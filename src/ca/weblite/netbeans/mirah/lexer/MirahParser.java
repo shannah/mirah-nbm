@@ -79,7 +79,7 @@ public class MirahParser extends Parser {
         ClassPath srcClassPath = ClassPath.getClassPath(src, ClassPath.SOURCE);
         LOG.warning("Src classapth is "+srcClassPath.toString());
         
-        
+        compiler.setDestination(buildClassPath.toString());
         compiler.setDiagnostics(diag);
         
         List<String> paths = new ArrayList<String>();
@@ -94,16 +94,18 @@ public class MirahParser extends Parser {
         }
         
         StringBuilder classPath = new StringBuilder();
-        boolean first = true;
         for ( String path : paths ){
             classPath.append(path);
-            if ( !first ){
-                first = false;
-                classPath.append(File.pathSeparator);
-            }
+            classPath.append(File.pathSeparator);
+            
         }
         
-        compiler.setClasspath(classPath.toString());
+        String cp = ".";
+        if ( classPath.length() >= 1 ){
+            cp = classPath.toString().substring(0, classPath.length()-1);
+        }
+        LOG.warning("The effective compile classpath is "+classPath.toString());
+        compiler.setClasspath(cp);
         DocumentDebugger debugger = new DocumentDebugger();
         compiler.setDebugger(debugger);
         synchronized(documentDebuggers){
