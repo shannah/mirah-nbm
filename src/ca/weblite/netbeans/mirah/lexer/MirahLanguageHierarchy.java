@@ -10,8 +10,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 import mirah.impl.MirahParser;
 import mirah.impl.Tokens;
@@ -25,6 +27,21 @@ import org.netbeans.spi.lexer.LexerRestartInfo;
  * @author shannah
  */
 public class MirahLanguageHierarchy extends LanguageHierarchy<MirahTokenId>{
+    
+    public static final int CLASS_DECLARATION = 1000;
+    public static final int METHOD_DECLARATION = 1001;
+    public static final int TYPE_HINT = 1002;
+    
+    private static Tokens[] literals = {
+        Tokens.tFloat,
+        Tokens.tTrue,
+        Tokens.tFalse,
+        Tokens.tInteger
+    };
+    
+    
+    
+    
     
     private static Tokens[] keywords = {
         Tokens.tDef,
@@ -41,7 +58,33 @@ public class MirahLanguageHierarchy extends LanguageHierarchy<MirahTokenId>{
         Tokens.tElse,
         Tokens.tElsif,
         Tokens.tEnd,
-        Tokens.tIn
+        Tokens.tIn,
+        Tokens.tRescue,
+        Tokens.tRetry,
+        Tokens.tReturn,
+        Tokens.tBreak,
+        Tokens.tClass,
+        Tokens.tFalse,
+        Tokens.tTrue,
+        Tokens.tOr,
+        Tokens.tAnd,
+        Tokens.tUnless,
+        Tokens.tUntil,
+        Tokens.tFor,
+        Tokens.tEnsure,
+        Tokens.tDef,
+        Tokens.tDefmacro,
+        Tokens.tDefined,
+        Tokens.tNil,
+        Tokens.tNot,
+        Tokens.tPackage,
+        Tokens.tRaise,
+        Tokens.tMacro,
+        Tokens.tRedo,
+        Tokens.tSelf,
+        Tokens.tSuper,
+        Tokens.tInterface
+        
         
         
            
@@ -51,8 +94,14 @@ public class MirahLanguageHierarchy extends LanguageHierarchy<MirahTokenId>{
     private static List<MirahTokenId>  tokens;
     private static Map<Integer,MirahTokenId>
                                     idToToken;
+    private static Set<Tokens> keywordSet = new HashSet<Tokens>();
+    private static Set<Tokens> literalSet = new HashSet<Tokens>();
 
     private static void init () {
+        
+        keywordSet.addAll(Arrays.asList(keywords));
+        literalSet.addAll(Arrays.asList(literals));
+        
         Tokens[] toks = new Tokens[]{
             Tokens.tBEGIN, 
             Tokens.tEND, 
@@ -109,17 +158,20 @@ public class MirahLanguageHierarchy extends LanguageHierarchy<MirahTokenId>{
         
         
         
-        tokens = /*Arrays.<MirahTokenId> asList (new MirahTokenId[] {
-            
-        });*/
+        //tokens = /*Arrays.<MirahTokenId> asList (new MirahTokenId[] {
+        //    
+        //});*/
         tokens = new ArrayList<MirahTokenId>();
-        LOG.warning("About to do tokens");
+        //LOG.warning("About to do tokens");
         for ( Tokens t : toks ){
-            LOG.warning("Creating token "+t.ordinal());
+            //LOG.warning("Creating token "+t.ordinal());
             MirahTokenId tok = new MirahTokenId(t.name(), getTokCategory(t), t.ordinal());
-            LOG.warning("Token created... now adding");
+            //LOG.warning("Token created... now adding");
             tokens.add(tok);
         }
+        tokens.add(new MirahTokenId("Class Declaration", "class-declaration", CLASS_DECLARATION));
+        tokens.add(new MirahTokenId("Method Declaration", "method-declaration", METHOD_DECLARATION ));
+        tokens.add(new MirahTokenId("Type Hint", "type-hint", TYPE_HINT));
         tokens.add(new MirahTokenId("WHITESPACE","whitespace", 999 ));
         
         idToToken = new HashMap<Integer, MirahTokenId> ();
@@ -128,10 +180,29 @@ public class MirahLanguageHierarchy extends LanguageHierarchy<MirahTokenId>{
     }
     
     private static String getTokCategory(Tokens t){
-        if ( Arrays.asList(keywords).contains(t)){
+        if ( CLASS_DECLARATION == t.ordinal()){
+            return "class-declaration";
+        } else if ( METHOD_DECLARATION == t.ordinal()){
+            return "method-declaration";
+        } else if ( TYPE_HINT == t.ordinal()){
+            return "type-hint";
+        } 
+        else if ( keywordSet.contains(t)){
             return "keyword";
-        } else  {
+        } else if ( Tokens.tIDENTIFIER.equals(t)){
+            return "identifier";
+        } else if ( literalSet.contains(t)){
+            return "literal";
+        } else if ( Tokens.tCharacter.equals(t) || Tokens.tSQuote.equals(t)) {
             return "character";
+        } else if ( Tokens.tInstVar.equals(t)){
+            return "instance-var";
+        } else if ( Tokens.tClassVar.equals(t)){
+            return "class-var";
+        } else if ( Tokens.tStringContent.equals(t) || Tokens.tDQuote.equals(t)){
+            return "string";
+        } else {
+            return "unknown";
         }
     }
 

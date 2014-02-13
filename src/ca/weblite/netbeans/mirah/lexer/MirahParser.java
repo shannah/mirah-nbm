@@ -51,6 +51,7 @@ public class MirahParser extends Parser {
     private Snapshot snapshot;
     private MirahParseDiagnostics diag;
     private static final Logger LOG = Logger.getLogger(MirahParser.class.getCanonicalName());
+    private static int count = 0;
     
     public static DocumentDebugger getDocumentDebugger(Document doc){
         return documentDebuggers.get(doc);
@@ -59,25 +60,27 @@ public class MirahParser extends Parser {
     @Override
     public void parse(Snapshot snapshot, Task task, SourceModificationEvent sme) throws ParseException {
          
+         LOG.warning("Parsing document "+(count++));
+         
          this.snapshot = snapshot;
          
         //mirahParser = new mirah.impl.MirahParser ();
         //mirahParser.parse(snapshot.getText().toString());
         diag = new MirahParseDiagnostics();
         Mirahc compiler = new Mirahc();
-        
         //Project proj = snapshot.getSource().getFileObject().getLookup().lookup(Project.class);
         FileObject src = snapshot.getSource().getFileObject();
-        LOG.warning("Source file is "+src);
+        //LOG.warning("Source file is "+src);
         ClassPath compileClassPath = ClassPath.getClassPath(src, ClassPath.COMPILE);
         //LOG.warning("Project directory is "+proj.getProjectDirectory().getName());
-        LOG.warning("Parsing classpath is "+compileClassPath.toString());
+        //LOG.warning("Parsing classpath is "+compileClassPath.toString());
         
         ClassPath buildClassPath = ClassPath.getClassPath(src, ClassPath.EXECUTE);
-        LOG.warning("Execute classapth is "+buildClassPath.toString());
+        
+        //LOG.warning("Execute classapth is "+buildClassPath.toString());
         
         ClassPath srcClassPath = ClassPath.getClassPath(src, ClassPath.SOURCE);
-        LOG.warning("Src classapth is "+srcClassPath.toString());
+        //LOG.warning("Src classapth is "+srcClassPath.toString());
         
         compiler.setDestination(buildClassPath.toString());
         compiler.setDiagnostics(diag);
@@ -104,13 +107,13 @@ public class MirahParser extends Parser {
         if ( classPath.length() >= 1 ){
             cp = classPath.toString().substring(0, classPath.length()-1);
         }
-        LOG.warning("The effective compile classpath is "+classPath.toString());
+        //LOG.warning("The effective compile classpath is "+classPath.toString());
         compiler.setClasspath(cp);
         DocumentDebugger debugger = new DocumentDebugger();
+        
         compiler.setDebugger(debugger);
-        synchronized(documentDebuggers){
-            documentDebuggers.put(sme.getModifiedSource().getDocument(false), debugger);
-        }
+        
+        
         
         
         
@@ -122,7 +125,23 @@ public class MirahParser extends Parser {
         
         compiler.addFakeFile(src.getPath(), snapshot.getText().toString());
         
-        compiler.compile(new String[0]);
+        try {
+            compiler.compile(new String[0]);
+        } catch ( Exception ex){
+            ex.printStackTrace();
+        }
+        synchronized(documentDebuggers){
+            Document doc = sme.getModifiedSource().getDocument(false);
+            
+            if ( diag.getErrors().isEmpty() || !documentDebuggers.containsKey(doc) ){
+                //LOG.warning("Updating document debugger "+diag.getErrors().size()+" errors");
+                documentDebuggers.put(doc, debugger);
+
+            } else {
+                //LOG.warning("Not updating document debugger after compiling");
+                //LOG.warning("Errors are "+diag.getErrors());
+            }
+        }
         
        
         
@@ -203,9 +222,9 @@ public class MirahParser extends Parser {
         
         @Override
         public int errorCount() {
-            if (super.errorCount() == 0 ){
-                super.log(Diagnostic.Kind.ERROR,  "0", "ERROR_TO_PREVENT_COMPILING");
-            }
+            //if (super.errorCount() == 0 ){
+            //    super.log(Diagnostic.Kind.ERROR,  "0", "ERROR_TO_PREVENT_COMPILING");
+            //}
             return super.errorCount();
         }
 
@@ -226,8 +245,15 @@ public class MirahParser extends Parser {
         public static class PositionType {
             public  int startPos, endPos;
             public  ResolvedType type;
+            public Node node;
             
-            
+            public String toString(){
+                if ( type == null ){
+                    return "["+startPos+","+endPos+"]";
+                } else {
+                    return "["+type.name() + " "+startPos+","+endPos+"]";
+                }
+            }
             
             
         }
@@ -242,6 +268,8 @@ public class MirahParser extends Parser {
                 public int compare(PositionType o1, PositionType o2) {
                     if ( o1.startPos < o2.startPos ) return -1;
                     else if (o2.startPos < o1.startPos ) return 1;
+                    else if ( o1.endPos < o2.endPos ) return -1;
+                    else if ( o2.endPos < o1.endPos ) return 1;
                     else return 0;
                 }
                 
@@ -252,6 +280,8 @@ public class MirahParser extends Parser {
                 public int compare(PositionType o1, PositionType o2) {
                     if ( o1.endPos < o2.endPos ) return -1;
                     else if ( o2.endPos < o1.endPos ) return 1;
+                    else if ( o1.startPos < o2.startPos ) return -1;
+                    else if ( o2.startPos < o1.startPos ) return 1;
                     else return 0;
                 }
                 
@@ -268,7 +298,28 @@ public class MirahParser extends Parser {
         public PositionType findNearestPositionOccuringBefore(int pos){
             PositionType t = new PositionType();
             t.endPos = pos;
-            return rightEdges.floor(t);
+            return rightEdges.lower(t);
+        }
+        
+        public SortedSet<PositionType> findPositionsWithRightEdgeInRange(int start, int end ){
+            LOG.warning("Finding positions in range "+start+","+end);
+            LOG.warning("Right edges "+rightEdges);
+            PositionType p1 = new PositionType();
+            p1.endPos = start;
+            p1.startPos = 0;
+            
+            PositionType p2 = new PositionType();
+            p2.endPos = end;
+            p2.startPos = end;
+            
+            SortedSet<PositionType> o1 = rightEdges.subSet(p1, p2);
+            
+            //p1.startPos = start;
+            //p2.startPos = end;
+            //SortedSet<PositionType> o2 = leftEdges.subSet(p1, p2);
+            
+            //o1.addAll(o2);
+            return o1;
         }
         
         @Override
@@ -278,6 +329,7 @@ public class MirahParser extends Parser {
 
         @Override
         public void enterNode(Context cntxt, Node node, boolean bln) {
+            
             //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             
         }
@@ -300,6 +352,13 @@ public class MirahParser extends Parser {
                     t.startPos = node.position().startChar();
                     t.endPos = node.position().endChar();
                     t.type = rt;
+                    t.node = node;
+                    if ( leftEdges.contains(t)){
+                        leftEdges.remove(t);
+                    }
+                    if ( rightEdges.contains(t)){
+                        rightEdges.remove(t);
+                    }
                     leftEdges.add(t);
                     rightEdges.add(t);
                 }

@@ -11,18 +11,22 @@ import ca.weblite.netbeans.mirah.lexer.MirahParser;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger.PositionType;
 import java.lang.reflect.Method;
+import java.util.SortedSet;
 import java.util.logging.Logger;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
+import org.netbeans.api.java.classpath.ClassPath;
+import org.netbeans.modules.editor.NbEditorUtilities;
 import org.netbeans.spi.editor.completion.CompletionItem;
 import org.netbeans.spi.editor.completion.CompletionProvider;
 import org.netbeans.spi.editor.completion.CompletionResultSet;
 import org.netbeans.spi.editor.completion.CompletionTask;
 import org.netbeans.spi.editor.completion.support.AsyncCompletionQuery;
 import org.netbeans.spi.editor.completion.support.AsyncCompletionTask;
+import org.openide.filesystems.FileObject;
 import org.openide.util.Exceptions;
 
 /**
@@ -38,41 +42,106 @@ public class MirahCodeCompleter implements CompletionProvider {
         if ( queryType != CompletionProvider.COMPLETION_QUERY_TYPE){
             return null;
         }
-        final int caretPosition = jtc.getCaretPosition();
-        final DocumentDebugger dbg = MirahParser.getDocumentDebugger(jtc.getDocument());
-        final Document doc = jtc.getDocument();
+        
+
+        // We should be looking for a method or field
         return new AsyncCompletionTask(new AsyncCompletionQuery(){
 
             @Override
-            protected void query(CompletionResultSet crs, Document dcmnt, int caretOffset) {
-                
+            protected void query(CompletionResultSet crs, Document doc, int caretOffset) {
+                DocumentDebugger dbg = MirahParser.getDocumentDebugger(doc);
                 if ( dbg != null ){
-                    PositionType pt = dbg.findNearestPositionOccuringBefore(caretPosition);
-                    if ( pt != null ){
-                        String className = pt.type.name();
-                        try {
-                            Class clz = Class.forName(className);
-                            Method[] methods = clz.getMethods();
-                            for ( int i=0; i<methods.length; i++){
-                                crs.addItem(new MirahCompletionItem(methods[i].getName(), caretPosition));
-                            }
-                        } catch (ClassNotFoundException ex) {
-                            Exceptions.printStackTrace(ex);
+                    try {
+
+                        int p = caretOffset-1;
+                        if ( p < 0 ){
+                            return;
                         }
+                        String lastChar = doc.getText(p, 1);
+                        while ( p > 0 && lastChar.trim().isEmpty()){
+                            p--;
+                            lastChar = doc.getText(p, 1);
+                        }
+
+
+                        if ( ".".equals(lastChar) ){
+
+                            // Find right edge of last node before '.'
+                            int rightEdge = p-1;
+                            String tmp = doc.getText(rightEdge, 1);
+                            while ( rightEdge > 0 && tmp.trim().isEmpty()){
+                                rightEdge--;
+                                tmp = doc.getText(rightEdge, 1);
+                            }
+
+                            rightEdge++;
+
+                            LOG.warning("CARET OFFSET "+caretOffset);
+                            //PositionType pt = dbg.findNearestPositionOccuringBefore(caretPosition);
+                            LOG.warning("Inside async query");
+                            SortedSet<PositionType> positions = dbg.findPositionsWithRightEdgeInRange(rightEdge, rightEdge);
+                            LOG.warning("Found set "+positions);
+                            for ( PositionType pt : positions ){
+                                FileObject fileObject = NbEditorUtilities.getFileObject(doc);
+                                LOG.warning("File Object for document "+fileObject.getPath());
+                                Class cls = findClass(fileObject, pt.type.name());
+                                if ( cls != null ){
+                                    for ( Method m : cls.getMethods()){
+                                        crs.addItem(new MirahMethodCompletionItem(m, caretOffset));
+                                    }
+                                }
+
+                               // crs.addItem(new MirahCompletionItem(p.type.name(), caretPosition));
+                            }
+
+
+
+                            
+                        }
+                    } catch ( BadLocationException ble ){
+                        ble.printStackTrace();
                     }
                 }
-                
-                crs.addItem(new MirahCompletionItem("Hello()",caretPosition ));
-                crs.addItem(new MirahCompletionItem("World()",caretPosition));
                 crs.finish();
             }
+
+        }, jtc);
+        
+
+        
             
-        });
+        
+        
+        
     }
 
     @Override
     public int getAutoQueryTypes(JTextComponent jtc, String string) {
         return 0;
     }
+    
+    private Class findClass(FileObject o, String name){
+        ClassPath[] paths = new ClassPath[]{
+            ClassPath.getClassPath(o, ClassPath.SOURCE),
+            ClassPath.getClassPath(o, ClassPath.EXECUTE),
+            ClassPath.getClassPath(o, ClassPath.COMPILE),
+            ClassPath.getClassPath(o, ClassPath.BOOT)
+        };
+        
+        for ( int i=0; i<paths.length; i++){
+            ClassPath cp = paths[i];
+            try {
+                Class c = cp.getClassLoader(true).loadClass(name);
+                if ( c != null ){
+                    return c;
+                }
+            } catch ( ClassNotFoundException ex){
+                
+            }
+        }
+        return null;
+    }
+    
+    
     
 }

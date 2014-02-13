@@ -30,7 +30,7 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
     private static final Logger LOG = Logger.getLogger(SyntaxErrorsHighlightingTask.class.getCanonicalName());
 
     public SyntaxErrorsHighlightingTask() {
-        LOG.warning("In SyntaxErrorsHighlightingTask constructor");
+        //LOG.warning("In SyntaxErrorsHighlightingTask constructor");
     }
 
     @Override
@@ -55,11 +55,11 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
             String message = syntaxError.message;
             int line =-1;
             try {
-                LOG.warning("About to parse line from ["+syntaxError.position+"]");
+                //LOG.warning("About to parse line from ["+syntaxError.position+"]");
                 String[] pieces = syntaxError.position.substring(0, syntaxError.position.lastIndexOf(":")).split(":");
                 
                 line = Integer.parseInt(pieces[pieces.length-1]);
-                LOG.warning("Parse error found on line "+line);
+                //LOG.warning("Parse error found on line "+line);
             } catch (NumberFormatException ex){
                 ex.printStackTrace();
             }
