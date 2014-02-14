@@ -113,9 +113,7 @@ private static final Logger LOG =
     )
     @Messages("LBL_Mirah_EDITOR=Source")
     public static MultiViewEditorElement createEditor(Lookup lkp) {
-        LOG.warning("Creating editor");
         MultiViewEditorElement el = new MultiViewEditorElement(lkp);
-        LOG.warning("Editor created");
         return el;
     }
 

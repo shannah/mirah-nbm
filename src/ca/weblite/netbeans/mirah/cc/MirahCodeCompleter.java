@@ -38,21 +38,15 @@ public class MirahCodeCompleter implements CompletionProvider {
     private static final Logger LOG = Logger.getLogger(MirahCodeCompleter.class.getCanonicalName());
     @Override
     public CompletionTask createTask(int queryType, final JTextComponent jtc) {
-        LOG.warning("TextComponent is "+jtc);
         if ( queryType != CompletionProvider.COMPLETION_QUERY_TYPE){
             return null;
         }
-        
-
-        // We should be looking for a method or field
         return new AsyncCompletionTask(new AsyncCompletionQuery(){
-
             @Override
             protected void query(CompletionResultSet crs, Document doc, int caretOffset) {
                 DocumentDebugger dbg = MirahParser.getDocumentDebugger(doc);
                 if ( dbg != null ){
                     try {
-
                         int p = caretOffset-1;
                         if ( p < 0 ){
                             return;
@@ -62,10 +56,7 @@ public class MirahCodeCompleter implements CompletionProvider {
                             p--;
                             lastChar = doc.getText(p, 1);
                         }
-
-
                         if ( ".".equals(lastChar) ){
-
                             // Find right edge of last node before '.'
                             int rightEdge = p-1;
                             String tmp = doc.getText(rightEdge, 1);
@@ -73,30 +64,17 @@ public class MirahCodeCompleter implements CompletionProvider {
                                 rightEdge--;
                                 tmp = doc.getText(rightEdge, 1);
                             }
-
                             rightEdge++;
-
-                            LOG.warning("CARET OFFSET "+caretOffset);
-                            //PositionType pt = dbg.findNearestPositionOccuringBefore(caretPosition);
-                            LOG.warning("Inside async query");
                             SortedSet<PositionType> positions = dbg.findPositionsWithRightEdgeInRange(rightEdge, rightEdge);
-                            LOG.warning("Found set "+positions);
                             for ( PositionType pt : positions ){
                                 FileObject fileObject = NbEditorUtilities.getFileObject(doc);
-                                LOG.warning("File Object for document "+fileObject.getPath());
                                 Class cls = findClass(fileObject, pt.type.name());
                                 if ( cls != null ){
                                     for ( Method m : cls.getMethods()){
                                         crs.addItem(new MirahMethodCompletionItem(m, caretOffset));
                                     }
                                 }
-
-                               // crs.addItem(new MirahCompletionItem(p.type.name(), caretPosition));
                             }
-
-
-
-                            
                         }
                     } catch ( BadLocationException ble ){
                         ble.printStackTrace();
