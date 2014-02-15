@@ -10,7 +10,9 @@ package ca.weblite.netbeans.mirah.lexer;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.WeakHashMap;
@@ -57,6 +59,35 @@ public class MirahParser extends Parser {
         return documentDebuggers.get(doc);
     }
     
+    private static WeakHashMap<Document, Queue<Runnable>> parserCallbacks = new WeakHashMap<Document,Queue<Runnable>>();
+    
+    
+    
+    
+    public static void addCallback(Document d, Runnable r){
+        synchronized (parserCallbacks ){
+            if ( !parserCallbacks.containsKey(d) ){
+                parserCallbacks.put(d, new LinkedList<Runnable>());
+            }
+            parserCallbacks.get(d).add(r);
+        }
+    }
+    
+    private static void fireOnParse(Document d){
+        List<Runnable> tasks = new ArrayList<Runnable>();
+        synchronized (parserCallbacks ){
+            Queue<Runnable> queue = parserCallbacks.get(d);
+            if ( queue != null ){
+                tasks.addAll(queue);
+            }
+            parserCallbacks.remove(d);
+        }
+        
+        for ( Runnable r : tasks ){
+            r.run();
+        }
+    }
+    
     @Override
     public void parse(Snapshot snapshot, Task task, SourceModificationEvent sme) throws ParseException {
          
@@ -68,6 +99,7 @@ public class MirahParser extends Parser {
         //mirahParser.parse(snapshot.getText().toString());
         diag = new MirahParseDiagnostics();
         Mirahc compiler = new Mirahc();
+        
         //Project proj = snapshot.getSource().getFileObject().getLookup().lookup(Project.class);
         FileObject src = snapshot.getSource().getFileObject();
         //LOG.warning("Source file is "+src);
@@ -130,13 +162,16 @@ public class MirahParser extends Parser {
         } catch ( Exception ex){
             ex.printStackTrace();
         }
+        
+        
         synchronized(documentDebuggers){
             Document doc = sme.getModifiedSource().getDocument(false);
             
             if ( diag.getErrors().isEmpty() || !documentDebuggers.containsKey(doc) ){
                 //LOG.warning("Updating document debugger "+diag.getErrors().size()+" errors");
+                debugger.compiler = compiler;
                 documentDebuggers.put(doc, debugger);
-
+                fireOnParse(doc);
             } else {
                 //LOG.warning("Not updating document debugger after compiling");
                 //LOG.warning("Errors are "+diag.getErrors());
@@ -260,6 +295,7 @@ public class MirahParser extends Parser {
         
         final private TreeSet<PositionType> leftEdges;
         final private TreeSet<PositionType> rightEdges;
+        public Mirahc compiler;
         
         public DocumentDebugger(){
             leftEdges = new TreeSet<PositionType>(new Comparator<PositionType>(){
@@ -321,6 +357,15 @@ public class MirahParser extends Parser {
             //o1.addAll(o2);
             return o1;
         }
+        
+        public int countNodes(){
+            return rightEdges.size();
+        }
+        
+        public Node firstNode(){
+            return leftEdges.first().node;
+        }
+        
         
         @Override
         public void parsedNode(Node node) {

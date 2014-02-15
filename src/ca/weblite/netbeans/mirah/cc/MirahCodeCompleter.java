@@ -11,11 +11,24 @@ import ca.weblite.netbeans.mirah.lexer.MirahParser;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger.PositionType;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.logging.Logger;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
+import mirah.lang.ast.Call;
+import mirah.lang.ast.ClassDefinition;
+import mirah.lang.ast.MethodDefinition;
+import mirah.lang.ast.Next;
+import mirah.lang.ast.Node;
+import mirah.lang.ast.NodeFilter;
+import mirah.lang.ast.NodeList;
+import mirah.lang.ast.NodeScanner;
+import mirah.lang.ast.SimpleNodeVisitor;
+import mirah.lang.ast.SimpleString;
+import mirah.lang.ast.TypeRef;
 
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.api.java.classpath.ClassPath;
@@ -41,10 +54,39 @@ public class MirahCodeCompleter implements CompletionProvider {
         if ( queryType != CompletionProvider.COMPLETION_QUERY_TYPE){
             return null;
         }
+        
+        try {
+            int caretOffset = jtc.getCaretPosition();
+        
+            int p = caretOffset-1;
+            if ( p < 0 ){
+                return null;
+            }
+            String lastChar = jtc.getDocument().getText(p, 1);
+            while ( p > 0 && lastChar.trim().isEmpty()){
+                p--;
+                lastChar = jtc.getDocument().getText(p, 1);
+            }
+            if ( !".".equals(lastChar) ){
+                return null;
+            }
+        } catch ( BadLocationException ble){
+            return null;
+        }
+        
         return new AsyncCompletionTask(new AsyncCompletionQuery(){
+            
+            int tries = 0;
+            Object lock = new Object();
             @Override
-            protected void query(CompletionResultSet crs, Document doc, int caretOffset) {
+            protected void query(final CompletionResultSet crs, final Document doc, final int caretOffset) {
+                if ( crs.isFinished() || this.isTaskCancelled()){
+                    return;
+                }
+                tries++;
                 DocumentDebugger dbg = MirahParser.getDocumentDebugger(doc);
+                
+                
                 if ( dbg != null ){
                     try {
                         int p = caretOffset-1;
@@ -65,7 +107,103 @@ public class MirahCodeCompleter implements CompletionProvider {
                                 tmp = doc.getText(rightEdge, 1);
                             }
                             rightEdge++;
+                            LOG.warning("Position is "+rightEdge);
+                            LOG.warning("Num nodes "+dbg.countNodes());
+                            if ( dbg.countNodes() > 0 ){
+                                for( Object node : dbg.compiler.compiler().getParsedNodes() ){
+                                    if ( node instanceof Node ){
+                                        LOG.warning(nodeToString((Node)node));
+                                        ((Node)node).accept(new NodeScanner(){
+
+                                            @Override
+                                            public Object visitNext(Next node, Object arg) {
+                                                LOG.warning(nodeToString(node));
+                                                if ( node != null ){
+                                                    Node orig = node.originalNode();
+                                                    if ( orig != null && orig instanceof SimpleString ){
+                                                        SimpleString ss = (SimpleString)orig;
+                                                        TypeRef tr = ss.typeref();
+                                                        if ( tr != null ){
+                                                            LOG.warning("Type ref is "+tr.name());
+                                                        }
+                                                    }
+                                                }
+                                                return super.visitNext(node, arg); //To change body of generated methods, choose Tools | Templates.
+                                            }
+
+                                            @Override
+                                            public Object visitSimpleString(SimpleString node, Object arg) {
+                                                if ( node != null ){
+                                                    TypeRef tr = node.typeref();
+                                                    if ( tr != null ){
+                                                        LOG.warning("SS Type ref is "+tr.name());
+                                                    }
+                                                    
+                                                }
+                                                return super.visitSimpleString(node, arg); //To change body of generated methods, choose Tools | Templates.
+                                            }
+
+                                            @Override
+                                            public Object visitCall(Call node, Object arg) {
+                                                if ( node != null ){
+                                                    TypeRef tr = node.typeref();
+                                                    if ( tr != null ){
+                                                        LOG.warning("Call Type ref is "+tr.name());
+                                                    }
+                                                    
+                                                }
+                                                return super.visitCall(node, arg); //To change body of generated methods, choose Tools | Templates.
+                                            }
+
+                                            
+                                            
+                                            @Override
+                                            public boolean enterDefault(Node node, Object arg) {
+                                                if ( node != null ){
+                                                    LOG.warning(nodeToString(node));
+                                                }
+                                                return super.enterDefault(node, arg); //To change body of generated methods, choose Tools | Templates.
+                                            }
+
+                                            
+                                            
+                                            
+                                            
+                                            
+                                            
+                                            
+                                            
+                                        }, null);
+                                        //walkTree((Node)node);
+                                        
+                                    }
+                                };
+                            
+                            }
                             SortedSet<PositionType> positions = dbg.findPositionsWithRightEdgeInRange(rightEdge, rightEdge);
+                            if ( positions.isEmpty() && tries < 3 ){
+                                LOG.warning("Trying code completion for "+tries+" time");
+                                MirahParser.addCallback(doc, new Runnable(){
+                                    public void run(){
+                                        LOG.warning("Running in addCallback "+tries);
+                                        query(crs, doc, caretOffset);
+                                        synchronized(lock){
+                                            lock.notifyAll();
+                                        }
+                                    }
+                                });
+                                synchronized (lock){
+                                    try {
+                                        lock.wait(1000);
+                                        
+                                    } catch (InterruptedException ex) {
+                                        Exceptions.printStackTrace(ex);
+                                    }
+                                }
+                                if ( crs.isFinished() ){
+                                    return;
+                                }
+                            }
                             for ( PositionType pt : positions ){
                                 FileObject fileObject = NbEditorUtilities.getFileObject(doc);
                                 Class cls = findClass(fileObject, pt.type.name());
@@ -81,6 +219,7 @@ public class MirahCodeCompleter implements CompletionProvider {
                     }
                 }
                 crs.finish();
+                
             }
 
         }, jtc);
@@ -118,6 +257,56 @@ public class MirahCodeCompleter implements CompletionProvider {
             }
         }
         return null;
+    }
+    
+    private static void walkTree(Node node){
+        LOG.warning(nodeToString(node));
+        NodeFilter f = new NodeFilter(){
+
+            @Override
+            public boolean matchesNode(Node node) {
+                
+                return true;
+            }
+            
+        };
+        
+        LOG.warning("About to find children");
+        //List out = new ArrayList();
+        List nodes = node.findChildren(f);
+        LOG.warning(nodes.size()+" children found");
+        for ( Object o : nodes ){
+            if ( o instanceof Node ){
+                walkTree((Node)o);
+            }
+        }
+        
+    }
+    
+    private static String nodeToString(Node n){
+        if ( n == null || n.position() == null ){
+            if ( n != null ){
+                return ""+n;
+            }
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("Node ").append(n)
+                .append(n.position().startLine())
+                .append(".")
+                .append(n.position().startColumn())
+                .append(":")
+                .append(n.position().startChar())
+                .append("-")
+                .append(n.position().endLine())
+                .append(".")
+                .append(n.position().endColumn())
+                .append(":")
+                .append(n.position().endChar())
+                .append(" # ");
+        
+       return sb.toString();
+                
     }
     
     

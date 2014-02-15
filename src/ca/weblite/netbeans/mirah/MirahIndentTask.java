@@ -42,30 +42,32 @@ public class MirahIndentTask implements IndentTask  {
         int currLineStart = context.lineStartOffset(context.startOffset());
         int prevLineEnd = currLineStart -1;
         String prevLine = doc.getText(prevLineStart, prevLineEnd-prevLineStart);
-        LOG.warning("PRevious line was ["+prevLine+"]");
+        //LOG.warning("PRevious line was ["+prevLine+"]");
         String prevLineTrimmed = prevLine.trim();
-        if ( prevLineTrimmed.matches("^(.*)\\bdo( \\|.*\\|){0,1}$")
+        if ( (prevLineTrimmed.matches("^(.*)\\bdo( \\|.*\\|){0,1}$")
             ||
              prevLineTrimmed.matches("^\\bclass .*$")
             ||
-             prevLineTrimmed.matches("^\\bdef\\b.*$")
+             prevLineTrimmed.matches("^\\bdef\\b.*$"))
+                &&
+             !prevLineTrimmed.matches("^.*\bend\b")
             
         ){
         
             
             
-            LOG.warning("Indenting");
+            //LOG.warning("Indenting");
             context.modifyIndent(context.lineStartOffset(context.startOffset()), prevIndent+4);
             // Check the next line indent
-            LOG.warning("End offset now "+context.endOffset());
-            if ( doc.getLength() <= context.endOffset()+1 ){
-                LOG.warning("Inserting String at the END of document to increase the size");
-                doc.insertString(doc.getLength(), "\n\n", new SimpleAttributeSet());
+            //LOG.warning("End offset now "+context.endOffset());
+            //if ( doc.getLength() <= context.endOffset()+1 ){
+            //    //LOG.warning("Inserting String at the END of document to increase the size");
+            //    doc.insertString(doc.getLength(), "\n\n", new SimpleAttributeSet());
 
-            }
-            LOG.warning("End offset after "+context.endOffset());
-            LOG.warning("Getting next line start");
-            
+            //}
+            //LOG.warning("End offset after "+context.endOffset());
+            //LOG.warning("Getting next line start");
+            /*
             int nextLineStart = context.lineStartOffset(context.caretOffset()+1);
             LOG.warning("Getting next line indent");
             int nextLineIndent = context.lineIndent(nextLineStart);
@@ -94,7 +96,7 @@ public class MirahIndentTask implements IndentTask  {
                 LOG.warning("Bad location exception "+ble.getMessage());
             }
             //int nextLineStart = context.lineStartOffset(context.endOffset()+1);
-            
+            */
             
             
         }
