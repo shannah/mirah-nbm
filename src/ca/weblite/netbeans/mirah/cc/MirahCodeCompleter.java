@@ -116,7 +116,7 @@ public class MirahCodeCompleter implements CompletionProvider {
         if ( queryType != CompletionProvider.COMPLETION_QUERY_TYPE){
             return null;
         }
-        
+        final int initialOffset = jtc.getCaretPosition();
         try {
             int caretOffset = jtc.getCaretPosition();
         
@@ -137,14 +137,50 @@ public class MirahCodeCompleter implements CompletionProvider {
         }
         
         return new AsyncCompletionTask(new AsyncCompletionQuery(){
-            
+            boolean parsed = false;
             int tries = 0;
             Object lock = new Object();
+
+            /*
+            @Override
+            protected boolean canFilter(JTextComponent component) {
+                int currentPos = component.getCaretPosition();
+                if ( currentPos == initialOffset){
+                    return true;
+                }
+                
+                try {
+                    char c = component.getText(currentPos, 1).charAt(0);
+                    switch ( c){
+                        case '.':
+                        case ':':
+                        case '(':
+                        case ';':
+                        
+                            return false;
+                    }
+                } catch (BadLocationException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+                return true;
+            }
+            */
+            
+            
+           
+            
+            
             @Override
             protected void query(final CompletionResultSet crs, final Document doc, final int caretOffset) {
                 if ( crs.isFinished() || this.isTaskCancelled()){
                     return;
                 }
+                
+                if ( caretOffset < initialOffset ){
+                    crs.finish();
+                    Completion.get().hideAll();
+                }
+                
                 
                 tries++;
                 DocumentDebugger dbg = MirahParser.getDocumentDebugger(doc);
@@ -186,16 +222,19 @@ public class MirahCodeCompleter implements CompletionProvider {
                             }
                             if ( (foundNode == null || type == null) && tries++ < 10){
                                 Source src = Source.create(doc);
+                                
+                                LOG.warning(src.createSnapshot().getText().toString());
                                 LOG.warning("Not found so we're going to reparse the document");
                                 try {
                                     Snapshot snapshot = src.createSnapshot();
+                                    
                                     MirahParser parser = new MirahParser();
-                                    parser.reparse(snapshot);
+                                    parser.reparse(snapshot, p, 1, "");
                                 } catch (ParseException ex) {
+                                    LOG.warning("There was a parse exception "+ex.getMessage());
                                     Exceptions.printStackTrace(ex);
                                 }
-                                
-                                
+                               
                                 
                                 
                                 dbg = MirahParser.getDocumentDebugger(doc);

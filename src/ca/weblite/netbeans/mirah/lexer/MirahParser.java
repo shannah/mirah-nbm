@@ -99,8 +99,12 @@ public class MirahParser extends Parser {
     
     
     
+    public void reparse(Snapshot snapshot ) throws ParseException {
+        reparse(snapshot, -1, 0, null);
+    }
     
-    public void reparse(Snapshot snapshot) throws ParseException {
+    
+    public void reparse(Snapshot snapshot, int swapOffset, int swapLen, String swapStr) throws ParseException {
          LOG.warning("Thread id "+Thread.currentThread().getId());
          LOG.warning("Parsing document "+(count++));
          
@@ -164,8 +168,15 @@ public class MirahParser extends Parser {
         if ( !"".equals(bootClassPath.toString())){
             compiler.setBootClasspath(bootClassPath.toString());
         }
-        
-        compiler.addFakeFile(src.getPath(), snapshot.getText().toString());
+        String srcText = snapshot.getText().toString();
+        if ( swapOffset >= 0 ){
+            StringBuilder sb = new StringBuilder();
+            sb.append(srcText.substring(0, swapOffset));
+            sb.append(swapStr);
+            sb.append(srcText.substring(swapOffset+swapLen));
+            srcText = sb.toString();
+        }
+        compiler.addFakeFile(src.getPath(), srcText);
         
         try {
             compiler.compile(new String[0]);
@@ -175,8 +186,9 @@ public class MirahParser extends Parser {
         LOG.warning("Finished parsing document"); 
         
         synchronized(documentDebuggers){
-            Document doc = snapshot.getSource().getDocument(false);
-            
+            LOG.warning("Inside sync documentDebuggers");
+            Document doc = snapshot.getSource().getDocument(true);
+            LOG.warning("Resolved types "+debugger.resolvedTypes);
             if ( debugger.resolvedTypes.size() > 0 ){
                 debugger.compiler = compiler;
                 LOG.warning("NEW DOCUMENT DEBUGGER ADDED");
@@ -389,10 +401,12 @@ public class MirahParser extends Parser {
         public void exitNode(Context cntxt, final Node node, TypeFuture tf) {
             //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             //LOG.warning("Position of node "+node+" is "+node.position());
+            LOG.warning("Exit node");
             tf.onUpdate(new TypeListener(){
 
                 @Override
                 public void updated(TypeFuture tf, ResolvedType rt) {
+                    LOG.warning("Updating node with resolve type");
                     if ( !tf.isResolved() ){
                         return;
                     }
@@ -412,6 +426,7 @@ public class MirahParser extends Parser {
                     }
                     leftEdges.add(t);
                     rightEdges.add(t);
+                    
                     resolvedTypes.put(node, rt);
                     //LOG.warning("Resolved type for "+nodeToString(node)+" is "+rt);
                 }
