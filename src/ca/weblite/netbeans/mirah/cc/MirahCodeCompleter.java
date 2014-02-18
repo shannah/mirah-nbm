@@ -13,6 +13,7 @@ import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger.PositionType
 import java.awt.EventQueue;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.logging.Logger;
@@ -37,7 +38,17 @@ import org.netbeans.api.editor.completion.Completion;
 
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.api.java.classpath.ClassPath;
+
 import org.netbeans.modules.editor.NbEditorUtilities;
+import org.netbeans.modules.parsing.api.ParserManager;
+import org.netbeans.modules.parsing.api.ResultIterator;
+import org.netbeans.modules.parsing.api.Snapshot;
+import org.netbeans.modules.parsing.api.Source;
+import org.netbeans.modules.parsing.api.UserTask;
+import org.netbeans.modules.parsing.spi.ParseException;
+import org.netbeans.modules.parsing.spi.SourceModificationEvent;
+//import org.netbeans.modules.parsing.impl.Utilities;
+
 import org.netbeans.spi.editor.completion.CompletionItem;
 import org.netbeans.spi.editor.completion.CompletionProvider;
 import org.netbeans.spi.editor.completion.CompletionResultSet;
@@ -46,6 +57,7 @@ import org.netbeans.spi.editor.completion.support.AsyncCompletionQuery;
 import org.netbeans.spi.editor.completion.support.AsyncCompletionTask;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Exceptions;
+
 
 /**
  *
@@ -133,9 +145,10 @@ public class MirahCodeCompleter implements CompletionProvider {
                 if ( crs.isFinished() || this.isTaskCancelled()){
                     return;
                 }
+                
                 tries++;
                 DocumentDebugger dbg = MirahParser.getDocumentDebugger(doc);
-                LOG.warning("Debugger is "+dbg);
+                //LOG.warning("Debugger is "+dbg);
                 
                 if ( dbg != null ){
                     try {
@@ -149,7 +162,8 @@ public class MirahCodeCompleter implements CompletionProvider {
                             lastChar = doc.getText(p, 1);
                         }
                         if ( ".".equals(lastChar) ){
-                            
+                            LOG.warning("In query");
+                            LOG.warning("Thread id "+Thread.currentThread().getId());
                             // Find right edge of last node before '.'
                             int rightEdge = p-1;
                             String tmp = doc.getText(rightEdge, 1);
@@ -159,39 +173,33 @@ public class MirahCodeCompleter implements CompletionProvider {
                             }
                             rightEdge++;
                             final int rightEdgeFinal = rightEdge;
-                            LOG.warning("Position is "+rightEdge);
+                            //LOG.warning("Position is "+rightEdge);
                             Node foundNode = findNode(dbg, rightEdge);
-                            
-                            int i = 0;
-                            if ( foundNode == null ){
-                                LOG.warning("Node is null after attempt 0");
-                            }else {
-                                LOG.warning("Node is "+nodeToString(foundNode)+" after attempt "+i+" with type "+dbg.getType(foundNode));
+                            if ( foundNode != null ){
+                                LOG.warning("Found node "+nodeToString(foundNode)+" and type is "+dbg.getType(foundNode));
                             }
+                            int i = 0;
+                            
                             ResolvedType type = null;
                             if ( foundNode != null ){
                                 type = dbg.getType(foundNode);
                             }
                             if ( (foundNode == null || type == null) && tries++ < 10){
-                                LOG.warning("In node loop "+tries);
+                                Source src = Source.create(doc);
+                                LOG.warning("Not found so we're going to reparse the document");
                                 try {
-                                    Thread.sleep(2000);
-                                } catch (InterruptedException ex) {
+                                    Snapshot snapshot = src.createSnapshot();
+                                    MirahParser parser = new MirahParser();
+                                    parser.reparse(snapshot);
+                                } catch (ParseException ex) {
                                     Exceptions.printStackTrace(ex);
                                 }
-                                EventQueue.invokeLater(new Runnable(){
-
-                                    @Override
-                                    public void run() {
-                                        Completion.get().hideCompletion();
-                                        Completion.get().showCompletion();
-                                    }
-
-                                });
+                                
+                                
                                 
                                 
                                 dbg = MirahParser.getDocumentDebugger(doc);
-                                printNodes(dbg.compiler.compiler(), rightEdgeFinal);
+                                //printNodes(dbg.compiler.compiler(), rightEdgeFinal);
                                 foundNode = findNode(dbg, rightEdge);
                                 if ( foundNode != null ){
                                     type = dbg.getType(foundNode);
@@ -209,7 +217,7 @@ public class MirahCodeCompleter implements CompletionProvider {
                                 type = dbg.getType(foundNode);
                                 
                                 if ( type != null ){
-                                    LOG.warning("Node was found "+nodeToString(foundNode));
+                                    //LOG.warning("Node was found "+nodeToString(foundNode));
                                     FileObject fileObject = NbEditorUtilities.getFileObject(doc);
                                     Class cls = findClass(fileObject, dbg.getType(foundNode).name());
                                     if ( cls != null ){
@@ -219,7 +227,7 @@ public class MirahCodeCompleter implements CompletionProvider {
                                     }
                                 }
                             } else {
-                                LOG.warning("Node was not found ");
+                                //LOG.warning("Node was not found ");
                             }
                         }
                     } catch ( BadLocationException ble ){
@@ -243,7 +251,7 @@ public class MirahCodeCompleter implements CompletionProvider {
 
                             @Override
                             public boolean enterDefault(Node node, Object arg) {
-                                LOG.warning("PRINTNODES: "+nodeToString(node));
+                                //LOG.warning("PRINTNODES: "+nodeToString(node));
                                 return super.enterDefault(node, arg); //To change body of generated methods, choose Tools | Templates.
                             }
                             

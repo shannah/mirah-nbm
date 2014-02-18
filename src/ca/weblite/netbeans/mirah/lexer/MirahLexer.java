@@ -33,21 +33,14 @@ public class MirahLexer implements Lexer<MirahTokenId>{
 
 
     MirahLexer (LexerRestartInfo<MirahTokenId> info, MirahParser parser) {
-        //LOG.warning("IN the mirah lexer hooohooo");
         this.info = info;
         this.parser = parser;
         this.lexer = null;
         
-    
-        //JavaCharStream stream = new JavaCharStream (info.input ());
-        //javaParserTokenManager = new JavaParserTokenManager (stream);
     }
 
     @Override
     public org.netbeans.api.lexer.Token<MirahTokenId> nextToken () {
-        //LOG.warning("In the nextToken");
-        //Token token = javaParserTokenManager.getNextToken ();
-        //if (info.input ().readLength () < 1) return null;
         if ( this.lexer == null ){
             int c;
             StringBuilder sb = new StringBuilder();
@@ -61,7 +54,6 @@ public class MirahLexer implements Lexer<MirahTokenId>{
                 }
             }
             String str = sb.toString();
-            //LOG.warning("String is "+str);
             lastPos = 0;
             lexer = new mirah.impl.MirahLexer(str, str.toCharArray(), parser);
         }
@@ -81,14 +73,6 @@ public class MirahLexer implements Lexer<MirahTokenId>{
             return null;
         } 
         if ( alreadyStarted || tok.startpos == tok.pos ){
-            //LOG.warning("Tok type "+tok.type);
-            //LOG.warning("TOk is "+tok.type.name()+", "+tok.type.ordinal());
-            //try {
-                //LOG.warning("TOK TEXT is "+tok.text());
-            //} catch ( Exception ex){
-                //LOG.warning("Null getting tok.text() "+ex.getMessage());
-            //}
-            //LOG.warning("Start "+tok.startpos+" pos: "+tok.pos+", endpos: "+tok.endpos);
             int ordinal = tok.type.ordinal();
             if ( inClassDeclaration && ordinal == Tokens.tCONSTANT.ordinal()){
                 inClassDeclaration = false;
@@ -111,10 +95,8 @@ public class MirahLexer implements Lexer<MirahTokenId>{
             }
             
             MirahTokenId tokid = MirahLanguageHierarchy.getToken(ordinal);
-            //LOG.warning("MTok is "+tokid);
             int len = tok.endpos-tok.startpos;
             lastPos = tok.endpos;
-            //LOG.warning("Length is "+len);
             lastToken = tok.type.ordinal();
             tok = null;
             return info.tokenFactory ().createToken (tokid,len);

@@ -93,9 +93,8 @@ private static final Logger LOG =
     Logger.getLogger(MirahDataObject.class.getCanonicalName());
     public MirahDataObject(FileObject pf, MultiFileLoader loader) throws DataObjectExistsException, IOException {
         super(pf, loader);
-        LOG.warning("Registering data object");
         registerEditor("text/x-mirah", true);
-        LOG.warning("Finished registering data object");
+        
     }
 
     @Override

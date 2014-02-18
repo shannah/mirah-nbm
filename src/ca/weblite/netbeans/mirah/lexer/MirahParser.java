@@ -90,9 +90,18 @@ public class MirahParser extends Parser {
         }
     }
     
-    @Override
+    
+     @Override
     public void parse(Snapshot snapshot, Task task, SourceModificationEvent sme) throws ParseException {
-         
+        
+        reparse(snapshot);
+    }
+    
+    
+    
+    
+    public void reparse(Snapshot snapshot) throws ParseException {
+         LOG.warning("Thread id "+Thread.currentThread().getId());
          LOG.warning("Parsing document "+(count++));
          
          this.snapshot = snapshot;
@@ -141,7 +150,6 @@ public class MirahParser extends Parser {
         if ( classPath.length() >= 1 ){
             cp = classPath.toString().substring(0, classPath.length()-1);
         }
-        //LOG.warning("The effective compile classpath is "+classPath.toString());
         compiler.setClasspath(cp);
         DocumentDebugger debugger = new DocumentDebugger();
         
@@ -164,35 +172,22 @@ public class MirahParser extends Parser {
         } catch ( Exception ex){
             ex.printStackTrace();
         }
-        
+        LOG.warning("Finished parsing document"); 
         
         synchronized(documentDebuggers){
-            Document doc = sme.getModifiedSource().getDocument(false);
+            Document doc = snapshot.getSource().getDocument(false);
             
-           // if ( diag.getErrors().isEmpty() || !documentDebuggers.containsKey(doc) ){
-                //LOG.warning("Updating document debugger "+diag.getErrors().size()+" errors");
             if ( debugger.resolvedTypes.size() > 0 ){
                 debugger.compiler = compiler;
                 LOG.warning("NEW DOCUMENT DEBUGGER ADDED");
                 documentDebuggers.put(doc, debugger);
                 fireOnParse(doc);
-            } //else {
-                //LOG.warning("Not updating document debugger after compiling");
-                //LOG.warning("Errors are "+diag.getErrors());
-            //}
+            } 
         }
         
        
         
         
-        
-        
-        
-        //try {
-        //    javaParser.CompilationUnit ();
-        //} catch (org.simplejava.jccparser.ParseException ex) {
-        //    Logger.getLogger (SJParser.class.getName()).log (Level.WARNING, null, ex);
-       // }
     }
     
 
@@ -349,8 +344,8 @@ public class MirahParser extends Parser {
         }
         
         public SortedSet<PositionType> findPositionsWithRightEdgeInRange(int start, int end ){
-            LOG.warning("Finding positions in range "+start+","+end);
-            LOG.warning("Right edges "+rightEdges);
+            //LOG.warning("Finding positions in range "+start+","+end);
+            //LOG.warning("Right edges "+rightEdges);
             PositionType p1 = new PositionType();
             p1.endPos = start;
             p1.startPos = 0;
@@ -393,7 +388,7 @@ public class MirahParser extends Parser {
         @Override
         public void exitNode(Context cntxt, final Node node, TypeFuture tf) {
             //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            LOG.warning("Position of node "+node+" is "+node.position());
+            //LOG.warning("Position of node "+node+" is "+node.position());
             tf.onUpdate(new TypeListener(){
 
                 @Override
@@ -418,7 +413,7 @@ public class MirahParser extends Parser {
                     leftEdges.add(t);
                     rightEdges.add(t);
                     resolvedTypes.put(node, rt);
-                    LOG.warning("Resolved type for "+nodeToString(node)+" is "+rt);
+                    //LOG.warning("Resolved type for "+nodeToString(node)+" is "+rt);
                 }
                 
             });
