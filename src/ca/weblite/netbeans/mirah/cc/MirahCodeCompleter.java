@@ -10,6 +10,7 @@ import ca.weblite.netbeans.mirah.lexer.MirahLexer;
 import ca.weblite.netbeans.mirah.lexer.MirahParser;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger.PositionType;
+import java.awt.EventQueue;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +27,13 @@ import mirah.lang.ast.Node;
 import mirah.lang.ast.NodeFilter;
 import mirah.lang.ast.NodeList;
 import mirah.lang.ast.NodeScanner;
+import mirah.lang.ast.Position;
 import mirah.lang.ast.SimpleNodeVisitor;
 import mirah.lang.ast.SimpleString;
 import mirah.lang.ast.TypeRef;
+import org.mirah.tool.MirahCompiler;
+import org.mirah.typer.ResolvedType;
+import org.netbeans.api.editor.completion.Completion;
 
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.api.java.classpath.ClassPath;
@@ -49,6 +54,51 @@ import org.openide.util.Exceptions;
 @MimeRegistration(mimeType="text/x-mirah", service=CompletionProvider.class)
 public class MirahCodeCompleter implements CompletionProvider {
     private static final Logger LOG = Logger.getLogger(MirahCodeCompleter.class.getCanonicalName());
+    
+    private Node findNode(final DocumentDebugger dbg, final int rightEdge){
+        final Node[] foundNode = new Node[1];
+        for( Object node : dbg.compiler.compiler().getParsedNodes() ){
+            if ( node instanceof Node ){
+                //LOG.warning(nodeToString((Node)node));
+                ((Node)node).accept(new NodeScanner(){
+
+                    @Override
+                    public boolean enterDefault(Node node, Object arg) {
+                        if ( node != null ){
+                            
+                            Position nodePos = node.position();
+                            ResolvedType type = dbg.getType(node);
+                            if ( type != null && nodePos != null && nodePos.endChar() == rightEdge ){
+                                LOG.warning("Visibing simple string "+nodeToString(node)+" with type "+type);
+                                LOG.warning("Set as found node as it is currently nearest");
+                                foundNode[0] = node;
+                            } else if ( nodePos != null && nodePos.endChar() == rightEdge ){
+                                LOG.warning("Found node but no type info yet "+nodeToString(node));
+                            } else {
+                                //LOG.warning("Not set as found node because it wasn't nearest or node was null");
+                            }
+                        } 
+                        return super.enterDefault(node, arg); //To change body of generated methods, choose Tools | Templates.
+                    }
+
+                    
+                    
+                    @Override
+                    public Object exitDefault(Node node, Object arg) {
+                        
+                        return super.exitDefault(node, arg); //To change body of generated methods, choose Tools | Templates.
+                    }
+
+
+
+                }, null);
+                //walkTree((Node)node);
+
+            }
+        };
+        return foundNode[0];
+    }
+    
     @Override
     public CompletionTask createTask(int queryType, final JTextComponent jtc) {
         if ( queryType != CompletionProvider.COMPLETION_QUERY_TYPE){
@@ -85,7 +135,7 @@ public class MirahCodeCompleter implements CompletionProvider {
                 }
                 tries++;
                 DocumentDebugger dbg = MirahParser.getDocumentDebugger(doc);
-                
+                LOG.warning("Debugger is "+dbg);
                 
                 if ( dbg != null ){
                     try {
@@ -99,6 +149,7 @@ public class MirahCodeCompleter implements CompletionProvider {
                             lastChar = doc.getText(p, 1);
                         }
                         if ( ".".equals(lastChar) ){
+                            
                             // Find right edge of last node before '.'
                             int rightEdge = p-1;
                             String tmp = doc.getText(rightEdge, 1);
@@ -107,119 +158,99 @@ public class MirahCodeCompleter implements CompletionProvider {
                                 tmp = doc.getText(rightEdge, 1);
                             }
                             rightEdge++;
+                            final int rightEdgeFinal = rightEdge;
                             LOG.warning("Position is "+rightEdge);
-                            LOG.warning("Num nodes "+dbg.countNodes());
-                            if ( dbg.countNodes() > 0 ){
-                                for( Object node : dbg.compiler.compiler().getParsedNodes() ){
-                                    if ( node instanceof Node ){
-                                        LOG.warning(nodeToString((Node)node));
-                                        ((Node)node).accept(new NodeScanner(){
-
-                                            @Override
-                                            public Object visitNext(Next node, Object arg) {
-                                                LOG.warning(nodeToString(node));
-                                                if ( node != null ){
-                                                    Node orig = node.originalNode();
-                                                    if ( orig != null && orig instanceof SimpleString ){
-                                                        SimpleString ss = (SimpleString)orig;
-                                                        TypeRef tr = ss.typeref();
-                                                        if ( tr != null ){
-                                                            LOG.warning("Type ref is "+tr.name());
-                                                        }
-                                                    }
-                                                }
-                                                return super.visitNext(node, arg); //To change body of generated methods, choose Tools | Templates.
-                                            }
-
-                                            @Override
-                                            public Object visitSimpleString(SimpleString node, Object arg) {
-                                                if ( node != null ){
-                                                    TypeRef tr = node.typeref();
-                                                    if ( tr != null ){
-                                                        LOG.warning("SS Type ref is "+tr.name());
-                                                    }
-                                                    
-                                                }
-                                                return super.visitSimpleString(node, arg); //To change body of generated methods, choose Tools | Templates.
-                                            }
-
-                                            @Override
-                                            public Object visitCall(Call node, Object arg) {
-                                                if ( node != null ){
-                                                    TypeRef tr = node.typeref();
-                                                    if ( tr != null ){
-                                                        LOG.warning("Call Type ref is "+tr.name());
-                                                    }
-                                                    
-                                                }
-                                                return super.visitCall(node, arg); //To change body of generated methods, choose Tools | Templates.
-                                            }
-
-                                            
-                                            
-                                            @Override
-                                            public boolean enterDefault(Node node, Object arg) {
-                                                if ( node != null ){
-                                                    LOG.warning(nodeToString(node));
-                                                }
-                                                return super.enterDefault(node, arg); //To change body of generated methods, choose Tools | Templates.
-                                            }
-
-                                            
-                                            
-                                            
-                                            
-                                            
-                                            
-                                            
-                                            
-                                        }, null);
-                                        //walkTree((Node)node);
-                                        
-                                    }
-                                };
+                            Node foundNode = findNode(dbg, rightEdge);
                             
+                            int i = 0;
+                            if ( foundNode == null ){
+                                LOG.warning("Node is null after attempt 0");
+                            }else {
+                                LOG.warning("Node is "+nodeToString(foundNode)+" after attempt "+i+" with type "+dbg.getType(foundNode));
                             }
-                            SortedSet<PositionType> positions = dbg.findPositionsWithRightEdgeInRange(rightEdge, rightEdge);
-                            if ( positions.isEmpty() && tries < 3 ){
-                                LOG.warning("Trying code completion for "+tries+" time");
-                                MirahParser.addCallback(doc, new Runnable(){
-                                    public void run(){
-                                        LOG.warning("Running in addCallback "+tries);
-                                        query(crs, doc, caretOffset);
-                                        synchronized(lock){
-                                            lock.notifyAll();
+                            ResolvedType type = null;
+                            if ( foundNode != null ){
+                                type = dbg.getType(foundNode);
+                            }
+                            if ( (foundNode == null || type == null) && tries++ < 10){
+                                LOG.warning("In node loop "+tries);
+                                try {
+                                    Thread.sleep(2000);
+                                } catch (InterruptedException ex) {
+                                    Exceptions.printStackTrace(ex);
+                                }
+                                EventQueue.invokeLater(new Runnable(){
+
+                                    @Override
+                                    public void run() {
+                                        Completion.get().hideCompletion();
+                                        Completion.get().showCompletion();
+                                    }
+
+                                });
+                                
+                                
+                                dbg = MirahParser.getDocumentDebugger(doc);
+                                printNodes(dbg.compiler.compiler(), rightEdgeFinal);
+                                foundNode = findNode(dbg, rightEdge);
+                                if ( foundNode != null ){
+                                    type = dbg.getType(foundNode);
+                                }
+                                LOG.warning("Node is "+nodeToString(foundNode)+" after attempt "+i+" type "+type);
+                                
+                                
+                            }
+                            
+                            
+                            
+                            
+                            if ( foundNode != null ){
+                                
+                                type = dbg.getType(foundNode);
+                                
+                                if ( type != null ){
+                                    LOG.warning("Node was found "+nodeToString(foundNode));
+                                    FileObject fileObject = NbEditorUtilities.getFileObject(doc);
+                                    Class cls = findClass(fileObject, dbg.getType(foundNode).name());
+                                    if ( cls != null ){
+                                        for ( Method m : cls.getMethods()){
+                                            crs.addItem(new MirahMethodCompletionItem(m, caretOffset));
                                         }
                                     }
-                                });
-                                synchronized (lock){
-                                    try {
-                                        lock.wait(1000);
-                                        
-                                    } catch (InterruptedException ex) {
-                                        Exceptions.printStackTrace(ex);
-                                    }
                                 }
-                                if ( crs.isFinished() ){
-                                    return;
-                                }
-                            }
-                            for ( PositionType pt : positions ){
-                                FileObject fileObject = NbEditorUtilities.getFileObject(doc);
-                                Class cls = findClass(fileObject, pt.type.name());
-                                if ( cls != null ){
-                                    for ( Method m : cls.getMethods()){
-                                        crs.addItem(new MirahMethodCompletionItem(m, caretOffset));
-                                    }
-                                }
+                            } else {
+                                LOG.warning("Node was not found ");
                             }
                         }
                     } catch ( BadLocationException ble ){
                         ble.printStackTrace();
                     }
                 }
-                crs.finish();
+                if ( !crs.isFinished() ){
+                    crs.finish();
+                }
                 
+                
+                
+            }
+
+            private void printNodes(MirahCompiler compiler, int rightEdgeFinal) {
+                for ( Object o : compiler.getParsedNodes()){
+                    if ( o instanceof Node && o != null ){
+                        Node node = (Node)o;
+                        
+                        node.accept(new NodeScanner(){
+
+                            @Override
+                            public boolean enterDefault(Node node, Object arg) {
+                                LOG.warning("PRINTNODES: "+nodeToString(node));
+                                return super.enterDefault(node, arg); //To change body of generated methods, choose Tools | Templates.
+                            }
+                            
+                        }, null);
+                        
+                    }
+                }
             }
 
         }, jtc);

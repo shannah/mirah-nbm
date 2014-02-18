@@ -10,6 +10,8 @@ package ca.weblite.netbeans.mirah.lexer;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -167,15 +169,17 @@ public class MirahParser extends Parser {
         synchronized(documentDebuggers){
             Document doc = sme.getModifiedSource().getDocument(false);
             
-            if ( diag.getErrors().isEmpty() || !documentDebuggers.containsKey(doc) ){
+           // if ( diag.getErrors().isEmpty() || !documentDebuggers.containsKey(doc) ){
                 //LOG.warning("Updating document debugger "+diag.getErrors().size()+" errors");
+            if ( debugger.resolvedTypes.size() > 0 ){
                 debugger.compiler = compiler;
+                LOG.warning("NEW DOCUMENT DEBUGGER ADDED");
                 documentDebuggers.put(doc, debugger);
                 fireOnParse(doc);
-            } else {
+            } //else {
                 //LOG.warning("Not updating document debugger after compiling");
                 //LOG.warning("Errors are "+diag.getErrors());
-            }
+            //}
         }
         
        
@@ -282,6 +286,7 @@ public class MirahParser extends Parser {
             public  ResolvedType type;
             public Node node;
             
+            
             public String toString(){
                 if ( type == null ){
                     return "["+startPos+","+endPos+"]";
@@ -295,6 +300,8 @@ public class MirahParser extends Parser {
         
         final private TreeSet<PositionType> leftEdges;
         final private TreeSet<PositionType> rightEdges;
+        final private HashMap<Node,ResolvedType> resolvedTypes = new HashMap<Node,ResolvedType>();
+        
         public Mirahc compiler;
         
         public DocumentDebugger(){
@@ -335,6 +342,10 @@ public class MirahParser extends Parser {
             PositionType t = new PositionType();
             t.endPos = pos;
             return rightEdges.lower(t);
+        }
+        
+        public ResolvedType getType(Node node){
+            return resolvedTypes.get(node);
         }
         
         public SortedSet<PositionType> findPositionsWithRightEdgeInRange(int start, int end ){
@@ -406,6 +417,8 @@ public class MirahParser extends Parser {
                     }
                     leftEdges.add(t);
                     rightEdges.add(t);
+                    resolvedTypes.put(node, rt);
+                    LOG.warning("Resolved type for "+nodeToString(node)+" is "+rt);
                 }
                 
             });
@@ -416,6 +429,32 @@ public class MirahParser extends Parser {
             //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
         
+    }
+    
+    private static String nodeToString(Node n){
+        if ( n == null || n.position() == null ){
+            if ( n != null ){
+                return ""+n;
+            }
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("Node ").append(n)
+                .append(n.position().startLine())
+                .append(".")
+                .append(n.position().startColumn())
+                .append(":")
+                .append(n.position().startChar())
+                .append("-")
+                .append(n.position().endLine())
+                .append(".")
+                .append(n.position().endColumn())
+                .append(":")
+                .append(n.position().endChar())
+                .append(" # ");
+        
+       return sb.toString();
+                
     }
     
     
