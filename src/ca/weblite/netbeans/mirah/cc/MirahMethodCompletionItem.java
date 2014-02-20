@@ -15,6 +15,8 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyledDocument;
 import org.netbeans.api.editor.completion.Completion;
+import org.netbeans.lib.editor.codetemplates.api.CodeTemplate;
+import org.netbeans.lib.editor.codetemplates.api.CodeTemplateManager;
 import org.netbeans.spi.editor.completion.CompletionItem;
 import org.netbeans.spi.editor.completion.CompletionTask;
 import org.netbeans.spi.editor.completion.support.CompletionUtilities;
@@ -28,21 +30,52 @@ import org.openide.util.ImageUtilities;
 public class MirahMethodCompletionItem implements CompletionItem {
 
     private int caretOffset;
+    private int length;
     private Method method;
     private static ImageIcon fieldIcon = new ImageIcon(ImageUtilities.loadImage("ca/weblite/netbeans/mirah/1391571312_application-x-ruby.png"));
     private static Color fieldColor = Color.decode("0x0000B2");
 
-    public MirahMethodCompletionItem(Method m, int caretOffset) {
+    public MirahMethodCompletionItem(Method m, int caretOffset, int len) {
         this.method = m;
         this.caretOffset = caretOffset;
+        this.length = len;
         
     }
 
     @Override
     public void defaultAction(JTextComponent jtc) {
+        CodeTemplateManager mgr = CodeTemplateManager.get(jtc.getDocument());
+        StringBuilder sb = new StringBuilder();
+        sb.append(method.getName());
+        Class[] ptypes = method.getParameterTypes();
+        
+        if ( ptypes.length > 0 ){
+            sb.append("(");
+            for ( int i=0; i<ptypes.length; i++){
+                sb.append("${PARAM");
+                sb.append(i);
+                sb.append(" instanceof=\"");
+                sb.append(ptypes[i].getCanonicalName());
+                sb.append("\" default=\"nil\"}");
+                if ( i < ptypes.length-1 ){
+                    sb.append(", ");
+                }
+            }
+            sb.append(")");
+            
+        }
+        String tplStr = sb.toString();
+        
+        CodeTemplate tpl = mgr.createTemporary(tplStr);
+        
+        
         try {
             StyledDocument doc = (StyledDocument) jtc.getDocument();
-            doc.insertString(caretOffset, formatMethod(method), null);
+            if ( length > 0 ){
+                doc.remove(caretOffset, length);
+            }
+            tpl.insert(jtc);
+            //doc.insertString(caretOffset, tpl., null);
             //This statement will close the code completion box:
             Completion.get().hideAll();
         } catch (BadLocationException ex) {
@@ -60,7 +93,7 @@ public class MirahMethodCompletionItem implements CompletionItem {
         }
         sb.append("(");
         for ( Class c : ptypes ){
-            sb.append(c.getName());
+            sb.append(c.getSimpleName());
             sb.append(",");
         }
         sb.deleteCharAt(sb.length()-1);
@@ -77,14 +110,14 @@ public class MirahMethodCompletionItem implements CompletionItem {
         if ( ptypes.length > 0 ){
             sb.append("(");
             for ( Class c : ptypes ){
-                sb.append(c.getName());
+                sb.append(c.getSimpleName());
                 sb.append(", ");
             }
             sb.delete(sb.length()-2, sb.length()-1);
             sb.append(")");
         }
         sb.append(":");
-        sb.append(m.getReturnType().getName());
+        sb.append(m.getReturnType().getSimpleName());
         return sb.toString();
     }
 

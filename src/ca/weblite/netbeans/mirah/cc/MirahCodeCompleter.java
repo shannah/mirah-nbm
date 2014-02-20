@@ -10,8 +10,10 @@ import ca.weblite.netbeans.mirah.lexer.MirahLexer;
 import ca.weblite.netbeans.mirah.lexer.MirahParser;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger.PositionType;
+import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
 import java.awt.EventQueue;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -20,8 +22,10 @@ import java.util.logging.Logger;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
+import mirah.impl.Tokens;
 import mirah.lang.ast.Call;
 import mirah.lang.ast.ClassDefinition;
+import mirah.lang.ast.Constant;
 import mirah.lang.ast.MethodDefinition;
 import mirah.lang.ast.Next;
 import mirah.lang.ast.Node;
@@ -31,6 +35,7 @@ import mirah.lang.ast.NodeScanner;
 import mirah.lang.ast.Position;
 import mirah.lang.ast.SimpleNodeVisitor;
 import mirah.lang.ast.SimpleString;
+import mirah.lang.ast.TypeName;
 import mirah.lang.ast.TypeRef;
 import org.mirah.tool.MirahCompiler;
 import org.mirah.typer.ResolvedType;
@@ -38,6 +43,11 @@ import org.netbeans.api.editor.completion.Completion;
 
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.api.java.classpath.ClassPath;
+import org.netbeans.api.lexer.Token;
+import org.netbeans.api.lexer.TokenHierarchy;
+import org.netbeans.api.lexer.TokenSequence;
+import org.netbeans.editor.BaseDocument;
+import org.netbeans.editor.Utilities;
 
 import org.netbeans.modules.editor.NbEditorUtilities;
 import org.netbeans.modules.parsing.api.ParserManager;
@@ -76,16 +86,18 @@ public class MirahCodeCompleter implements CompletionProvider {
 
                     @Override
                     public boolean enterDefault(Node node, Object arg) {
+                        //LOG.warning("Entering Node "+node);
+                        //LOG.warning(nodeToString(node));
                         if ( node != null ){
                             
                             Position nodePos = node.position();
                             ResolvedType type = dbg.getType(node);
                             if ( type != null && nodePos != null && nodePos.endChar() == rightEdge ){
-                                LOG.warning("Visibing simple string "+nodeToString(node)+" with type "+type);
-                                LOG.warning("Set as found node as it is currently nearest");
+                                //LOG.warning("Visibing simple string "+nodeToString(node)+" with type "+type);
+                                //LOG.warning("Set as found node as it is currently nearest");
                                 foundNode[0] = node;
                             } else if ( nodePos != null && nodePos.endChar() == rightEdge ){
-                                LOG.warning("Found node but no type info yet "+nodeToString(node));
+                                //LOG.warning("Found node but no type info yet "+nodeToString(node));
                             } else {
                                 //LOG.warning("Not set as found node because it wasn't nearest or node was null");
                             }
@@ -94,13 +106,10 @@ public class MirahCodeCompleter implements CompletionProvider {
                     }
 
                     
-                    
-                    @Override
-                    public Object exitDefault(Node node, Object arg) {
-                        
-                        return super.exitDefault(node, arg); //To change body of generated methods, choose Tools | Templates.
-                    }
 
+                    
+                    
+                    
 
 
                 }, null);
@@ -140,13 +149,19 @@ public class MirahCodeCompleter implements CompletionProvider {
             boolean parsed = false;
             int tries = 0;
             Object lock = new Object();
+            String filter = null;
+            Class currentType = null;
+            boolean isStatic;
 
-            /*
+            
             @Override
             protected boolean canFilter(JTextComponent component) {
+                if ( currentType == null ){
+                    return false;
+                }
                 int currentPos = component.getCaretPosition();
-                if ( currentPos == initialOffset){
-                    return true;
+                if ( currentPos <= initialOffset){
+                    return false;
                 }
                 
                 try {
@@ -162,9 +177,28 @@ public class MirahCodeCompleter implements CompletionProvider {
                 } catch (BadLocationException ex) {
                     Exceptions.printStackTrace(ex);
                 }
-                return true;
+                try {
+                    filter = component.getText(initialOffset, currentPos-initialOffset).trim();
+                } catch (BadLocationException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+                return filter != null;
             }
-            */
+
+            @Override
+            protected void filter(CompletionResultSet resultSet) {
+                for ( Method m : currentType.getMethods()){
+                    if ( m.getName().toLowerCase().indexOf(filter.toLowerCase()) == 0 && isStatic == Modifier.isStatic(m.getModifiers()) ){
+                        resultSet.addItem(new MirahMethodCompletionItem(m, initialOffset, filter.length()));
+                    }
+                    
+                }
+                resultSet.finish();
+                
+            }
+            
+            
+            
             
             
            
@@ -172,6 +206,7 @@ public class MirahCodeCompleter implements CompletionProvider {
             
             @Override
             protected void query(final CompletionResultSet crs, final Document doc, final int caretOffset) {
+                BaseDocument bdoc = (BaseDocument)doc;
                 if ( crs.isFinished() || this.isTaskCancelled()){
                     return;
                 }
@@ -179,6 +214,7 @@ public class MirahCodeCompleter implements CompletionProvider {
                 if ( caretOffset < initialOffset ){
                     crs.finish();
                     Completion.get().hideAll();
+                    return;
                 }
                 
                 
@@ -193,10 +229,162 @@ public class MirahCodeCompleter implements CompletionProvider {
                             return;
                         }
                         String lastChar = doc.getText(p, 1);
-                        while ( p > 0 && lastChar.trim().isEmpty()){
-                            p--;
-                            lastChar = doc.getText(p, 1);
+                        LOG.warning("TOK OFFSET: "+caretOffset);
+                        TokenSequence<MirahTokenId> toks = mirahTokenSequence(doc, caretOffset, true);
+                        LOG.warning("CURR TOK "+toks.token().id().name());
+                        MirahTokenId tDot = MirahTokenId.get(Tokens.tDot.ordinal());
+                        MirahTokenId tId = MirahTokenId.get(Tokens.tIDENTIFIER.ordinal());
+                        MirahTokenId tNL = MirahTokenId.get(Tokens.tNL.ordinal());
+                        MirahTokenId tWS = MirahTokenId.WHITESPACE;
+                        
+                        // Will hold the "dot" token that we want to do code
+                        // completion for
+                        Token<MirahTokenId> dotToken = null;
+                        
+                        // Will hold the subject token (i.e. the last token before 
+                        // the dot that we will be checking for a type
+                        Token<MirahTokenId> subjectToken = null;
+                        Token<MirahTokenId> thisTok = toks.token();
+                        if ( thisTok != null ){
+                            MirahTokenId thisTokType = thisTok.id();
+                            
+                            Token<MirahTokenId> prevTok = null;
+                            MirahTokenId prevTokType = null;
+                            if ( toks.movePrevious() ){
+                                prevTok = toks.token();
+                                prevTokType = prevTok.id();
+                                toks.moveNext();
+                            }
+                            
+                            if ( tId.equals(thisTokType) && tDot.equals(prevTokType) ){
+                                
+                                filter = toks.token().text().toString();
+                                dotToken = prevTok;
+                                toks.movePrevious();
+                                
+                            } else if (tDot.equals(thisTokType)){
+                                filter = "";
+                                dotToken = thisTok;
+                                
+                            }
+                            
                         }
+                        LOG.warning("Filter is "+filter);
+                        if ( dotToken == null ){
+                            crs.finish();
+                            Completion.get().hideAll();
+                            return;
+                        }
+                        
+                        // Now to find the subject token.
+                        while ( toks.movePrevious() ){
+                            Token<MirahTokenId> tok = toks.token();
+                            if ( tWS.equals(tok.id())||tNL.equals(tok.id())){
+                                // 
+                            } else {
+                                subjectToken = tok;
+                                break;
+                            }
+                        }
+                        
+                        LOG.warning("DOT: "+dotToken+", SUB: "+subjectToken);
+                        
+                        if ( dotToken == null || subjectToken == null ){
+                            crs.finish();
+                            Completion.get().hideAll();
+                            return;
+                        }
+                        
+                        LOG.warning("DOT IS "+dotToken.id().name());
+                        LOG.warning("SUBJECT "+subjectToken.id().name());
+                        
+                        //while ( p > 0 && lastChar.trim().isEmpty()){
+                        //    p--;
+                        //    lastChar = doc.getText(p, 1);
+                        //}
+                        bdoc.readLock();
+                        TokenHierarchy<?> hi = TokenHierarchy.get(doc);
+                        bdoc.readUnlock();
+                        
+                        int bol = getBeginningOfLine(doc, caretOffset);
+                        int eol = getEndOfLine(doc, caretOffset);
+                        int dotPos = dotToken.offset(hi);
+                       
+                        LOG.warning("LINE RANGE: "+bol+"-"+eol);
+                        
+                        Node foundNode = findNode(dbg, subjectToken.offset(hi)+subjectToken.length());
+                        LOG.warning("Found node is "+foundNode);
+                        ResolvedType type = null;
+                        if ( foundNode != null ){
+                            type = dbg.getType(foundNode);
+                            
+                            Node c = foundNode;
+                            while ( c != null ){
+                                LOG.warning("NODE: "+nodeToString(c));
+                                c = c.parent();
+                            }
+                            
+                        }
+                        
+                        if ( foundNode == null || type == null ){
+                            Source src = Source.create(doc);
+                            MirahParser parser = new MirahParser();
+                            try {
+                                Snapshot snapshot = src.createSnapshot();
+                                String text = snapshot.getText().toString();
+                                StringBuilder sb = new StringBuilder();
+                                sb.append(text.substring(0, dotPos));
+                                for ( int i=dotPos; i<eol; i++){
+                                    sb.append(' ');
+                                }
+                                sb.append(text.substring(eol));
+                                //LOG.warning("Parsing "+sb.toString());
+                                parser.reparse(snapshot, sb.toString());
+                                
+                            } catch (ParseException ex){
+                                Exceptions.printStackTrace(ex);
+                            }
+                            
+                            dbg = MirahParser.getDocumentDebugger(doc);
+                            //printNodes(dbg.compiler.compiler(), rightEdgeFinal);
+                            foundNode = findNode(dbg, subjectToken.offset(hi)+subjectToken.length());
+                            if ( foundNode != null ){
+                                type = dbg.getType(foundNode);
+                            }
+                            LOG.warning("Node is "+nodeToString(foundNode)+" type "+type);
+                        }
+                        
+                        if ( foundNode != null ){
+                                
+                            type = dbg.getType(foundNode);
+
+                            if ( type != null ){
+                                
+                                //LOG.warning("Node was found "+nodeToString(foundNode));
+                                FileObject fileObject = NbEditorUtilities.getFileObject(doc);
+                                Class cls = findClass(fileObject, dbg.getType(foundNode).name());
+                                currentType = cls;
+                                isStatic = false;
+                                if ( TypeName.class.isAssignableFrom(foundNode.getClass())){
+                                    LOG.warning("it is a typename");
+                                    TypeName tn = (TypeName)foundNode;
+                                    
+                                    isStatic = tn.typeref().isStatic();
+                                    LOG.warning("Is static: "+isStatic);
+                                }
+                                isStatic = foundNode instanceof Constant;
+                                if ( cls != null ){
+                                    
+                                    for ( Method m : cls.getMethods()){
+                                        if ( m.getName().startsWith(filter) && isStatic == Modifier.isStatic(m.getModifiers())){
+                                            crs.addItem(new MirahMethodCompletionItem(m, caretOffset, filter.length()));
+                                        }
+                                    }
+                                }
+                            }
+                        } 
+                        /*
+                        
                         if ( ".".equals(lastChar) ){
                             LOG.warning("In query");
                             LOG.warning("Thread id "+Thread.currentThread().getId());
@@ -259,6 +447,7 @@ public class MirahCodeCompleter implements CompletionProvider {
                                     //LOG.warning("Node was found "+nodeToString(foundNode));
                                     FileObject fileObject = NbEditorUtilities.getFileObject(doc);
                                     Class cls = findClass(fileObject, dbg.getType(foundNode).name());
+                                    currentType = cls;
                                     if ( cls != null ){
                                         for ( Method m : cls.getMethods()){
                                             crs.addItem(new MirahMethodCompletionItem(m, caretOffset));
@@ -269,6 +458,7 @@ public class MirahCodeCompleter implements CompletionProvider {
                                 //LOG.warning("Node was not found ");
                             }
                         }
+                                */
                     } catch ( BadLocationException ble ){
                         ble.printStackTrace();
                     }
@@ -386,6 +576,67 @@ public class MirahCodeCompleter implements CompletionProvider {
        return sb.toString();
                 
     }
+    
+    
+    private static TokenSequence<MirahTokenId> mirahTokenSequence(Document doc, int caretOffset, boolean backwardBias) {
+        BaseDocument bd = (BaseDocument)doc;
+        bd.readLock();
+        TokenHierarchy<?> hi = TokenHierarchy.get(doc);
+        List<TokenSequence<?>> tsList = hi.embeddedTokenSequences(caretOffset, backwardBias);
+        // Go from inner to outer TSes
+        for (int i = tsList.size() - 1; i >= 0; i--) {
+            TokenSequence<?> ts = tsList.get(i);
+            if (ts.languagePath().innerLanguage() == MirahTokenId.getLanguage()) {
+                TokenSequence<MirahTokenId> javaInnerTS = (TokenSequence<MirahTokenId>) ts;
+                bd.readUnlock();
+                return javaInnerTS;
+            }
+        }
+        bd.readUnlock();
+        return null;
+    }
+    
+    private static int getEndOfLine(Document doc, int caretOffset){
+        BaseDocument bd = (BaseDocument)doc;
+        bd.readLock();
+        
+        TokenHierarchy<?> hi = TokenHierarchy.get(doc);
+        TokenSequence<MirahTokenId> toks = mirahTokenSequence(doc, caretOffset, false);
+        MirahTokenId eol = MirahTokenId.get(Tokens.tNL.ordinal());
+        MirahTokenId eof = MirahTokenId.get(Tokens.tEOF.ordinal());
+        while ( !eol.equals(toks.token().id()) && !eof.equals(toks.token().id())){
+            if ( !toks.moveNext() ){
+                break;
+            }
+        }
+        int off = toks.token().offset(hi);
+        bd.readUnlock();
+        return off;
+        
+    }
+    
+    private static int getBeginningOfLine(Document doc, int caretOffset){
+        BaseDocument bd = (BaseDocument)doc;
+        bd.readLock();
+        
+        TokenHierarchy<?> hi = TokenHierarchy.get(doc);
+        TokenSequence<MirahTokenId> toks = mirahTokenSequence(doc, caretOffset, true);
+        MirahTokenId eol = MirahTokenId.get(Tokens.tNL.ordinal());
+        //MirahTokenId eof = MirahTokenId.get(Tokens.tEOF.ordinal());
+        while ( !eol.equals(toks.token().id())){
+            if ( !toks.movePrevious() ){
+                break;
+            }
+        }
+        int off = toks.token().offset(hi)+toks.token().length();
+        bd.readUnlock();
+        return off;
+    }
+    
+    
+    
+    
+    
     
     
     

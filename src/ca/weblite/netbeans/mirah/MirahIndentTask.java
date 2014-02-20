@@ -41,7 +41,11 @@ public class MirahIndentTask implements IndentTask  {
         Document doc = context.document();
         int currLineStart = context.lineStartOffset(context.startOffset());
         int prevLineEnd = currLineStart -1;
-        String prevLine = doc.getText(prevLineStart, prevLineEnd-prevLineStart);
+        int len = prevLineEnd-prevLineStart;
+        String prevLine = "";
+        if ( len > 0 ){
+            prevLine = doc.getText(prevLineStart, len );
+        }
         //LOG.warning("PRevious line was ["+prevLine+"]");
         String prevLineTrimmed = prevLine.trim();
         if ( (prevLineTrimmed.matches("^(.*)\\bdo( \\|.*\\|){0,1}$")

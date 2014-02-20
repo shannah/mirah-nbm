@@ -100,11 +100,13 @@ public class MirahParser extends Parser {
     
     
     public void reparse(Snapshot snapshot ) throws ParseException {
-        reparse(snapshot, -1, 0, null);
+        reparse(snapshot, snapshot.getText().toString());
     }
     
     
-    public void reparse(Snapshot snapshot, int swapOffset, int swapLen, String swapStr) throws ParseException {
+    
+    
+    public void reparse(Snapshot snapshot, String content) throws ParseException {
          LOG.warning("Thread id "+Thread.currentThread().getId());
          LOG.warning("Parsing document "+(count++));
          
@@ -168,14 +170,8 @@ public class MirahParser extends Parser {
         if ( !"".equals(bootClassPath.toString())){
             compiler.setBootClasspath(bootClassPath.toString());
         }
-        String srcText = snapshot.getText().toString();
-        if ( swapOffset >= 0 ){
-            StringBuilder sb = new StringBuilder();
-            sb.append(srcText.substring(0, swapOffset));
-            sb.append(swapStr);
-            sb.append(srcText.substring(swapOffset+swapLen));
-            srcText = sb.toString();
-        }
+        String srcText = content;
+        
         compiler.addFakeFile(src.getPath(), srcText);
         
         try {
@@ -276,6 +272,7 @@ public class MirahParser extends Parser {
 
         @Override
         public void log(Diagnostic.Kind kind, String position, String message) {
+            
             super.log(kind, position, message); //To change body of generated methods, choose Tools | Templates.
             if ( !"ERROR_TO_PREVENT_COMPILING".equals(message)){
                 errors.add(new SyntaxError(kind, position, message));
