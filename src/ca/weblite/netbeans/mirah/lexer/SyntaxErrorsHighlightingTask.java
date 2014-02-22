@@ -5,6 +5,10 @@
  */
 package ca.weblite.netbeans.mirah.lexer;
 
+import ca.weblite.netbeans.mirah.ClassIndex;
+import ca.weblite.netbeans.mirah.ClassIndex.ClassPathQuery;
+import ca.weblite.netbeans.mirah.ClassIndex.CompoundQuery;
+import ca.weblite.netbeans.mirah.ImportFixList;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.MirahParseDiagnostics.SyntaxError;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -32,6 +36,7 @@ import org.netbeans.spi.editor.hints.LazyFixList;
 import org.netbeans.spi.editor.hints.Severity;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Exceptions;
+import org.openide.util.RequestProcessor;
 
 /**
  *
@@ -79,13 +84,16 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
             if (line <= 0) {
                 continue;
             }
-            ErrorDescription errorDescription = ErrorDescriptionFactory.createErrorDescription(
-                    Severity.ERROR,
-                    message,
-                    document,
-                    line);
-            LOG.warning("Checking message");
+            
+            
+            
+                    
+            ErrorDescription errorDescription = null;
             if ( message.toLowerCase().contains("cannot find class")){
+                
+                
+                
+                
                 LOG.warning("Message cannot find class");
                 List<Fix> imports = new ArrayList<Fix>();
                 Pattern p = Pattern.compile("cannot find class ([a-zA-Z][a-zA-Z0-9\\.\\$]*)", Pattern.CASE_INSENSITIVE);
@@ -100,22 +108,32 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
                             pos++;
                         }
                         className = className.substring(pos);
-                    }
-                    FileObject fo = source.getFileObject();
-                    ClassPath[] classPaths = new ClassPath[]{
-                        ClassPath.getClassPath(fo, ClassPath.SOURCE),
-                        ClassPath.getClassPath(fo, ClassPath.EXECUTE),
-                        ClassPath.getClassPath(fo, ClassPath.COMPILE),
-                        ClassPath.getClassPath(fo, ClassPath.BOOT)
-                    };
-                    for ( ClassPath cp : classPaths){
-                        List<ClassPath.Entry> entries = cp.entries();
-                        for ( ClassPath.Entry entry : entries ){
-                            LOG.warning("Entry "+entry);
-                        }
+                        
                     }
                     
+                    ImportFixList importFixes = new ImportFixList(source, className);
+                    errorDescription = ErrorDescriptionFactory.createErrorDescription(
+                        Severity.ERROR,
+                        message,
+                        importFixes,
+                        document,
+                        line
+                    );
+
+                    RequestProcessor rp = new RequestProcessor(SyntaxErrorsHighlightingTask.class);
+                    LOG.warning("Submitting the importFix task");
+                    rp.submit(importFixes);
+                    
+
                 }
+            }
+                
+            if ( errorDescription == null ){
+                errorDescription = ErrorDescriptionFactory.createErrorDescription(
+                        Severity.ERROR,
+                        message, 
+                        document,
+                        line);
             }
             
             errors.add(errorDescription);

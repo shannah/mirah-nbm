@@ -309,6 +309,7 @@ public class MirahParser extends Parser {
         public Mirahc compiler;
         
         public DocumentDebugger(){
+            
             leftEdges = new TreeSet<PositionType>(new Comparator<PositionType>(){
 
                 @Override

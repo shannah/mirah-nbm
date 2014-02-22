@@ -61,8 +61,13 @@ public class MirahLexer implements Lexer<MirahTokenId>{
         boolean alreadyStarted = true;
         if ( tok == null ){
             alreadyStarted = false;
-            
-            tok = lexer.lex(lastPos);
+            try {
+                tok = lexer.lex(lastPos);
+            } catch ( NullPointerException npe ){
+                int len = 1;
+                lastPos++;
+                return info.tokenFactory().createToken(MirahLanguageHierarchy.getToken(999), len);
+            }
             
         } 
         
