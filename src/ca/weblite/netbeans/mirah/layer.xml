@@ -25,4 +25,9 @@
             </folder>
         </folder>
     </folder>
+    <folder name="org-netbeans-api-project-libraries">
+        <folder name="Libraries">
+            <file name="mirah-all.xml" url="mirah-all.xml"/>
+        </folder>
+    </folder>
 </filesystem>

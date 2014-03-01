@@ -124,27 +124,13 @@ made subject to such option by the copyright holder.
                     <sequential>
                         <taskdef>
                             <xsl:attribute name="name">mirahc</xsl:attribute>
-                            <xsl:attribute name="classpath">${javac.classpath}</xsl:attribute>
+                            <xsl:attribute name="classpath">${libs.mirah-all.classpath}:${javac.classpath}</xsl:attribute>
                             <xsl:attribute name="classname">ca.weblite.mirah.ant.MirahcTask</xsl:attribute>
                         </taskdef>
                         <property name="empty.dir" location="${{build.dir}}/empty"/><!-- #157692 -->
                         <mkdir dir="${{empty.dir}}"/>
                         <mirahc>
-                            <xsl:attribute name="srcdir">@{srcdir}</xsl:attribute>
-                            <xsl:attribute name="sourcepath">@{sourcepath}</xsl:attribute>
-                            <xsl:attribute name="destdir">@{destdir}</xsl:attribute>
-                            <xsl:attribute name="encoding">${source.encoding}</xsl:attribute>
-                            <xsl:attribute name="excludes">@{excludes}</xsl:attribute>
-                            <xsl:attribute name="includeAntRuntime">false</xsl:attribute>
-                            <xsl:attribute name="fork">true</xsl:attribute>
-                            <src>
-                                <dirset dir="@{{gensrcdir}}" erroronmissingdir="false">
-                                    <include name="*"/>
-                                </dirset>
-                            </src>
-                            <classpath>
-                                <path path="@{{classpath}}"/>
-                            </classpath>
+                            
                             <javac>
                                 <xsl:attribute name="debug">@{debug}</xsl:attribute>
                                 <xsl:attribute name="deprecation">${javac.deprecation}</xsl:attribute>

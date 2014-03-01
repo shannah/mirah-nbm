@@ -12,11 +12,9 @@
             <attribute default="" name="sourcepath"/>
             <element name="customize" optional="true"/>
             <sequential>
-                <taskdef name="mirahc" classpath="${javac.classpath}" classname="ca.weblite.mirah.ant.MirahcTask"/>
-                <mirahc destdir="@{destdir}" encoding="${source.encoding}" excludes="@{excludes}" includes="@{includes}" sourcepath="@{sourcepath}" srcdir="@{srcdir}" fork="true">
-                    <classpath>
-                        <path path="@{classpath}"/>
-                    </classpath>
+                <taskdef name="mirahc" classpath="${libs.mirah-all.classpath}:${javac.classpath}" classname="ca.weblite.mirah.ant.MirahcTask"/>
+                <mirahc >
+                    
                     <javac debug="@{debug}" deprecation="${javac.deprecation}" destdir="@{destdir}" encoding="${source.encoding}" excludes="@{excludes}" includeantruntime="false" includes="@{includes}" source="${javac.source}" sourcepath="@{sourcepath}" srcdir="@{srcdir}" target="${javac.target}">
                         <compilerarg line="${javac.compilerargs} ${javac.compilerargs.jaxws}"/>
                         <customize/>

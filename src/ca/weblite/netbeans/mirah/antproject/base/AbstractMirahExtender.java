@@ -42,6 +42,7 @@
 
 package ca.weblite.netbeans.mirah.antproject.base;
 
+import ca.weblite.mirah.ant.MirahCompiler2;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -69,6 +70,7 @@ import org.netbeans.spi.project.support.ant.GeneratedFilesHelper;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.filesystems.URLMapper;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.EditableProperties;
 import org.openide.util.Exceptions;
 import org.openide.util.Mutex;
@@ -110,13 +112,22 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
      */
     @Override
     public boolean isActive() {
+        URL loc = MirahCompiler2.class.getProtectionDomain().getCodeSource().getLocation();
+        System.out.println("CLS: "+loc);
+        System.out.println("CLS PATH:"+loc.getPath());
+        System.out.println("IN ISACTIVE");
         AntBuildExtender extender = project.getLookup().lookup(AntBuildExtender.class);
-        return extender != null && extender.getExtension(MIRAH_EXTENSION_ID) != null;
+        boolean out = extender != null && extender.getExtension(MIRAH_EXTENSION_ID) != null;
+        System.out.println("IS ACTIVE : "+out);
+        return out;
     }
 
     @Override
     public boolean activate() {
-        return addClasspath() & addExcludes() & addBuildScript() & addDisableCompileOnSaveProperty();
+        System.out.println("ACTIVATING");
+        boolean out = addClasspath() & addExcludes() & addBuildScript() & addDisableCompileOnSaveProperty();
+        System.out.println("IS active: "+out);
+        return out;
     }
 
     @Override
@@ -128,8 +139,15 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
      * Add mirah-all.jar to the project ClassPath.
      */
     protected final boolean addClasspath() {
+        if ( true ) return true;
+        InstalledFileLocator locator = InstalledFileLocator.getDefault();
+        File f = locator.locate("ext", "ca.weblite.netbeans.mirah", true);
+        System.out.println("_________"+f+"______________");
+        
         Library mirahAllLib = getMirahAllLibrary();
+        System.out.println("Adding classpath");
         if (mirahAllLib != null) {
+            System.out.println("Mirah all lib "+mirahAllLib);
             try {
                 Sources sources = ProjectUtils.getSources(project);
                 SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
@@ -153,6 +171,7 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
      * Removes mirah-all.jar from project ClassPath.
      */
     protected final boolean removeClasspath() {
+        if  ( true ) return true;
         Library mirahAllLib = getMirahAllLibrary(); // NOI18N
         if (mirahAllLib != null) {
             try {
@@ -173,7 +192,9 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
 
     private Library getMirahAllLibrary() {
         for (Library library : LibraryManager.getDefault().getLibraries()) {
+            System.out.println("Library "+library);
             List<URL> uriContent = library.getContent("classpath"); // NOI18N
+            System.out.println(uriContent);
             try {
                 if (containsClass(uriContent, "ca.weblite.mirah.ant.MirahCompiler2")) { // NOI18N
                     return library;
@@ -255,6 +276,7 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
         try {
             EditableProperties props = getEditableProperties(project, PROJECT_PROPERTIES_PATH);
             String exclude = props.getProperty(EXCLUDE_PROPERTY);
+            props.setProperty("mirahc.ant.classpath", "foobarfoo");
             if (!exclude.contains(EXCLUSION_PATTERN)) {
                 props.setProperty(EXCLUDE_PROPERTY, exclude + "," + EXCLUSION_PATTERN); // NOI18N
                 storeEditableProperties(project, PROJECT_PROPERTIES_PATH, props);

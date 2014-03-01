@@ -299,7 +299,52 @@
                     </run-dependency>
                 </dependency>
             </module-dependencies>
-            <public-packages/>
+            <public-packages>
+                <package>bootstrap.org.mirah</package>
+                <package>bootstrap.org.mirah.builtins</package>
+                <package>bootstrap.org.mirah.jvm.compiler</package>
+                <package>bootstrap.org.mirah.jvm.mirrors</package>
+                <package>bootstrap.org.mirah.jvm.mirrors.debug</package>
+                <package>bootstrap.org.mirah.jvm.mirrors.generics</package>
+                <package>bootstrap.org.mirah.jvm.model</package>
+                <package>bootstrap.org.mirah.jvm.types</package>
+                <package>bootstrap.org.mirah.macros</package>
+                <package>bootstrap.org.mirah.macros.anno</package>
+                <package>bootstrap.org.mirah.tool</package>
+                <package>bootstrap.org.mirah.typer</package>
+                <package>bootstrap.org.mirah.typer.simple</package>
+                <package>bootstrap.org.mirah.util</package>
+                <package>compiler.org.mirah.jvm.compiler</package>
+                <package>compiler.org.mirah.jvm.types</package>
+                <package>compiler.org.mirah.util</package>
+                <package>mirah.impl</package>
+                <package>mirah.lang.ast</package>
+                <package>org.jruby.org.objectweb.asm</package>
+                <package>org.jruby.org.objectweb.asm.commons</package>
+                <package>org.jruby.org.objectweb.asm.signature</package>
+                <package>org.jruby.org.objectweb.asm.tree</package>
+                <package>org.jruby.org.objectweb.asm.tree.analysis</package>
+                <package>org.jruby.org.objectweb.asm.util</package>
+                <package>org.mirah</package>
+                <package>org.mirah.ant</package>
+                <package>org.mirah.ast</package>
+                <package>org.mirah.builtins</package>
+                <package>org.mirah.jvm.compiler</package>
+                <package>org.mirah.jvm.mirrors</package>
+                <package>org.mirah.jvm.mirrors.debug</package>
+                <package>org.mirah.jvm.mirrors.generics</package>
+                <package>org.mirah.jvm.model</package>
+                <package>org.mirah.jvm.types</package>
+                <package>org.mirah.macros</package>
+                <package>org.mirah.macros.anno</package>
+                <package>org.mirah.mmeta</package>
+                <package>org.mirah.tool</package>
+                <package>org.mirah.typer</package>
+                <package>org.mirah.typer.simple</package>
+                <package>org.mirah.util</package>
+                <package>util.org.mirah</package>
+                <package>util.org.mirah.ant</package>
+            </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/mirahc.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/mirahc.jar</binary-origin>

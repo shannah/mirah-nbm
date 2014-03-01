@@ -34,6 +34,9 @@ public class MirahIndentTask implements IndentTask  {
     
     @Override
     public void reindent() throws BadLocationException {
+        if ( context.startOffset() <= 0 ){
+            return;
+        }
         int prevLineStart = context.lineStartOffset(context.startOffset()-1);
         int prevIndent = context.lineIndent(prevLineStart);
         context.modifyIndent(context.lineStartOffset(context.startOffset()), prevIndent);
