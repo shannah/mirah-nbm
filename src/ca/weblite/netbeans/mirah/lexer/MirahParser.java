@@ -7,7 +7,9 @@
 package ca.weblite.netbeans.mirah.lexer;
 
 
+import ca.weblite.mirah.ant.MirahCompiler2;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -38,6 +40,7 @@ import org.mirah.util.Context;
 import org.mirah.util.SimpleDiagnostics;
 import org.netbeans.api.java.classpath.ClassPath;
 import static org.netbeans.api.java.classpath.ClassPath.COMPILE;
+import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.modules.parsing.api.Snapshot;
 import org.netbeans.modules.parsing.api.Task;
@@ -115,11 +118,16 @@ public class MirahParser extends Parser {
         //mirahParser = new mirah.impl.MirahParser ();
         //mirahParser.parse(snapshot.getText().toString());
         diag = new MirahParseDiagnostics();
-        Mirahc compiler = new Mirahc();
+        MirahCompiler2 compiler = new MirahCompiler2();
         
         //Project proj = snapshot.getSource().getFileObject().getLookup().lookup(Project.class);
         FileObject src = snapshot.getSource().getFileObject();
         //LOG.warning("Source file is "+src);
+        
+        Project project = FileOwnerQuery.getOwner(src);
+        FileObject projectDirectory = project.getProjectDirectory();
+        FileObject buildDir = projectDirectory.getFileObject("build");
+        
         ClassPath compileClassPath = ClassPath.getClassPath(src, ClassPath.COMPILE);
         //LOG.warning("Project directory is "+proj.getProjectDirectory().getName());
         //LOG.warning("Parsing classpath is "+compileClassPath.toString());
@@ -129,9 +137,22 @@ public class MirahParser extends Parser {
         //LOG.warning("Execute classapth is "+buildClassPath.toString());
         
         ClassPath srcClassPath = ClassPath.getClassPath(src, ClassPath.SOURCE);
+        compiler.setJavaSourceClasspath(srcClassPath.toString());
         //LOG.warning("Src classapth is "+srcClassPath.toString());
-        
-        compiler.setDestination(buildClassPath.toString());
+        String dest = buildClassPath.toString();
+        try {
+            if ( buildDir == null ){
+                buildDir = projectDirectory.createFolder("build");
+            }
+            FileObject mirahDir = buildDir.getFileObject("mirah");
+            if (mirahDir == null ){
+                mirahDir = buildDir.createFolder("mirah");
+            }
+            dest = mirahDir.getPath();
+        } catch (IOException ex){
+            
+        }
+        compiler.setDestination(dest);
         compiler.setDiagnostics(diag);
         
         List<String> paths = new ArrayList<String>();

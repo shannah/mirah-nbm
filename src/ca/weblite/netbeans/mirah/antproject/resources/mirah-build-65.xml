@@ -12,14 +12,19 @@
             <attribute default="" name="sourcepath"/>
             <element name="customize" optional="true"/>
             <sequential>
+                <mkdir dir="${build.dir}/mirah"/>
+
                 <taskdef name="mirahc" classpath="${libs.mirah-all.classpath}:${javac.classpath}" classname="ca.weblite.mirah.ant.MirahcTask"/>
-                <mirahc >
+                <mirahc dest="${build.dir}/mirah">
                     
-                    <javac debug="@{debug}" deprecation="${javac.deprecation}" destdir="@{destdir}" encoding="${source.encoding}" excludes="@{excludes}" includeantruntime="false" includes="@{includes}" source="${javac.source}" sourcepath="@{sourcepath}" srcdir="@{srcdir}" target="${javac.target}">
+                    <javac debug="@{debug}" classpath="@{classpath}" deprecation="${javac.deprecation}" destdir="@{destdir}" encoding="${source.encoding}" excludes="@{excludes}" includeantruntime="false" includes="@{includes}" source="${javac.source}" sourcepath="@{sourcepath}" srcdir="@{srcdir}" target="${javac.target}">
                         <compilerarg line="${javac.compilerargs} ${javac.compilerargs.jaxws}"/>
                         <customize/>
                     </javac>
                 </mirahc>
+                <copy todir="@{destdir}">
+                    <fileset dir="${build.dir}/mirah"/>
+                </copy>
             </sequential>
         </macrodef>
         <macrodef name="depend" uri="http://www.netbeans.org/ns/j2se-project/3">

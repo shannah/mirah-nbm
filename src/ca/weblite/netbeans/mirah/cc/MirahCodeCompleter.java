@@ -365,13 +365,13 @@ public class MirahCodeCompleter implements CompletionProvider {
                                 Class cls = findClass(fileObject, dbg.getType(foundNode).name());
                                 currentType = cls;
                                 isStatic = false;
-                                if ( TypeName.class.isAssignableFrom(foundNode.getClass())){
-                                    LOG.warning("it is a typename");
-                                    TypeName tn = (TypeName)foundNode;
-                                    
-                                    isStatic = tn.typeref().isStatic();
-                                    LOG.warning("Is static: "+isStatic);
-                                }
+                                //if ( TypeName.class.isAssignableFrom(foundNode.getClass())){
+                                //    LOG.warning("it is a typename");
+                                //    TypeName tn = (TypeName)foundNode;
+                                //    
+                                //    isStatic = tn.typeref().isStatic();
+                                //    LOG.warning("Is static: "+isStatic);
+                                //}
                                 isStatic = foundNode instanceof Constant;
                                 if ( cls != null ){
                                     

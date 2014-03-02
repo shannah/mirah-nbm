@@ -110,6 +110,9 @@ made subject to such option by the copyright holder.
                         <xsl:attribute name="optional">true</xsl:attribute>
                     </element>
                     <sequential>
+                        <mkdir>
+                            <xsl:attribute name="dir">${build.dir}/mirah</xsl:attribute>
+                        </mkdir>
                         <taskdef>
                             <xsl:attribute name="name">mirahc</xsl:attribute>
                             <xsl:attribute name="classpath">${libs.mirah-all.classpath}:${javac.classpath}:${j2ee.platform.classpath}</xsl:attribute>
@@ -118,8 +121,15 @@ made subject to such option by the copyright holder.
                         <property name="empty.dir" location="${{build.dir}}/empty"/>
                         <mkdir dir="${{empty.dir}}"/>
                         <mirahc>
-                           
+                           <xsl:attribute name="dest">${build.dir}/mirah</xsl:attribute>
                             <javac>
+                                <xsl:attribute name="srcdir">@{srcdir}</xsl:attribute>
+                                <xsl:attribute name="classpath">@{classpath}</xsl:attribute>
+                                <xsl:attribute name="sourcepath">@{sourcepath}</xsl:attribute>
+                                <xsl:attribute name="includes">@{includes}</xsl:attribute>
+                                <xsl:attribute name="excludes">@{excludes}</xsl:attribute>
+                                
+                                
                                 <xsl:attribute name="debug">@{debug}</xsl:attribute>
                                 <xsl:attribute name="deprecation">${javac.deprecation}</xsl:attribute>
                                 <xsl:attribute name="encoding">${source.encoding}</xsl:attribute>
@@ -133,10 +143,16 @@ made subject to such option by the copyright holder.
                                     <xsl:attribute name="tempdir">${java.io.tmpdir}</xsl:attribute>
                                 </xsl:if>
 
-                                <compilerarg line="${{javac.compilerargs}} ${{javac.compilerargs.jaxws}}"/>
+                                <compilerarg line="${{javac.compilerargs}}"/>
                                 <customize/>
                             </javac>
                         </mirahc>
+                        <copy>
+                            <xsl:attribute name="todir">@{destdir}</xsl:attribute>
+                            <fileset>
+                                <xsl:attribute name="dir">${build.dir}/mirah</xsl:attribute>
+                            </fileset>
+                        </copy>
                     </sequential>
                 </macrodef>
                 <macrodef>

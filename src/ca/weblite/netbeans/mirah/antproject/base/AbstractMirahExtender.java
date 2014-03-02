@@ -66,6 +66,7 @@ import org.netbeans.api.project.ant.AntBuildExtender;
 import org.netbeans.api.project.libraries.Library;
 import org.netbeans.api.project.libraries.LibraryManager;
 import ca.weblite.netbeans.mirah.support.spi.MirahExtenderImplementation;
+import java.net.URI;
 import org.netbeans.spi.project.support.ant.GeneratedFilesHelper;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -93,6 +94,8 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
     private static final String EXCLUDE_PROPERTY = "build.classes.excludes"; // NOI18N
     private static final String DISABLE_COMPILE_ON_SAVE = "compile.on.save.unsupported.mirah"; // NOI18N
     private static final String EXCLUSION_PATTERN = "**/*.mirah"; // NOI18N
+    private static final String MIRAH_BUILD_PATH_PROPERTY = "mirah.build.dir";
+    
 
     private final Project project;
 
@@ -113,20 +116,18 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
     @Override
     public boolean isActive() {
         URL loc = MirahCompiler2.class.getProtectionDomain().getCodeSource().getLocation();
-        System.out.println("CLS: "+loc);
-        System.out.println("CLS PATH:"+loc.getPath());
-        System.out.println("IN ISACTIVE");
+       
         AntBuildExtender extender = project.getLookup().lookup(AntBuildExtender.class);
         boolean out = extender != null && extender.getExtension(MIRAH_EXTENSION_ID) != null;
-        System.out.println("IS ACTIVE : "+out);
+        
         return out;
     }
 
     @Override
     public boolean activate() {
-        System.out.println("ACTIVATING");
+        
         boolean out = addClasspath() & addExcludes() & addBuildScript() & addDisableCompileOnSaveProperty();
-        System.out.println("IS active: "+out);
+        
         return out;
     }
 
@@ -139,29 +140,35 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
      * Add mirah-all.jar to the project ClassPath.
      */
     protected final boolean addClasspath() {
-        if ( true ) return true;
-        InstalledFileLocator locator = InstalledFileLocator.getDefault();
-        File f = locator.locate("ext", "ca.weblite.netbeans.mirah", true);
-        System.out.println("_________"+f+"______________");
         
-        Library mirahAllLib = getMirahAllLibrary();
-        System.out.println("Adding classpath");
-        if (mirahAllLib != null) {
-            System.out.println("Mirah all lib "+mirahAllLib);
-            try {
-                Sources sources = ProjectUtils.getSources(project);
-                SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
-                for (SourceGroup sourceGroup : sourceGroups) {
-                    if (!sourceGroup.getRootFolder().getName().equals("test")) {
-                        ProjectClassPathModifier.addLibraries(new Library[]{mirahAllLib}, sourceGroup.getRootFolder(), ClassPath.COMPILE);
-                    }
-                }
-                return true;
-            } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
-            } catch (UnsupportedOperationException ex) {
-                Exceptions.printStackTrace(ex);
+        try {
+            
+            Sources sources = ProjectUtils.getSources(project);
+            
+            FileObject rootDir = project.getProjectDirectory();
+            FileObject buildDir = rootDir.getFileObject("build");
+            if ( buildDir == null ){
+                buildDir = rootDir.createFolder("build");
             }
+            FileObject mirahDir = buildDir.getFileObject("mirah");
+            if ( mirahDir == null ){
+                mirahDir = buildDir.createFolder("mirah");
+            }
+            
+            
+            
+            SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
+            for (SourceGroup sourceGroup : sourceGroups) {
+                if (!sourceGroup.getRootFolder().getName().equals("test")) {
+                    //ProjectClassPathModifier.addLibraries(new Library[]{mirahAllLib}, sourceGroup.getRootFolder(), ClassPath.COMPILE);
+                    ProjectClassPathModifier.addRoots(new URI[]{mirahDir.toURI()}, sourceGroup.getRootFolder(), ClassPath.COMPILE);
+                }
+            }
+            return true;
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (UnsupportedOperationException ex) {
+            Exceptions.printStackTrace(ex);
         }
         return false;
     }
