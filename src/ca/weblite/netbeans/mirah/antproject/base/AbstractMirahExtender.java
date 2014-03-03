@@ -126,14 +126,14 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
     @Override
     public boolean activate() {
         
-        boolean out = addClasspath() & addExcludes() & addBuildScript() & addDisableCompileOnSaveProperty();
+        boolean out = addClasspath() & addExcludes() & addBuildScript() /*& addDisableCompileOnSaveProperty()*/;
         
         return out;
     }
 
     @Override
     public boolean deactivate() {
-        return removeClasspath() & removeExcludes() & removeBuildScript() & removeDisableCompileOnSaveProperty();
+        return removeClasspath() & removeExcludes() & removeBuildScript() /*& removeDisableCompileOnSaveProperty()*/;
     }
 
     /**
@@ -283,7 +283,7 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
         try {
             EditableProperties props = getEditableProperties(project, PROJECT_PROPERTIES_PATH);
             String exclude = props.getProperty(EXCLUDE_PROPERTY);
-            props.setProperty("mirahc.ant.classpath", "foobarfoo");
+            //props.setProperty("mirahc.ant.classpath", "foobarfoo");
             if (!exclude.contains(EXCLUSION_PATTERN)) {
                 props.setProperty(EXCLUDE_PROPERTY, exclude + "," + EXCLUSION_PATTERN); // NOI18N
                 storeEditableProperties(project, PROJECT_PROPERTIES_PATH, props);

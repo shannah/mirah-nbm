@@ -12,6 +12,7 @@ import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger.PositionType;
 import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
 import java.awt.EventQueue;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -375,6 +376,11 @@ public class MirahCodeCompleter implements CompletionProvider {
                                 isStatic = foundNode instanceof Constant;
                                 if ( cls != null ){
                                     
+                                    if ( isStatic && filter == null || "new".startsWith(filter)){
+                                        for ( Constructor c : cls.getConstructors()){
+                                            crs.addItem(new MirahConstructorCompletionItem(c, caretOffset, filter.length()));
+                                        }
+                                    }
                                     for ( Method m : cls.getMethods()){
                                         if ( m.getName().startsWith(filter) && isStatic == Modifier.isStatic(m.getModifiers())){
                                             crs.addItem(new MirahMethodCompletionItem(m, caretOffset, filter.length()));
@@ -510,7 +516,8 @@ public class MirahCodeCompleter implements CompletionProvider {
             ClassPath.getClassPath(o, ClassPath.SOURCE),
             ClassPath.getClassPath(o, ClassPath.EXECUTE),
             ClassPath.getClassPath(o, ClassPath.COMPILE),
-            ClassPath.getClassPath(o, ClassPath.BOOT)
+            ClassPath.getClassPath(o, ClassPath.BOOT),
+            
         };
         
         for ( int i=0; i<paths.length; i++){
