@@ -23,11 +23,11 @@ public class SyntaxErrorsHighlightingTaskFactory extends TaskFactory {
     
     
     public SyntaxErrorsHighlightingTaskFactory(){
-        LOG.warning("In SyntaxErrorsHightlingTaskFactory constructor");
+        
     }
     @Override
     public Collection<? extends SchedulerTask> create(Snapshot snpsht) {
-        LOG.warning("About to create SyntaxErrorsHighlightingTask");
+        
         return Collections.singleton(new SyntaxErrorsHighlightingTask());
     }
     

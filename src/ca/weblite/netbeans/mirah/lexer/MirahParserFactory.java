@@ -20,7 +20,7 @@ public class MirahParserFactory extends ParserFactory{
     private static final Logger LOG = Logger.getLogger(MirahParserFactory.class.getCanonicalName());
     
     public MirahParserFactory(){
-        LOG.warning("In MirahParserFactory constructor");
+        
     }
     
     @Override

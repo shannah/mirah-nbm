@@ -156,17 +156,11 @@ public class MirahLanguageHierarchy extends LanguageHierarchy<MirahTokenId>{
             Tokens.tStringContent, Tokens.tStrEvBegin, Tokens.tRegexBegin, Tokens.tRegexEnd, Tokens.tHereDocId, 
             Tokens.tHereDocBegin, Tokens.tHereDocEnd, Tokens.tUNKNOWN, Tokens.tEOF};
         
-        
-        
-        //tokens = /*Arrays.<MirahTokenId> asList (new MirahTokenId[] {
-        //    
-        //});*/
         tokens = new ArrayList<MirahTokenId>();
-        //LOG.warning("About to do tokens");
         for ( Tokens t : toks ){
-            //LOG.warning("Creating token "+t.ordinal());
+            
             MirahTokenId tok = new MirahTokenId(t.name(), getTokCategory(t), t.ordinal());
-            //LOG.warning("Token created... now adding");
+            
             tokens.add(tok);
         }
         tokens.add(new MirahTokenId("Class Declaration", "class-declaration", CLASS_DECLARATION));

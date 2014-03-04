@@ -199,9 +199,9 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
 
     private Library getMirahAllLibrary() {
         for (Library library : LibraryManager.getDefault().getLibraries()) {
-            System.out.println("Library "+library);
+
             List<URL> uriContent = library.getContent("classpath"); // NOI18N
-            System.out.println(uriContent);
+            
             try {
                 if (containsClass(uriContent, "ca.weblite.mirah.ant.MirahCompiler2")) { // NOI18N
                     return library;

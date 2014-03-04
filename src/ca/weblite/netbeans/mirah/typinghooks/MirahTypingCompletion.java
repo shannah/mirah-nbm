@@ -357,7 +357,6 @@ public class MirahTypingCompletion {
     
     
     private static boolean isSkipClosingBracket(TypedTextInterceptor.MutableContext context, TokenSequence<MirahTokenId> javaTS, MirahTokenId.Enum rightBracketId) {
-        LOG.warning("isSkipClosingBracket "+rightBracketId+", "+context.getOffset()+", "+context.getDocument().getLength());
         if (context.getOffset() == context.getDocument().getLength()) {
             return false;
         }
@@ -460,7 +459,6 @@ public class MirahTypingCompletion {
                 }
             }
 
-            LOG.warning("BRACKET BALANCE "+bracketBalance);
             skipClosingBracket = bracketBalance != 1;
         }
         return skipClosingBracket;
@@ -485,14 +483,12 @@ public class MirahTypingCompletion {
 
         // If caret within comment return false
         if ( id != null ){
-            LOG.warning("INSIDE TOKEN: "+javaTS.offset()+", "+javaTS.token().length()+", "+context.getOffset());
+            
         }
         boolean caretInsideToken = (id != null)
                 && (javaTS.offset() + javaTS.token().length() >= context.getOffset()
                 || javaTS.token().partType() == PartType.START);
-        //if (caretInsideToken && (id == JavaTokenId.BLOCK_COMMENT || id == JavaTokenId.JAVADOC_COMMENT || id == JavaTokenId.LINE_COMMENT)) {
-        //    return -1;
-       // }
+        
 
         boolean completablePosition = isQuoteCompletablePosition(context);
         boolean insideString = caretInsideToken
@@ -501,7 +497,7 @@ public class MirahTypingCompletion {
         int lastNonWhite = org.netbeans.editor.Utilities.getRowLastNonWhite((BaseDocument) context.getDocument(), context.getOffset());
         // eol - true if the caret is at the end of line (ignoring whitespaces)
         boolean eol = lastNonWhite < context.getOffset();
-        LOG.warning("COMPLETE QUOTE: "+insideString+ " "+id+" ");
+        
         if (insideString) {
             if (eol) {
                 return -1;
@@ -634,7 +630,7 @@ public class MirahTypingCompletion {
             int dotPosition = context.getCaretOffset();
             ts.move(dotPosition);
             if (!((ts.moveNext() || ts.movePrevious()) && (ts.token().id() == MirahTokenId.WHITESPACE) || ts.token().id() == MirahTokenId.NL)) {
-                System.out.println("Token is "+ts.token().id().name()+" at "+ts.index());
+                
                return false;
             }
 

@@ -47,7 +47,7 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
     private static final Logger LOG = Logger.getLogger(SyntaxErrorsHighlightingTask.class.getCanonicalName());
 
     public SyntaxErrorsHighlightingTask() {
-        //LOG.warning("In SyntaxErrorsHighlightingTask constructor");
+       
     }
 
     @Override
@@ -72,11 +72,11 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
             String message = syntaxError.message;
             int line =-1;
             try {
-                //LOG.warning("About to parse line from ["+syntaxError.position+"]");
+                
                 String[] pieces = syntaxError.position.substring(0, syntaxError.position.lastIndexOf(":")).split(":");
                 
                 line = Integer.parseInt(pieces[pieces.length-1]);
-                //LOG.warning("Parse error found on line "+line);
+                
             } catch (NumberFormatException ex){
                 ex.printStackTrace();
             }
@@ -94,13 +94,13 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
                 
                 
                 
-                LOG.warning("Message cannot find class");
+               
                 List<Fix> imports = new ArrayList<Fix>();
                 Pattern p = Pattern.compile("cannot find class ([a-zA-Z][a-zA-Z0-9\\.\\$]*)", Pattern.CASE_INSENSITIVE);
                 Matcher m = p.matcher(message);
                 
                 if ( m.find() ){
-                    LOG.warning("It matches the pattern");
+                    
                     String className = m.group(1);
                     if ( className.indexOf(".") != -1 ){
                         int pos = className.lastIndexOf(".");
@@ -121,7 +121,7 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
                     );
 
                     RequestProcessor rp = new RequestProcessor(SyntaxErrorsHighlightingTask.class);
-                    LOG.warning("Submitting the importFix task");
+                    
                     rp.submit(importFixes);
                     
 
