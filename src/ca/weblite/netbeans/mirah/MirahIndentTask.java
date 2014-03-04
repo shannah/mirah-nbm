@@ -49,8 +49,16 @@ public class MirahIndentTask implements IndentTask  {
         }
         
         
+        int prevLineLen = currLineStart - prevLineStart-1;
+        if ( prevLineLen < 0){
+            prevLineLen = 0;
+        }
         
-        String prevLine = context.document().getText(prevLineStart, currLineStart-prevLineStart-1);
+        int currLineLen = currLineEnd-currLineStart;
+        if ( currLineLen < 0 ){
+            currLineLen = 0;
+        }
+        String prevLine = context.document().getText(prevLineStart, prevLineLen);
         String currLine = context.document().getText(currLineStart, currLineEnd-currLineStart);
         
         
@@ -99,6 +107,16 @@ public class MirahIndentTask implements IndentTask  {
         prevLineStart = prevLineStartPos.getOffset();
         currLineStart = currLineStartPos.getOffset();
         currLineEnd = currLineEndPos.getOffset();
+        
+        prevLineLen = currLineStart - prevLineStart-1;
+        if ( prevLineLen < 0){
+            prevLineLen = 0;
+        }
+        
+        currLineLen = currLineEnd-currLineStart;
+        if ( currLineLen < 0 ){
+            currLineLen = 0;
+        }
         
         //toks.moveIndex(index);
         
@@ -160,7 +178,9 @@ public class MirahIndentTask implements IndentTask  {
             toks.moveNext();
         }
         
-        context.modifyIndent(currLineStart, indent);
+        if ( indent >= 0 ){
+            context.modifyIndent(currLineStart, indent);
+        }
         
         
         
