@@ -29,7 +29,7 @@ public class MirahTokenId implements TokenId {
     public static final MirahTokenId CHAR_LITERAL = get(Tokens.tCharacter.ordinal());
     public static final MirahTokenId SQUOTE = get(Tokens.tSQuote.ordinal());
     public static final MirahTokenId DQUOTE = get(Tokens.tDQuote.ordinal());
-    
+    public static final MirahTokenId NL = get(Tokens.tNL.ordinal());
     
     public static enum Enum {
         RPAREN,

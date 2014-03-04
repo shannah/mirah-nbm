@@ -23,6 +23,7 @@ import org.netbeans.api.lexer.PartType;
 import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenSequence;
 import org.netbeans.editor.BaseDocument;
+import org.netbeans.lib.editor.util.swing.DocumentUtilities;
 import org.netbeans.spi.editor.typinghooks.DeletedTextInterceptor;
 import org.netbeans.spi.editor.typinghooks.TypedBreakInterceptor;
 import org.netbeans.spi.editor.typinghooks.TypedTextInterceptor;
@@ -46,9 +47,19 @@ public class MirahTypingCompletion {
     private static int tokenBalance(Document doc, MirahTokenId leftTokenId) {
         TokenBalance tb = TokenBalance.get(doc);
         
+        MirahTokenId tEnd = MirahTokenId.get(Tokens.tEnd.ordinal());
+        
         tb.addTokenPair(MirahTokenId.getLanguage(), MirahTokenId.get(Tokens.tLParen.ordinal()), MirahTokenId.get(Tokens.tRParen.ordinal()));
         tb.addTokenPair(MirahTokenId.getLanguage(), MirahTokenId.get(Tokens.tLBrace.ordinal()), MirahTokenId.get(Tokens.tRBrace.ordinal()));
         tb.addTokenPair(MirahTokenId.getLanguage(), MirahTokenId.get(Tokens.tLBrack.ordinal()), MirahTokenId.get(Tokens.tRBrack.ordinal()));
+        tb.addTokenPair(MirahTokenId.getLanguage(), MirahTokenId.get(Tokens.tDo.ordinal()), tEnd);
+        tb.addTokenPair(MirahTokenId.getLanguage(), MirahTokenId.get(Tokens.tDef.ordinal()), tEnd);
+        tb.addTokenPair(MirahTokenId.getLanguage(), MirahTokenId.get(Tokens.tClass.ordinal()), tEnd);
+        tb.addTokenPair(MirahTokenId.getLanguage(), MirahTokenId.get(Tokens.tInterface.ordinal()), tEnd);
+        tb.addTokenPair(MirahTokenId.getLanguage(), MirahTokenId.get(Tokens.tIf.ordinal()), tEnd);
+        tb.addTokenPair(MirahTokenId.getLanguage(), MirahTokenId.get(Tokens.tWhile.ordinal()), tEnd);
+        tb.addTokenPair(MirahTokenId.getLanguage(), MirahTokenId.get(Tokens.tCase.ordinal()), tEnd);
+        tb.addTokenPair(MirahTokenId.getLanguage(), MirahTokenId.get(Tokens.tBegin.ordinal()), tEnd);
         //tb.addTokenPair(MirahTokenId.getLanguage(), MirahTokenId.get(Tokens.tDo.ordinal()), MirahTokenId.get(Tokens.tEnd.ordinal()));
         
         
@@ -138,6 +149,61 @@ public class MirahTypingCompletion {
             }
         }
         return null;
+    }
+    
+    
+    static boolean isAddEnd(BaseDocument doc, int caretOffset) throws BadLocationException {
+        
+        MirahTokenId[] starts = new MirahTokenId[]{
+             MirahTokenId.get(Tokens.tDo.ordinal()),
+             MirahTokenId.get(Tokens.tClass.ordinal()),
+             MirahTokenId.get(Tokens.tInterface.ordinal()),
+             MirahTokenId.get(Tokens.tDef.ordinal()),
+             MirahTokenId.get(Tokens.tIf.ordinal()),
+             MirahTokenId.get(Tokens.tCase.ordinal()),
+             MirahTokenId.get(Tokens.tWhile.ordinal()),
+             MirahTokenId.get(Tokens.tBegin.ordinal())
+        };
+        boolean foundStart = false;
+        for ( int i=0; i<starts.length; i++){
+            if (tokenBalance(doc, starts[i]) > 0) {
+                foundStart = true;
+            }
+        }
+        if ( !foundStart ){
+            return false;
+        }
+        //if (tokenBalance(doc, MirahTokenId.get(Tokens.tDo.ordinal())) <= 0) {
+        //    return false;
+       // }
+        int caretRowStartOffset = org.netbeans.editor.Utilities.getRowStart(doc, caretOffset);
+        TokenSequence<MirahTokenId> ts = mirahTokenSequence(doc, caretOffset, true);
+        if (ts == null) {
+            return false;
+        }
+        boolean first = true;
+        
+        MirahTokenId WHITESPACE = MirahTokenId.get(999);
+        //MirahTokenId LINE_COMMENT = MirahTokenId.get(Tokens.t)
+        MirahTokenId LBRACE = MirahTokenId.get(Tokens.tLBrace.ordinal());
+        
+        do {
+            if (ts.offset() < caretRowStartOffset) {
+                return false;
+            }
+            for (int i=0; i<starts.length; i++){
+                if ( ts.token().id().equals(starts[i])){
+                    return true;
+                }
+            }
+            //if ( ts.token().id().equals(LBRACE)){
+            //    return true;
+            //}
+            
+            
+            first = false;
+        } while (ts.movePrevious());
+        return false;
     }
     
     /**
@@ -551,5 +617,108 @@ public class MirahTypingCompletion {
             }
         }
     }
+    
+     static boolean blockCommentCompletion(TypedBreakInterceptor.Context context) {
+        return blockCommentCompletionImpl(context, false);
+    }
+
+    static boolean javadocBlockCompletion(TypedBreakInterceptor.Context context) {
+        return blockCommentCompletionImpl(context, true);
+    }
+
+    private static boolean blockCommentCompletionImpl(TypedBreakInterceptor.Context context, boolean javadoc) {
+            TokenSequence<MirahTokenId> ts = mirahTokenSequence(context, false);
+            if (ts == null) {
+                return false;
+            }
+            int dotPosition = context.getCaretOffset();
+            ts.move(dotPosition);
+            if (!((ts.moveNext() || ts.movePrevious()) && (ts.token().id() == MirahTokenId.WHITESPACE) || ts.token().id() == MirahTokenId.NL)) {
+                System.out.println("Token is "+ts.token().id().name()+" at "+ts.index());
+               return false;
+            }
+
+            int jdoffset = dotPosition - (javadoc ? 3 : 2);
+            if (jdoffset >= 0) {
+                //CharSequence content = org.netbeans.lib.editor.util.swing.DocumentUtilities.getText(context.getDocument());
+                CharSequence content = DocumentUtilities.getText(context.getDocument());
+                if (isOpenBlockComment(content, dotPosition - 1, javadoc) && !isClosedBlockComment(content, dotPosition) && isAtRowEnd(content, dotPosition)) {
+                    return true;
+                }
+            }
+        return false;
+    }
+    
+    private static boolean isOpenBlockComment(CharSequence content, int pos, boolean javadoc) {
+        for (int i = pos; i >= 0; i--) {
+            char c = content.charAt(i);
+            if (c == '*' && (javadoc ? i - 2 >= 0 && content.charAt(i - 1) == '*' && content.charAt(i - 2) == '/' : i - 1 >= 0 && content.charAt(i - 1) == '/')) {
+                // matched /*
+                return true;
+            } else if (c == '\n') {
+                // no javadoc, matched start of line
+                return false;
+            } else if (c == '/' && i - 1 >= 0 && content.charAt(i - 1) == '*') {
+                // matched javadoc enclosing tag
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean isClosedBlockComment(CharSequence txt, int pos) {
+        int length = txt.length();
+        int quotation = 0;
+        for (int i = pos; i < length; i++) {
+            char c = txt.charAt(i);
+            if (c == '*' && i < length - 1 && txt.charAt(i + 1) == '/') {
+                if (quotation == 0 || i < length - 2) {
+                    return true;
+                }
+                // guess it is not just part of some text constant
+                boolean isClosed = true;
+                for (int j = i + 2; j < length; j++) {
+                    char cc = txt.charAt(j);
+                    if (cc == '\n') {
+                        break;
+                    } else if (cc == '"' && j < length - 1 && txt.charAt(j + 1) != '\'') {
+                        isClosed = false;
+                        break;
+                    }
+                }
+
+                if (isClosed) {
+                    return true;
+                }
+            } else if (c == '/' && i < length - 1 && txt.charAt(i + 1) == '*') {
+                // start of another comment block
+                return false;
+            } else if (c == '\n') {
+                quotation = 0;
+            } else if (c == '"' && i < length - 1 && txt.charAt(i + 1) != '\'') {
+                quotation = ++quotation % 2;
+            }
+        }
+
+        return false;
+    }
+    
+     private static boolean isAtRowEnd(CharSequence txt, int pos) {
+        int length = txt.length();
+        for (int i = pos; i < length; i++) {
+            char c = txt.charAt(i);
+            if (c == '\n') {
+                return true;
+            }
+            if (!Character.isWhitespace(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
+     
+      
+    
 
 }
