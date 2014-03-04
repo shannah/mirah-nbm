@@ -55,6 +55,7 @@ import org.openide.filesystems.FileObject;
  */
 public class MirahParser extends Parser {
     private static WeakHashMap<Document,DocumentDebugger> documentDebuggers = new WeakHashMap<Document,DocumentDebugger>();
+    private static WeakHashMap<Document,String> lastContent = new WeakHashMap<Document,String>();
     private Snapshot snapshot;
     private MirahParseDiagnostics diag;
     private static final Logger LOG = Logger.getLogger(MirahParser.class.getCanonicalName());
@@ -93,11 +94,20 @@ public class MirahParser extends Parser {
         }
     }
     
+    String lastSource = "";
     
      @Override
     public void parse(Snapshot snapshot, Task task, SourceModificationEvent sme) throws ParseException {
+        String oldContent = lastContent.get(snapshot.getSource().getDocument(false));
+        String newContent = snapshot.getText().toString();
         
-        reparse(snapshot);
+        boolean changed = oldContent == null || !oldContent.equals(newContent);
+        
+        if ( sme.sourceChanged() && changed){
+            lastContent.put(snapshot.getSource().getDocument(false), newContent);
+            reparse(snapshot);
+        }
+        
     }
     
     
@@ -111,6 +121,8 @@ public class MirahParser extends Parser {
     
     public void reparse(Snapshot snapshot, String content) throws ParseException {
         
+        System.out.println("Mirah Reparsing now ...");
+        (new RuntimeException()).printStackTrace();
          this.snapshot = snapshot;
         diag = new MirahParseDiagnostics();
         MirahCompiler2 compiler = new MirahCompiler2();
