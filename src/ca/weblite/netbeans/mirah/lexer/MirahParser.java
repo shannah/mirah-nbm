@@ -98,6 +98,7 @@ public class MirahParser extends Parser {
     
      @Override
     public void parse(Snapshot snapshot, Task task, SourceModificationEvent sme) throws ParseException {
+        System.out.println("In parse");
         String oldContent = lastContent.get(snapshot.getSource().getDocument(false));
         String newContent = snapshot.getText().toString();
         

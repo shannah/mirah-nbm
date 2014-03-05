@@ -17,7 +17,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.logging.Logger;
 import javax.swing.text.BadLocationException;
@@ -78,7 +80,7 @@ import org.openide.util.Exceptions;
 public class MirahCodeCompleter implements CompletionProvider {
     private static final Logger LOG = Logger.getLogger(MirahCodeCompleter.class.getCanonicalName());
     
-    private Node findNode(final DocumentDebugger dbg, final int rightEdge){
+    static Node findNode(final DocumentDebugger dbg, final int rightEdge){
         final Node[] foundNode = new Node[1];
         for( Object node : dbg.compiler.compiler().getParsedNodes() ){
             if ( node instanceof Node ){
@@ -134,273 +136,76 @@ public class MirahCodeCompleter implements CompletionProvider {
                 p--;
                 lastChar = jtc.getDocument().getText(p, 1);
             }
-            if ( !".".equals(lastChar) ){
+            
+            TokenSequence<MirahTokenId> toks = mirahTokenSequence(jtc.getDocument(), caretOffset, true);
+            // Tokens that activate code completion
+            MirahTokenId tWhitespace = MirahTokenId.WHITESPACE;
+            MirahTokenId tIdentifier = MirahTokenId.get(Tokens.tIDENTIFIER.ordinal());
+            MirahTokenId tInstanceVar = MirahTokenId.get(Tokens.tInstVar.ordinal());
+            MirahTokenId tAt = MirahTokenId.get(Tokens.tAt.ordinal());
+            MirahTokenId tDot = MirahTokenId.get(Tokens.tDot.ordinal());
+            
+            Set<MirahTokenId> activators = new HashSet<MirahTokenId>();
+            activators.add(tDot);
+            activators.add(tAt);
+            activators.add(tInstanceVar);
+            activators.add(MirahTokenId.get(Tokens.tDef.ordinal()));
+            
+            
+            
+            Token<MirahTokenId> activator = null;
+            int activatorOffset = -1;
+            int activatorLen = -1;
+            boolean hasWhitespace = false;
+            boolean hasIdentifier = false;
+            
+            while ( toks.token().id() == tIdentifier || toks.token().id() == tWhitespace || activators.contains(toks.token().id()) ){
+                Token<MirahTokenId> curr = toks.token();
+                if ( curr.id() == tWhitespace ){
+                    hasWhitespace = true;
+                } else if ( curr.id() == tIdentifier ){
+                    hasIdentifier = true;
+                } else {
+                    activator = toks.token();
+                    activatorOffset = toks.offset();
+                    activatorLen = curr.length();
+                    break;
+                    
+                }
+                if ( !toks.movePrevious() ){
+                    break;
+                }
+                
+            }
+            System.out.println("Loop killed after token "+toks.token().id().name());
+            
+            if ( activator == null ){
                 return null;
             }
+            
+            if ( activator.id() == tAt || activator.id() == tInstanceVar ){
+                System.out.println("Activator was @");
+                if ( hasWhitespace ){
+                    return null;
+                }
+                return new AsyncCompletionTask(new PropertyCompletionQuery(activatorOffset-activatorLen), jtc);
+            
+                
+            } else if ( activator.id() == tDot ){
+                if ( hasWhitespace && hasIdentifier ){
+                    return null;
+                }
+                
+                return new AsyncCompletionTask(new MethodCompletionQuery(initialOffset), jtc);
+                
+                
+            }
+            
         } catch ( BadLocationException ble){
             return null;
         }
         
-        return new AsyncCompletionTask(new AsyncCompletionQuery(){
-            boolean parsed = false;
-            int tries = 0;
-            Object lock = new Object();
-            String filter = null;
-            Class currentType = null;
-            boolean isStatic;
-
-            
-            @Override
-            protected boolean canFilter(JTextComponent component) {
-                if ( currentType == null ){
-                    return false;
-                }
-                int currentPos = component.getCaretPosition();
-                if ( currentPos <= initialOffset){
-                    return false;
-                }
-                
-                try {
-                    char c = component.getText(currentPos, 1).charAt(0);
-                    switch ( c){
-                        case '.':
-                        case ':':
-                        case '(':
-                        case ';':
-                        
-                            return false;
-                    }
-                } catch (BadLocationException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-                try {
-                    filter = component.getText(initialOffset, currentPos-initialOffset).trim();
-                } catch (BadLocationException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-                return filter != null;
-            }
-
-            @Override
-            protected void filter(CompletionResultSet resultSet) {
-                for ( Method m : currentType.getMethods()){
-                    if ( m.getName().toLowerCase().indexOf(filter.toLowerCase()) == 0 && isStatic == Modifier.isStatic(m.getModifiers()) ){
-                        resultSet.addItem(new MirahMethodCompletionItem(m, initialOffset, filter.length()));
-                    }
-                    
-                }
-                resultSet.finish();
-                
-            }
-            
-            
-            
-            
-            
-           
-            
-            
-            @Override
-            protected void query(final CompletionResultSet crs, final Document doc, final int caretOffset) {
-                BaseDocument bdoc = (BaseDocument)doc;
-                if ( crs.isFinished() || this.isTaskCancelled()){
-                    return;
-                }
-                
-                if ( caretOffset < initialOffset ){
-                    crs.finish();
-                    Completion.get().hideAll();
-                    return;
-                }
-                
-                
-                tries++;
-                DocumentDebugger dbg = MirahParser.getDocumentDebugger(doc);
-                
-                if ( dbg != null ){
-                    try {
-                        int p = caretOffset-1;
-                        if ( p < 0 ){
-                            return;
-                        }
-                        String lastChar = doc.getText(p, 1);
-                        
-                        TokenSequence<MirahTokenId> toks = mirahTokenSequence(doc, caretOffset, true);
-                        
-                        MirahTokenId tDot = MirahTokenId.get(Tokens.tDot.ordinal());
-                        MirahTokenId tId = MirahTokenId.get(Tokens.tIDENTIFIER.ordinal());
-                        MirahTokenId tNL = MirahTokenId.get(Tokens.tNL.ordinal());
-                        MirahTokenId tWS = MirahTokenId.WHITESPACE;
-                        
-                        // Will hold the "dot" token that we want to do code
-                        // completion for
-                        Token<MirahTokenId> dotToken = null;
-                        
-                        // Will hold the subject token (i.e. the last token before 
-                        // the dot that we will be checking for a type
-                        Token<MirahTokenId> subjectToken = null;
-                        Token<MirahTokenId> thisTok = toks.token();
-                        if ( thisTok != null ){
-                            MirahTokenId thisTokType = thisTok.id();
-                            
-                            Token<MirahTokenId> prevTok = null;
-                            MirahTokenId prevTokType = null;
-                            if ( toks.movePrevious() ){
-                                prevTok = toks.token();
-                                prevTokType = prevTok.id();
-                                toks.moveNext();
-                            }
-                            
-                            if ( tId.equals(thisTokType) && tDot.equals(prevTokType) ){
-                                
-                                filter = toks.token().text().toString();
-                                dotToken = prevTok;
-                                toks.movePrevious();
-                                
-                            } else if (tDot.equals(thisTokType)){
-                                filter = "";
-                                dotToken = thisTok;
-                                
-                            }
-                            
-                        }
-                        
-                        if ( dotToken == null ){
-                            crs.finish();
-                            Completion.get().hideAll();
-                            return;
-                        }
-                        
-                        // Now to find the subject token.
-                        while ( toks.movePrevious() ){
-                            Token<MirahTokenId> tok = toks.token();
-                            if ( tWS.equals(tok.id())||tNL.equals(tok.id())){
-                                // 
-                            } else {
-                                subjectToken = tok;
-                                break;
-                            }
-                        }
-                        
-                        
-                        
-                        if ( dotToken == null || subjectToken == null ){
-                            crs.finish();
-                            Completion.get().hideAll();
-                            return;
-                        }
-                        
-                        bdoc.readLock();
-                        TokenHierarchy<?> hi = TokenHierarchy.get(doc);
-                        bdoc.readUnlock();
-                        
-                        int bol = getBeginningOfLine(doc, caretOffset);
-                        int eol = getEndOfLine(doc, caretOffset);
-                        int dotPos = dotToken.offset(hi);
-                       
-                        
-                        
-                        Node foundNode = findNode(dbg, subjectToken.offset(hi)+subjectToken.length());
-                        
-                        ResolvedType type = null;
-                        if ( foundNode != null ){
-                            type = dbg.getType(foundNode);
-                            
-                            Node c = foundNode;
-                            while ( c != null ){
-                                
-                                c = c.parent();
-                            }
-                            
-                        }
-                        
-                        if ( foundNode == null || type == null ){
-                            Source src = Source.create(doc);
-                            MirahParser parser = new MirahParser();
-                            try {
-                                Snapshot snapshot = src.createSnapshot();
-                                String text = snapshot.getText().toString();
-                                StringBuilder sb = new StringBuilder();
-                                sb.append(text.substring(0, dotPos));
-                                for ( int i=dotPos; i<eol; i++){
-                                    sb.append(' ');
-                                }
-                                sb.append(text.substring(eol));
-                                
-                                parser.reparse(snapshot, sb.toString());
-                                
-                            } catch (ParseException ex){
-                                Exceptions.printStackTrace(ex);
-                            }
-                            
-                            dbg = MirahParser.getDocumentDebugger(doc);
-                            //printNodes(dbg.compiler.compiler(), rightEdgeFinal);
-                            foundNode = findNode(dbg, subjectToken.offset(hi)+subjectToken.length());
-                            if ( foundNode != null ){
-                                type = dbg.getType(foundNode);
-                            }
-                            
-                        }
-                        
-                        if ( foundNode != null ){
-                                
-                            type = dbg.getType(foundNode);
-
-                            if ( type != null ){
-                                
-                                
-                                FileObject fileObject = NbEditorUtilities.getFileObject(doc);
-                                Class cls = findClass(fileObject, dbg.getType(foundNode).name());
-                                currentType = cls;
-                                
-                                isStatic = foundNode instanceof Constant;
-                                if ( cls != null ){
-                                    
-                                    if ( isStatic && filter == null || "new".startsWith(filter)){
-                                        for ( Constructor c : cls.getConstructors()){
-                                            crs.addItem(new MirahConstructorCompletionItem(c, caretOffset, filter.length()));
-                                        }
-                                    }
-                                    for ( Method m : cls.getMethods()){
-                                        if ( m.getName().startsWith(filter) && isStatic == Modifier.isStatic(m.getModifiers())){
-                                            crs.addItem(new MirahMethodCompletionItem(m, caretOffset, filter.length()));
-                                        }
-                                    }
-                                }
-                            }
-                        } 
-                        
-                    } catch ( BadLocationException ble ){
-                        ble.printStackTrace();
-                    }
-                }
-                if ( !crs.isFinished() ){
-                    crs.finish();
-                }
-                
-                
-                
-            }
-
-            private void printNodes(MirahCompiler compiler, int rightEdgeFinal) {
-                for ( Object o : compiler.getParsedNodes()){
-                    if ( o instanceof Node && o != null ){
-                        Node node = (Node)o;
-                        
-                        node.accept(new NodeScanner(){
-
-                            @Override
-                            public boolean enterDefault(Node node, Object arg) {
-                                return super.enterDefault(node, arg); //To change body of generated methods, choose Tools | Templates.
-                            }
-                            
-                        }, null);
-                        
-                    }
-                }
-            }
-
-        }, jtc);
+        return null;
         
 
         
@@ -415,7 +220,7 @@ public class MirahCodeCompleter implements CompletionProvider {
         return 0;
     }
     
-    private Class findClass(FileObject o, String name){
+    static Class findClass(FileObject o, String name){
         ClassPath[] paths = new ClassPath[]{
             ClassPath.getClassPath(o, ClassPath.SOURCE),
             ClassPath.getClassPath(o, ClassPath.EXECUTE),
@@ -486,7 +291,7 @@ public class MirahCodeCompleter implements CompletionProvider {
     }
     
     
-    private static TokenSequence<MirahTokenId> mirahTokenSequence(Document doc, int caretOffset, boolean backwardBias) {
+     static TokenSequence<MirahTokenId> mirahTokenSequence(Document doc, int caretOffset, boolean backwardBias) {
         BaseDocument bd = (BaseDocument)doc;
         bd.readLock();
         TokenHierarchy<?> hi = TokenHierarchy.get(doc);
@@ -504,7 +309,7 @@ public class MirahCodeCompleter implements CompletionProvider {
         return null;
     }
     
-    private static int getEndOfLine(Document doc, int caretOffset){
+     static int getEndOfLine(Document doc, int caretOffset){
         BaseDocument bd = (BaseDocument)doc;
         bd.readLock();
         
@@ -523,7 +328,7 @@ public class MirahCodeCompleter implements CompletionProvider {
         
     }
     
-    private static int getBeginningOfLine(Document doc, int caretOffset){
+     static int getBeginningOfLine(Document doc, int caretOffset){
         BaseDocument bd = (BaseDocument)doc;
         bd.readLock();
         

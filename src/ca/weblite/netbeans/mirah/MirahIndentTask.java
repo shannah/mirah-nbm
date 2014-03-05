@@ -98,8 +98,8 @@ public class MirahIndentTask implements IndentTask  {
         Position prevLineStartPos = context.document().createPosition(prevLineStart);
         Position currLineStartPos = context.document().createPosition(currLineStart);
         Position currLineEndPos = context.document().createPosition(currLineEnd);
-        
-        if ( changePrevIndent  >= 0 ){
+        prevIndent = context.lineIndent(prevLineStartPos.getOffset());
+        if ( changePrevIndent  >= 0  && prevIndent != changePrevIndent){
             context.modifyIndent(prevLineStartPos.getOffset(), changePrevIndent);
         }
         
