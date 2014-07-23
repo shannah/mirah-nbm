@@ -123,7 +123,7 @@ public class MirahParser extends Parser {
     public void reparse(Snapshot snapshot, String content) throws ParseException {
         
         System.out.println("Mirah Reparsing now ...");
-        (new RuntimeException()).printStackTrace();
+        //(new RuntimeException()).printStackTrace();
          this.snapshot = snapshot;
         diag = new MirahParseDiagnostics();
         MirahCompiler2 compiler = new MirahCompiler2();
