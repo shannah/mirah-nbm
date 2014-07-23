@@ -91,9 +91,12 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                     cancel(crs);
                     return;
                 }
-                
+                cancel(crs);
+                return;
+                /*
                 if ( foundToken.id() == tInstanceVar ){
                     String varName = doc.getText(tokenStart, tokenLen);
+                    
                     Node foundNode = MirahCodeCompleter.findNode(dbg, tokenStart+tokenLen);
 
                     if ( foundNode == null ){
@@ -133,7 +136,7 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                 
                 
                 cancel(crs);
-                
+                        */
             } catch ( BadLocationException ble){
                 cancel(crs);
             }
