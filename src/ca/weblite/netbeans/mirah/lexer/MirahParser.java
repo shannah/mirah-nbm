@@ -137,10 +137,22 @@ public class MirahParser extends Parser {
         FileObject buildDir = projectDirectory.getFileObject("build");
         
         ClassPath compileClassPath = ClassPath.getClassPath(src, ClassPath.COMPILE);
+        String compileClassPathStr = "";
+        if ( compileClassPath != null ){
+            compileClassPathStr = compileClassPath.toString();
+        }
         ClassPath buildClassPath = ClassPath.getClassPath(src, ClassPath.EXECUTE);
+        String buildClassPathStr = "";
+        if (buildClassPath != null ){
+            buildClassPathStr = buildClassPath.toString();
+        }
         ClassPath srcClassPath = ClassPath.getClassPath(src, ClassPath.SOURCE);
-        compiler.setJavaSourceClasspath(srcClassPath.toString());
-        String dest = buildClassPath.toString();
+        String srcClassPathStr = "";
+        
+        if ( srcClassPath != null ) srcClassPathStr = srcClassPath.toString();
+        compiler.setJavaSourceClasspath(srcClassPathStr);
+        
+        String dest = buildClassPathStr;
         try {
             if ( buildDir == null ){
                 buildDir = projectDirectory.createFolder("build");
@@ -157,14 +169,14 @@ public class MirahParser extends Parser {
         compiler.setDiagnostics(diag);
         
         List<String> paths = new ArrayList<String>();
-        if ( !"".equals(srcClassPath.toString()) ){
-            paths.add(srcClassPath.toString());
+        if ( !"".equals(srcClassPathStr) ){
+            paths.add(srcClassPathStr);
         }
-        if ( !"".equals(buildClassPath.toString())){
-            paths.add(buildClassPath.toString());
+        if ( !"".equals(buildClassPathStr)){
+            paths.add(buildClassPathStr);
         }
-        if ( !"".equals(compileClassPath.toString())){
-            paths.add(compileClassPath.toString());
+        if ( !"".equals(compileClassPathStr)){
+            paths.add(compileClassPathStr);
         }
         
         StringBuilder classPath = new StringBuilder();
@@ -189,8 +201,10 @@ public class MirahParser extends Parser {
         
         
         ClassPath bootClassPath = ClassPath.getClassPath(src, ClassPath.BOOT);
-        if ( !"".equals(bootClassPath.toString())){
-            compiler.setBootClasspath(bootClassPath.toString());
+        String  bootClassPathStr = "";
+        if ( bootClassPath != null ) bootClassPathStr = bootClassPath.toString();
+        if ( !"".equals(bootClassPathStr)){
+            compiler.setBootClasspath(bootClassPathStr);
         }
         String srcText = content;
         

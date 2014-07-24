@@ -58,8 +58,8 @@ public class MirahIndentTask implements IndentTask  {
         if ( currLineLen < 0 ){
             currLineLen = 0;
         }
-        String prevLine = context.document().getText(prevLineStart, prevLineLen);
-        String currLine = context.document().getText(currLineStart, currLineEnd-currLineStart);
+        //String prevLine = context.document().getText(prevLineStart, prevLineLen);
+        //String currLine = context.document().getText(currLineStart, currLineEnd-currLineStart);
         
         
         
@@ -73,7 +73,7 @@ public class MirahIndentTask implements IndentTask  {
         MirahTokenId tElse = MirahTokenId.get(Tokens.tElse.ordinal());
         MirahTokenId tElsIf = MirahTokenId.get(Tokens.tElsif.ordinal());
         MirahTokenId tIf = MirahTokenId.get(Tokens.tIf.ordinal());
-        int index = toks.index();
+        //int index = toks.index();
         int changePrevIndent = -1;
         while ( toks.offset() > prevLineStart ){
             Token<MirahTokenId> curr = toks.token();
@@ -204,6 +204,7 @@ public class MirahIndentTask implements IndentTask  {
     private static TokenSequence<MirahTokenId> mirahTokenSequence(Document doc, int caretOffset, boolean backwardBias) {
         TokenHierarchy<?> hi = TokenHierarchy.get(doc);
         List<TokenSequence<?>> tsList = hi.embeddedTokenSequences(caretOffset, backwardBias);
+        //System.out.println(tsList+" off "+caretOffset+" back: "+backwardBias);
         // Go from inner to outer TSes
         for (int i = tsList.size() - 1; i >= 0; i--) {
             TokenSequence<?> ts = tsList.get(i);
