@@ -98,8 +98,9 @@ public class MirahParser extends Parser {
     
      @Override
     public void parse(Snapshot snapshot, Task task, SourceModificationEvent sme) throws ParseException {
-        System.out.println("In parse");
+        
         String oldContent = lastContent.get(snapshot.getSource().getDocument(false));
+        
         String newContent = snapshot.getText().toString();
         
         boolean changed = oldContent == null || !oldContent.equals(newContent);
@@ -122,7 +123,7 @@ public class MirahParser extends Parser {
     
     public void reparse(Snapshot snapshot, String content) throws ParseException {
         
-        System.out.println("Mirah Reparsing now ...");
+        
         //(new RuntimeException()).printStackTrace();
          this.snapshot = snapshot;
         diag = new MirahParseDiagnostics();
@@ -212,6 +213,7 @@ public class MirahParser extends Parser {
                 fireOnParse(doc);
             } 
         }
+        
         
        
         

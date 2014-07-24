@@ -24,7 +24,7 @@ public class MirahTokenId implements TokenId {
     public static final MirahTokenId LBRACK = get(Tokens.tLBrack.ordinal());
     public static final MirahTokenId RBRACE = get(Tokens.tRBrace.ordinal());
     public static final MirahTokenId LBRACE = get(Tokens.tLBrace.ordinal());
-    public static final MirahTokenId WHITESPACE = get(999);
+    public static final MirahTokenId WHITESPACE = get(Tokens.tWhitespace.ordinal());
     public static final MirahTokenId STRING_LITERAL = get(Tokens.tStringContent.ordinal());
     public static final MirahTokenId CHAR_LITERAL = get(Tokens.tCharacter.ordinal());
     public static final MirahTokenId SQUOTE = get(Tokens.tSQuote.ordinal());

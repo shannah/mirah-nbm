@@ -24,7 +24,8 @@ public class MirahDeletedTextInterceptor implements DeletedTextInterceptor{
         }
 
         @Override
-        public void remove(DeletedTextInterceptor.Context context) throws BadLocationException {            
+        public void remove(DeletedTextInterceptor.Context context) throws BadLocationException {  
+            //System.out.println("In remove()");
             char removedChar = context.getText().charAt(0);
             switch(removedChar) {
                 case '(':

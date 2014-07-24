@@ -14,11 +14,13 @@ import java.util.Collections;
 import java.util.List;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyledDocument;
 import mirah.impl.Tokens;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenSequence;
+import org.netbeans.editor.BaseDocument;
 import org.netbeans.modules.parsing.api.Source;
 import org.netbeans.spi.editor.hints.ChangeInfo;
 import org.netbeans.spi.editor.hints.Fix;
@@ -200,17 +202,23 @@ public class ImportFixList  implements LazyFixList, Runnable {
      * doc-or-section-end-and-fwd-bias.
      */
     private static TokenSequence<MirahTokenId> mirahTokenSequence(Document doc, int caretOffset, boolean backwardBias) {
-        TokenHierarchy<?> hi = TokenHierarchy.get(doc);
-        List<TokenSequence<?>> tsList = hi.embeddedTokenSequences(caretOffset, backwardBias);
-        // Go from inner to outer TSes
-        for (int i = tsList.size() - 1; i >= 0; i--) {
-            TokenSequence<?> ts = tsList.get(i);
-            if (ts.languagePath().innerLanguage() == MirahTokenId.getLanguage()) {
-                TokenSequence<MirahTokenId> javaInnerTS = (TokenSequence<MirahTokenId>) ts;
-                return javaInnerTS;
+        
+        try {
+            ((BaseDocument)doc).readLock();
+            TokenHierarchy<?> hi = TokenHierarchy.get(doc);
+            List<TokenSequence<?>> tsList = hi.embeddedTokenSequences(caretOffset, backwardBias);
+            // Go from inner to outer TSes
+            for (int i = tsList.size() - 1; i >= 0; i--) {
+                TokenSequence<?> ts = tsList.get(i);
+                if (ts.languagePath().innerLanguage() == MirahTokenId.getLanguage()) {
+                    TokenSequence<MirahTokenId> javaInnerTS = (TokenSequence<MirahTokenId>) ts;
+                    return javaInnerTS;
+                }
             }
+            return null;
+        } finally {
+            ((BaseDocument)doc).readUnlock();
         }
-        return null;
     }
     
 }

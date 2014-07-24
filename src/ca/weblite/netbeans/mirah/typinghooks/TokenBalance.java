@@ -96,6 +96,7 @@ class TokenBalance implements TokenHierarchyListener {
     }
 
     public void tokenHierarchyChanged(TokenHierarchyEvent evt) {
+        
         synchronized (lang2handler) {
             if (evt.type() == TokenHierarchyEventType.ACTIVITY ||
                     evt.type() == TokenHierarchyEventType.REBUILD)
@@ -139,15 +140,18 @@ class TokenBalance implements TokenHierarchyListener {
     }
 
     private void checkScanDone() {
+        List<LanguageHandler<?>> vals = new ArrayList();
         synchronized (lang2handler) {
-            if (!scanDone) {
-                TokenHierarchy hi = TokenHierarchy.get(doc);
-                for (LanguageHandler<?> handler : lang2handler.values()) {
-                    handler.scan(hi);
-                }
-                scanDone = true;
-            }
+            vals.addAll(lang2handler.values());
         }
+        if (!scanDone) {
+            TokenHierarchy hi = TokenHierarchy.get(doc);
+            for (LanguageHandler<?> handler : vals) {
+                handler.scan(hi);
+            }
+            scanDone = true;
+        }
+        
     }
     
     private static final class LanguageHandler<T extends TokenId> {

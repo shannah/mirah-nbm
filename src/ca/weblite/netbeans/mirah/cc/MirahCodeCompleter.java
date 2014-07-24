@@ -177,14 +177,14 @@ public class MirahCodeCompleter implements CompletionProvider {
                 }
                 
             }
-            System.out.println("Loop killed after token "+toks.token().id().name());
+            //System.out.println("Loop killed after token "+toks.token().id().name());
             
             if ( activator == null ){
                 return null;
             }
             
             if ( activator.id() == tAt || activator.id() == tInstanceVar ){
-                System.out.println("Activator was @");
+                //System.out.println("Activator was @");
                 if ( hasWhitespace ){
                     return null;
                 }
@@ -293,57 +293,66 @@ public class MirahCodeCompleter implements CompletionProvider {
     
      static TokenSequence<MirahTokenId> mirahTokenSequence(Document doc, int caretOffset, boolean backwardBias) {
         BaseDocument bd = (BaseDocument)doc;
-        bd.readLock();
-        TokenHierarchy<?> hi = TokenHierarchy.get(doc);
-        List<TokenSequence<?>> tsList = hi.embeddedTokenSequences(caretOffset, backwardBias);
-        // Go from inner to outer TSes
-        for (int i = tsList.size() - 1; i >= 0; i--) {
-            TokenSequence<?> ts = tsList.get(i);
-            if (ts.languagePath().innerLanguage() == MirahTokenId.getLanguage()) {
-                TokenSequence<MirahTokenId> javaInnerTS = (TokenSequence<MirahTokenId>) ts;
-                bd.readUnlock();
-                return javaInnerTS;
+        try {
+            bd.readLock();
+            TokenHierarchy<?> hi = TokenHierarchy.get(doc);
+            List<TokenSequence<?>> tsList = hi.embeddedTokenSequences(caretOffset, backwardBias);
+            // Go from inner to outer TSes
+            for (int i = tsList.size() - 1; i >= 0; i--) {
+                TokenSequence<?> ts = tsList.get(i);
+                if (ts.languagePath().innerLanguage() == MirahTokenId.getLanguage()) {
+                    TokenSequence<MirahTokenId> javaInnerTS = (TokenSequence<MirahTokenId>) ts;
+                    //bd.readUnlock();
+                    return javaInnerTS;
+                }
             }
+        } finally {
+            bd.readUnlock();
         }
-        bd.readUnlock();
         return null;
     }
     
      static int getEndOfLine(Document doc, int caretOffset){
         BaseDocument bd = (BaseDocument)doc;
         bd.readLock();
-        
-        TokenHierarchy<?> hi = TokenHierarchy.get(doc);
-        TokenSequence<MirahTokenId> toks = mirahTokenSequence(doc, caretOffset, false);
-        MirahTokenId eol = MirahTokenId.get(Tokens.tNL.ordinal());
-        MirahTokenId eof = MirahTokenId.get(Tokens.tEOF.ordinal());
-        while ( !eol.equals(toks.token().id()) && !eof.equals(toks.token().id())){
-            if ( !toks.moveNext() ){
-                break;
+        try {
+            TokenHierarchy<?> hi = TokenHierarchy.get(doc);
+            TokenSequence<MirahTokenId> toks = mirahTokenSequence(doc, caretOffset, false);
+            MirahTokenId eol = MirahTokenId.get(Tokens.tNL.ordinal());
+            MirahTokenId eof = MirahTokenId.get(Tokens.tEOF.ordinal());
+            while ( !eol.equals(toks.token().id()) && !eof.equals(toks.token().id())){
+                if ( !toks.moveNext() ){
+                    break;
+                }
             }
+            int off = toks.token().offset(hi);
+            return off;
+        } finally {
+            bd.readUnlock();
         }
-        int off = toks.token().offset(hi);
-        bd.readUnlock();
-        return off;
+        
         
     }
     
      static int getBeginningOfLine(Document doc, int caretOffset){
         BaseDocument bd = (BaseDocument)doc;
         bd.readLock();
-        
-        TokenHierarchy<?> hi = TokenHierarchy.get(doc);
-        TokenSequence<MirahTokenId> toks = mirahTokenSequence(doc, caretOffset, true);
-        MirahTokenId eol = MirahTokenId.get(Tokens.tNL.ordinal());
-        //MirahTokenId eof = MirahTokenId.get(Tokens.tEOF.ordinal());
-        while ( !eol.equals(toks.token().id())){
-            if ( !toks.movePrevious() ){
-                break;
+        try {
+            TokenHierarchy<?> hi = TokenHierarchy.get(doc);
+            TokenSequence<MirahTokenId> toks = mirahTokenSequence(doc, caretOffset, true);
+            MirahTokenId eol = MirahTokenId.get(Tokens.tNL.ordinal());
+            //MirahTokenId eof = MirahTokenId.get(Tokens.tEOF.ordinal());
+            while ( !eol.equals(toks.token().id())){
+                if ( !toks.movePrevious() ){
+                    break;
+                }
             }
+            int off = toks.token().offset(hi)+toks.token().length();
+            
+            return off;
+        } finally {
+            bd.readUnlock();
         }
-        int off = toks.token().offset(hi)+toks.token().length();
-        bd.readUnlock();
-        return off;
     }
     
     

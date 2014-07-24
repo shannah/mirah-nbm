@@ -87,7 +87,7 @@ public class MirahTypingCompletion {
             return caretOffset;
         }
         
-        int lParen = 999;
+        //int lParen = 999;
         
         while (ts.offset() < rowEnd) {
             final int id = ts.token().id().ordinal();
@@ -138,17 +138,22 @@ public class MirahTypingCompletion {
      * doc-or-section-end-and-fwd-bias.
      */
     private static TokenSequence<MirahTokenId> mirahTokenSequence(Document doc, int caretOffset, boolean backwardBias) {
-        TokenHierarchy<?> hi = TokenHierarchy.get(doc);
-        List<TokenSequence<?>> tsList = hi.embeddedTokenSequences(caretOffset, backwardBias);
-        // Go from inner to outer TSes
-        for (int i = tsList.size() - 1; i >= 0; i--) {
-            TokenSequence<?> ts = tsList.get(i);
-            if (ts.languagePath().innerLanguage() == MirahTokenId.getLanguage()) {
-                TokenSequence<MirahTokenId> javaInnerTS = (TokenSequence<MirahTokenId>) ts;
-                return javaInnerTS;
+        ((BaseDocument)doc).readLock();
+        try {
+            TokenHierarchy<?> hi = TokenHierarchy.get(doc);
+            List<TokenSequence<?>> tsList = hi.embeddedTokenSequences(caretOffset, backwardBias);
+            // Go from inner to outer TSes
+            for (int i = tsList.size() - 1; i >= 0; i--) {
+                TokenSequence<?> ts = tsList.get(i);
+                if (ts.languagePath().innerLanguage() == MirahTokenId.getLanguage()) {
+                    TokenSequence<MirahTokenId> javaInnerTS = (TokenSequence<MirahTokenId>) ts;
+                    return javaInnerTS;
+                }
             }
+            return null;
+        } finally {
+            ((BaseDocument)doc).readUnlock();
         }
-        return null;
     }
     
     
@@ -183,7 +188,7 @@ public class MirahTypingCompletion {
         }
         boolean first = true;
         
-        MirahTokenId WHITESPACE = MirahTokenId.get(999);
+        MirahTokenId WHITESPACE = MirahTokenId.get(Tokens.tWhitespace.ordinal());
         //MirahTokenId LINE_COMMENT = MirahTokenId.get(Tokens.t)
         MirahTokenId LBRACE = MirahTokenId.get(Tokens.tLBrace.ordinal());
         
@@ -233,7 +238,7 @@ public class MirahTypingCompletion {
         }
         boolean first = true;
         
-        MirahTokenId WHITESPACE = MirahTokenId.get(999);
+        MirahTokenId WHITESPACE = MirahTokenId.get(Tokens.tWhitespace.ordinal());
         //MirahTokenId LINE_COMMENT = MirahTokenId.get(Tokens.t)
         MirahTokenId LBRACE = MirahTokenId.get(Tokens.tLBrace.ordinal());
         
@@ -597,7 +602,9 @@ public class MirahTypingCompletion {
      * @throws BadLocationException
      */
     static void removeCompletedQuote(DeletedTextInterceptor.Context context) throws BadLocationException {
+        
         TokenSequence<MirahTokenId> ts = mirahTokenSequence(context, false);
+        
         if (ts == null) {
             return;
         }

@@ -28,6 +28,7 @@ public class MirahLexer implements Lexer<MirahTokenId>{
     private boolean inTypeHint = false;
     private int lastToken = -1;
     
+    
     private static final Logger LOG = Logger.getLogger(MirahLexer.class.getCanonicalName());
     private org.mirah.mmeta.BaseParser.Token<mirah.impl.Tokens> tok = null;
 
@@ -36,6 +37,7 @@ public class MirahLexer implements Lexer<MirahTokenId>{
         this.info = info;
         this.parser = parser;
         this.lexer = null;
+        
         
     }
 
@@ -54,7 +56,9 @@ public class MirahLexer implements Lexer<MirahTokenId>{
                 }
             }
             String str = sb.toString();
+            //System.out.println("Str is: "+str);
             lastPos = 0;
+            //strLen = str.length();
             lexer = new mirah.impl.MirahLexer(str, str.toCharArray(), parser);
         }
         
@@ -63,15 +67,18 @@ public class MirahLexer implements Lexer<MirahTokenId>{
             alreadyStarted = false;
             try {
                 tok = lexer.lex(lastPos);
+                
             } catch ( NullPointerException npe ){
+                npe.printStackTrace();
+                
                 int len = 1;
                 lastPos++;
-                return info.tokenFactory().createToken(MirahLanguageHierarchy.getToken(999), len);
+                return info.tokenFactory().createToken(MirahLanguageHierarchy.getToken(Tokens.tWhitespace.ordinal()), len);
             }
             
         } 
         
-        if ( Tokens.tEOF.equals(tok.type)){
+        if ( Tokens.tEOF.ordinal() == tok.type.ordinal()){
             
             lexer = null;
             tok = null;
@@ -104,11 +111,15 @@ public class MirahLexer implements Lexer<MirahTokenId>{
             lastPos = tok.endpos;
             lastToken = tok.type.ordinal();
             tok = null;
-            return info.tokenFactory ().createToken (tokid,len);
+            
+            //if ( lastPos == strLen ){
+            //    len--;
+            //}
+            return info.tokenFactory().createToken(tokid,len);
         } else {
             int len = tok.startpos-tok.pos;
             lastPos = tok.startpos;
-            return info.tokenFactory().createToken(MirahLanguageHierarchy.getToken(999), len);
+            return info.tokenFactory().createToken(MirahLanguageHierarchy.getToken(Tokens.tComment.ordinal()), len);
         }
         
         

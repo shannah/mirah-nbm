@@ -154,7 +154,7 @@ public class MirahLanguageHierarchy extends LanguageHierarchy<MirahTokenId>{
             Tokens.tDollar, Tokens.tInstVarBacktick, Tokens.tClassVarBacktick, Tokens.tComma, Tokens.tStar, Tokens.tStars, 
             Tokens.tAmper, Tokens.tAmpers, Tokens.tPipe, Tokens.tPipes, Tokens.tRocket, Tokens.tCharacter, Tokens.tEscape, 
             Tokens.tStringContent, Tokens.tStrEvBegin, Tokens.tRegexBegin, Tokens.tRegexEnd, Tokens.tHereDocId, 
-            Tokens.tHereDocBegin, Tokens.tHereDocEnd, Tokens.tUNKNOWN, Tokens.tEOF};
+            Tokens.tHereDocBegin, Tokens.tHereDocEnd, Tokens.tUNKNOWN, Tokens.tEOF, Tokens.tComment, Tokens.tJavaDoc, Tokens.tWhitespace};
         
         tokens = new ArrayList<MirahTokenId>();
         for ( Tokens t : toks ){
@@ -166,7 +166,7 @@ public class MirahLanguageHierarchy extends LanguageHierarchy<MirahTokenId>{
         tokens.add(new MirahTokenId("Class Declaration", "class-declaration", CLASS_DECLARATION));
         tokens.add(new MirahTokenId("Method Declaration", "method-declaration", METHOD_DECLARATION ));
         tokens.add(new MirahTokenId("Type Hint", "type-hint", TYPE_HINT));
-        tokens.add(new MirahTokenId("WHITESPACE","whitespace", 999 ));
+        //tokens.add(new MirahTokenId("WHITESPACE","whitespace", 999 ));
         
         idToToken = new HashMap<Integer, MirahTokenId> ();
         for (MirahTokenId token : tokens)
@@ -174,6 +174,7 @@ public class MirahLanguageHierarchy extends LanguageHierarchy<MirahTokenId>{
     }
     
     private static String getTokCategory(Tokens t){
+        
         if ( CLASS_DECLARATION == t.ordinal()){
             return "class-declaration";
         } else if ( METHOD_DECLARATION == t.ordinal()){
@@ -195,6 +196,8 @@ public class MirahLanguageHierarchy extends LanguageHierarchy<MirahTokenId>{
             return "class-var";
         } else if ( Tokens.tStringContent.equals(t) || Tokens.tDQuote.equals(t)){
             return "string";
+        } else if ( Tokens.tComment.equals(t) || Tokens.tJavaDoc.equals(t)){
+            return "comment";
         } else {
             return "unknown";
         }

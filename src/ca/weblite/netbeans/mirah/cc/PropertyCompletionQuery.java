@@ -40,11 +40,11 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
     @Override
     protected void query(CompletionResultSet crs, Document doc, int caretOffset) {
         BaseDocument bdoc = (BaseDocument)doc;
-        System.out.println("In property completion query");
+        //System.out.println("In property completion query");
         MirahParser.DocumentDebugger dbg = MirahParser.getDocumentDebugger(doc);
                 
         if ( dbg != null ){
-            System.out.println("Debugger is not null");
+            //System.out.println("Debugger is not null");
             try {
                 int p = caretOffset-1;
                 if ( p < 0 ){
@@ -65,11 +65,11 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                 int tokenStart = -1;
                 int tokenLen = -1;
                 
-                System.out.println("About to walk back the tree "+toks.offset()+" "+tAtPos);
+                //System.out.println("About to walk back the tree "+toks.offset()+" "+tAtPos);
                 while ( toks.offset() >= tAtPos ){
-                    System.out.println("OFFSET "+toks.offset());
+                    //System.out.println("OFFSET "+toks.offset());
                     Token<MirahTokenId> tok = toks.token();
-                    System.out.println("TOKEN is "+tok.id().name());
+                    //System.out.println("TOKEN is "+tok.id().name());
                     if ( tok.id() == tInstanceVar ){
                         foundToken = tok;
                         tokenStart = toks.offset();
@@ -151,19 +151,23 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
     private static TokenSequence<MirahTokenId> mirahTokenSequence(Document doc, int caretOffset, boolean backwardBias) {
         BaseDocument bd = (BaseDocument)doc;
         bd.readLock();
-        TokenHierarchy<?> hi = TokenHierarchy.get(doc);
-        List<TokenSequence<?>> tsList = hi.embeddedTokenSequences(caretOffset, backwardBias);
-        // Go from inner to outer TSes
-        for (int i = tsList.size() - 1; i >= 0; i--) {
-            TokenSequence<?> ts = tsList.get(i);
-            if (ts.languagePath().innerLanguage() == MirahTokenId.getLanguage()) {
-                TokenSequence<MirahTokenId> javaInnerTS = (TokenSequence<MirahTokenId>) ts;
-                bd.readUnlock();
-                return javaInnerTS;
+        try {
+            TokenHierarchy<?> hi = TokenHierarchy.get(doc);
+            List<TokenSequence<?>> tsList = hi.embeddedTokenSequences(caretOffset, backwardBias);
+            // Go from inner to outer TSes
+            for (int i = tsList.size() - 1; i >= 0; i--) {
+                TokenSequence<?> ts = tsList.get(i);
+                if (ts.languagePath().innerLanguage() == MirahTokenId.getLanguage()) {
+                    TokenSequence<MirahTokenId> javaInnerTS = (TokenSequence<MirahTokenId>) ts;
+                    bd.readUnlock();
+                    return javaInnerTS;
+                }
             }
+            
+            return null;
+        } finally {
+            bd.readUnlock();
         }
-        bd.readUnlock();
-        return null;
     }
     
 }
