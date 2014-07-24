@@ -2,6 +2,8 @@
 
 A module to add Mirah support to Netbeans.
 
+![Screenshot](screenshots/overview.png)
+
 ##Features
 
 ###Mirah (the language)
@@ -32,11 +34,11 @@ Apache 2.0
 
 ##Download
 
-[ca-weblite-netbeans-mirah.nbm]()
+[ca-weblite-netbeans-mirah.nbm](https://github.com/shannah/mirah-nbm/raw/master/ca-weblite-netbeans-mirah.nbm)
 
 ##Installation Instructions
 
-1. [Download]() the .nbm file.
+1. [Download](https://github.com/shannah/mirah-nbm/raw/master/ca-weblite-netbeans-mirah.nbm) the .nbm file.
 2. In Netbeans, select "Tools" > "Plugins"
 3. Click on the "Downloaded" tab, and click the "Add Plugins…" button.
 4. In the file dialog, select the ca-weblite-netbeans-mirah.nbm module that you downloaded, and click "Open".
@@ -58,3 +60,24 @@ Apache 2.0
 
 ###Method Completion
 
+Method completion is a little bit rough, but it works in most cases.
+
+1. Press Ctrl-Space after typing ".", and it will present a drop-down list of available methods on this object.
+
+![Autocomplete](screenshots/autocomplete.png)
+
+###Import Hints
+
+If you use a class or symbol that hasn't been imported into the file's scope, you will receive a hint in the margin that allows you to select appropriate classes that it has found in the classpath and add the import statement automatically.
+
+![Import hint](screenshots/import-hint.png)
+
+##Limitations
+
+This was the first Netbeans module of this complexity that I have written, and there is still much to do.  It does handle method completion, but it is still a little clunky and only provides autocomplete for those methods that it could introspect using Java reflection.  This doesn't include Rubyisms like the List.each() method, and it currently doesn't include properties or static fields.
+
+There also isn't any support for refactoring operations, either from a producer or consumer standpoint. 
+
+## Bugs
+
+Report bugs in the [issue tracker](https://github.com/shannah/mirah-nbm/issues)
