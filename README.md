@@ -34,11 +34,11 @@ Apache 2.0
 
 ##Download
 
-[ca-weblite-netbeans-mirah.nbm](https://github.com/shannah/mirah-nbm/raw/master/ca-weblite-netbeans-mirah.nbm)
+[ca-weblite-netbeans-mirah.nbm](https://s3.amazonaws.com/download.weblite.ca/mirah-nbm/ca-weblite-netbeans-mirah.nbm)
 
 ##Installation Instructions
 
-1. [Download](https://github.com/shannah/mirah-nbm/raw/master/ca-weblite-netbeans-mirah.nbm) the .nbm file.
+1. [Download](https://s3.amazonaws.com/download.weblite.ca/mirah-nbm/ca-weblite-netbeans-mirah.nbm) the .nbm file.
 2. In Netbeans, select "Tools" > "Plugins"
 3. Click on the "Downloaded" tab, and click the "Add Plugins…" button.
 4. In the file dialog, select the ca-weblite-netbeans-mirah.nbm module that you downloaded, and click "Open".
@@ -81,3 +81,38 @@ There also isn't any support for refactoring operations, either from a producer 
 ## Bugs
 
 Report bugs in the [issue tracker](https://github.com/shannah/mirah-nbm/issues)
+
+##Building from Source
+
+1. Clone the repo
+2. Open project in Netbeans
+3. Build project
+
+
+##Contributions
+
+Mirah is awesome, but the community is small right now.  Make it better by forking and improving any of the following projects:
+
+1. This project
+2. The [Mirah Ant Task](https://github.com/shannah/mirah-ant) (used by the Netbeans module to perform builds)
+2. The [Mirah Project](https://github.com/mirah/mirah) (Includes the Mirah compiler and CLI tools)
+3. The [Mirah Parser](https://github.com/mirah/mirah-parser) Project (Used by the Mirah compiler for parsing source)
+
+##References
+
+* [The Mirah Website](http://www.mirah.org/)
+* [The Mirah Github Repository](https://github.com/mirah)
+* [The Mirah Wiki](https://github.com/mirah/mirah/wiki)
+
+##Credits
+
+1. Module developed and maintained by [Steve Hannah](http://sjhannah.com)
+2. Mirah created by [Charles Nutter](http://blog.headius.com/)
+3. Thanks to [Nick Howard](https://github.com/baroquebobcat) and [Ryan Brown](https://github.com/ribrdb) for their stewardship of the Mirah project in recent years, and for their guidance in building this module.
+
+
+
+
+
+
+
