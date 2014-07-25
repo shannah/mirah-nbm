@@ -59,7 +59,7 @@ public enum BuildScriptType {
     WEB {
         @Override
         protected String getMirahBuildXslPath() {
-            return "ca/weblite/mirah/antproject/resources/mirah-build-web.xsl"; // NOI18N
+            return "ca/weblite/netbeans/mirah/antproject/resources/mirah-build-web.xsl"; // NOI18N
         }
     },
 
