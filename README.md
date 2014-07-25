@@ -4,6 +4,14 @@ A module to add Mirah support to Netbeans.
 
 ![Screenshot](screenshots/overview.png)
 
+##Project Status
+
+Pre-alpha
+
+The module should allow you to use Mirah with your JavaSE, Java Web, and EJB projects.  You can try it with any type of Java project, but I have only tested with these three kinds.  I don't think it works right now with JavaFX projects - but if this is required, it isn't too hard to add support.
+
+Occasionally I still run into problems with the lexer locking up…  But as I continue to do Mirah development, I hope to get these resolved.
+
 ##Features
 
 ###Mirah (the language)
