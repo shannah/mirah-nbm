@@ -191,6 +191,7 @@ public class MirahParser extends Parser {
             cp = classPath.toString().substring(0, classPath.length()-1);
         }
         compiler.setClasspath(cp);
+        compiler.setMacroClasspath(cp);
         DocumentDebugger debugger = new DocumentDebugger();
         
         compiler.setDebugger(debugger);
