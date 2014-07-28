@@ -52,7 +52,7 @@ import org.netbeans.spi.options.AdvancedOption;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
-import static ca.weblite.netbeans.mirah.support.api.Bundle.*;
+//import static ca.weblite.netbeans.mirah.support.api.Bundle.*;
 
 /**
  * Mirah settings
@@ -108,13 +108,13 @@ public final class MirahSettings extends AdvancedOption {
     @Override
     @NbBundle.Messages("AdvancedOption_DisplayName_Support=Mirah")
     public String getDisplayName() {
-        return AdvancedOption_DisplayName_Support();
+        return "Mirah Support";//AdvancedOption_DisplayName_Support();
     }
 
     @Override
     @NbBundle.Messages("AdvancedOption_Tooltip_Support=Mirah configuration")
     public String getTooltip() {
-        return AdvancedOption_Tooltip_Support();
+        return "Mirah support";//AdvancedOption_Tooltip_Support();
     }
 
     @Override

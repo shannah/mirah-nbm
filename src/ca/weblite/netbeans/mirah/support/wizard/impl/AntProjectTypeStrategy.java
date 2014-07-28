@@ -64,7 +64,7 @@ import org.netbeans.api.project.libraries.Library;
 import org.netbeans.api.project.libraries.LibraryManager;
 import ca.weblite.netbeans.mirah.support.wizard.JUnit;
 import ca.weblite.netbeans.mirah.support.wizard.ProjectTypeStrategy;
-import static ca.weblite.netbeans.mirah.support.wizard.impl.Bundle.*;
+//import static ca.weblite.netbeans.mirah.support.wizard.impl.Bundle.*;
 import org.netbeans.spi.java.classpath.ClassPathProvider;
 import org.netbeans.spi.java.project.support.ui.BrokenReferencesSupport;
 import org.openide.DialogDisplayer;
@@ -208,6 +208,7 @@ public class AntProjectTypeStrategy extends ProjectTypeStrategy {
         "junitlib_confirm_accept=Download and Install JUnit"
     })
     private boolean storeProjectSettingsJUnitVer(JUnit jUnit) {
+        
         String version = "";
         if (jUnit == JUnit.JUNIT3) {
             version = JUNIT3_LIB;
@@ -218,8 +219,8 @@ public class AntProjectTypeStrategy extends ProjectTypeStrategy {
             for (BrokenReferencesSupport.LibraryDefiner definer : Lookup.getDefault().lookupAll(BrokenReferencesSupport.LibraryDefiner.class)) {
                 Callable<Library> download = definer.missingLibrary(version);
                 if (download != null) {
-                    NotifyDescriptor nd = new NotifyDescriptor.Confirmation(junitlib_confirm_text(), junitlib_confirm_title());
-                    JButton accept = new JButton(junitlib_confirm_accept());
+                    NotifyDescriptor nd = new NotifyDescriptor.Confirmation(/*junitlib_confirm_text()*/"foo", /*junitlib_confirm_title()*/"bar");
+                    JButton accept = new JButton(/*junitlib_confirm_accept()*/);
                     accept.setDefaultCapable(true);
                     nd.setOptions(new Object[] {accept, NotifyDescriptor.CANCEL_OPTION});
                     if (DialogDisplayer.getDefault().notify(nd) == accept) {
