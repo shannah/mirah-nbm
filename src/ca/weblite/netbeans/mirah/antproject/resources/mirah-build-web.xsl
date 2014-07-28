@@ -126,9 +126,14 @@ made subject to such option by the copyright holder.
                                 <xsl:attribute name="srcdir">@{srcdir}</xsl:attribute>
                                 <xsl:attribute name="classpath">@{classpath}</xsl:attribute>
                                 <xsl:attribute name="sourcepath">@{sourcepath}</xsl:attribute>
+                                <xsl:attribute name="destdir">@{destdir}</xsl:attribute>
                                 <xsl:attribute name="includes">@{includes}</xsl:attribute>
                                 <xsl:attribute name="excludes">@{excludes}</xsl:attribute>
-                                
+                                <src>
+                                    <dirset dir="@{{gensrcdir}}" erroronmissingdir="false">
+                                        <include name="*"/>
+                                    </dirset>
+                                </src>
                                 
                                 <xsl:attribute name="debug">@{debug}</xsl:attribute>
                                 <xsl:attribute name="deprecation">${javac.deprecation}</xsl:attribute>
