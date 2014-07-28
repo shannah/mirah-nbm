@@ -52,7 +52,7 @@ public enum BuildScriptType {
     EJB {
         @Override
         protected String getMirahBuildXslPath() {
-            return "ca/weblite/netbeans/antproject/resources/mirah-build-ejb.xsl"; // NOI18N
+            return "ca/weblite/netbeans/mirah/antproject/resources/mirah-build-ejb.xsl"; // NOI18N
         }
     },
 

@@ -116,7 +116,7 @@ made subject to such option by the copyright holder.
                         <taskdef>
                             <xsl:attribute name="name">mirahc</xsl:attribute>
                             <xsl:attribute name="classpath">${libs.mirah-all.classpath}:${javac.classpath}:${j2ee.platform.classpath}</xsl:attribute>
-                            <xsl:attribute name="classname">ca.weblite.mirah.ant.MirahcTaask</xsl:attribute>
+                            <xsl:attribute name="classname">ca.weblite.mirah.ant.MirahcTask</xsl:attribute>
                         </taskdef>
                         <property name="empty.dir" location="${{build.dir}}/empty"/>
                         <mkdir dir="${{empty.dir}}"/>

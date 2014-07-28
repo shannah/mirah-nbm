@@ -111,11 +111,13 @@ made subject to such option by the copyright holder.
                     </element>
                     <sequential>
                         <taskdef>
-                            <xsl:attribute name="name">mirah</xsl:attribute>
+                            <xsl:attribute name="name">mirahc</xsl:attribute>
                             <xsl:attribute name="classpath">${libs.mirah-all.classpath}:${javac.classpath}:${j2ee.platform.classpath}</xsl:attribute>
                             <xsl:attribute name="classname">ca.weblite.mirah.ant.MirahcTask</xsl:attribute>
                         </taskdef>
                         <property name="empty.dir" location="${{build.dir}}/empty"/>
+                        <property name="javac.compilerargs" value=""/>
+                        <property name="javac.compilerargs.jaxws" value=""/>
                         <mkdir dir="${{empty.dir}}"/>
                         <mkdir>
                             <xsl:attribute name="dir">${build.dir}/mirah</xsl:attribute>
@@ -128,8 +130,13 @@ made subject to such option by the copyright holder.
                                 <xsl:attribute name="sourcepath">@{sourcepath}</xsl:attribute>
                                 <xsl:attribute name="includes">@{includes}</xsl:attribute>
                                 <xsl:attribute name="excludes">@{excludes}</xsl:attribute>
-                                
-                                
+                                <xsl:attribute name="destdir">@{destdir}</xsl:attribute>
+                                <xsl:attribute name="includeAntRuntime">false</xsl:attribute>
+                                <src>
+                                    <dirset dir="@{{gensrcdir}}" erroronmissingdir="false">
+                                        <include name="*"/>
+                                    </dirset>
+                                </src>
                                 <xsl:attribute name="debug">@{debug}</xsl:attribute>
                                 <xsl:attribute name="deprecation">${javac.deprecation}</xsl:attribute>
                                 <xsl:attribute name="encoding">${source.encoding}</xsl:attribute>
@@ -143,7 +150,7 @@ made subject to such option by the copyright holder.
                                     <xsl:attribute name="tempdir">${java.io.tmpdir}</xsl:attribute>
                                 </xsl:if>
 
-                                <compilerarg line="${{javac.compilerargs}}"/>
+                                <compilerarg line="${{javac.compilerargs}} ${{javac.compilerargs.jaxws}}"/>
                                 <customize/>
                             </javac>
                         </mirahc>
