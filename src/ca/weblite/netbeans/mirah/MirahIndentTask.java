@@ -14,6 +14,7 @@ import mirah.impl.Tokens;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenSequence;
+import org.netbeans.modules.editor.indent.api.IndentUtils;
 import org.netbeans.modules.editor.indent.spi.Context;
 import org.netbeans.modules.editor.indent.spi.ExtraLock;
 import org.netbeans.modules.editor.indent.spi.IndentTask;
@@ -33,13 +34,16 @@ public class MirahIndentTask implements IndentTask  {
     private static final Logger LOG = Logger.getLogger(MirahIndentTask.class.getCanonicalName());
     public MirahIndentTask(Context ctx){
         this.context = ctx;
+        
     }
 
     @Override
     public void reindent() throws BadLocationException {
+        
         if ( context.startOffset() <= 0 ){
             return;
         }
+        int indentSize = IndentUtils.indentLevelSize(context.document());
         int prevLineStart = context.lineStartOffset(context.startOffset()-1);
         int prevIndent = context.lineIndent(prevLineStart);
         int currLineStart = context.lineStartOffset(context.startOffset());
@@ -157,7 +161,7 @@ public class MirahIndentTask implements IndentTask  {
         }
         
         if ( numOpeners > 0){
-            indent += 4;
+            indent += indentSize;
         } 
         
         toks = mirahTokenSequence(context.document(), context.caretOffset(), false);
@@ -172,7 +176,7 @@ public class MirahIndentTask implements IndentTask  {
         
         while ( toks.offset() < currLineEnd ){
             if ( closers.contains(toks.token().id())){
-                indent -= 4;
+                indent -= indentSize;
                 break;
             }
             toks.moveNext();
