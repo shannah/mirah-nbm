@@ -66,7 +66,10 @@ import org.netbeans.api.project.ant.AntBuildExtender;
 import org.netbeans.api.project.libraries.Library;
 import org.netbeans.api.project.libraries.LibraryManager;
 import ca.weblite.netbeans.mirah.support.spi.MirahExtenderImplementation;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.net.URI;
+import org.netbeans.spi.project.ProjectFactory;
 import org.netbeans.spi.project.support.ant.GeneratedFilesHelper;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -323,26 +326,51 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
      * @return true if the mirah extension were successfully applied, false otherwise
      */
     protected final boolean addBuildScript() {
-        AntBuildExtender extender = project.getLookup().lookup(AntBuildExtender.class);
-        if (extender != null && extender.getExtensibleTargets().contains(EXTENSIBLE_TARGET_NAME)) {
-            AntBuildExtender.Extension extension = extender.getExtension(MIRAH_EXTENSION_ID);
-            if (extension == null) {
-                FileObject destDirFO = project.getProjectDirectory().getFileObject("nbproject"); // NOI18N
-                try {
-                    GeneratedFilesHelper helper = new GeneratedFilesHelper(project.getProjectDirectory());
-                    helper.generateBuildScriptFromStylesheet("nbproject/mirah-build.xml", getMirahBuildXls());
-                    FileObject destFileFO = destDirFO.getFileObject("mirah-build", "xml"); // NOI18N
-                    extension = extender.addExtension(MIRAH_EXTENSION_ID, destFileFO);
-                    extension.addDependency(EXTENSIBLE_TARGET_NAME, "-mirah-init-macrodef-javac"); // NOI18N
-                    ProjectManager.getDefault().saveProject(project);
+        
+        try {
+            
+        
+            AntBuildExtender extender = project.getLookup().lookup(AntBuildExtender.class);
+            
+            if (extender != null && extender.getExtensibleTargets().contains(EXTENSIBLE_TARGET_NAME)) {
+                AntBuildExtender.Extension extension = extender.getExtension(MIRAH_EXTENSION_ID);
+                if (extension == null) {
+                    FileObject destDirFO = project.getProjectDirectory().getFileObject("nbproject"); // NOI18N
+                    try {
+                        GeneratedFilesHelper helper = new GeneratedFilesHelper(project.getProjectDirectory());
+                        helper.generateBuildScriptFromStylesheet("nbproject/mirah-build.xml", getMirahBuildXls());
+                        FileObject destFileFO = destDirFO.getFileObject("mirah-build", "xml"); // NOI18N
+                        extension = extender.addExtension(MIRAH_EXTENSION_ID, destFileFO);
+                        extension.addDependency(EXTENSIBLE_TARGET_NAME, "-mirah-init-macrodef-javac"); // NOI18N
+                        ProjectManager.getDefault().saveProject(project);
+                        FileObject buildImplFO = destDirFO.getFileObject("build-impl", "xml");
+                        String contents = buildImplFO.asText();
+                        if ( !contents.contains("mirah-build.xml")){
+                            // Codename One projects don't seem to be regenerating the build-impl.xml file automatically
+                            // so we have to use this ugly regex workaround to updating it ourselves. 
+                            contents = contents.replaceAll("<project [^>]*>", "$0\n <import file=\"mirah-build.xml\"/>");
+                            contents = contents.replaceAll("(<target depends=\".*?)(\"[^>]* name=\"-pre-pre-compile\">)", "$1,-mirah-init-macrodef-javac$2");
+                            PrintWriter os = null;
+                            try {
+                                os = new PrintWriter(buildImplFO.getOutputStream());
+                                os.write(contents);
+                            } finally {
+                                try {
+                                    os.close();
+                                } catch ( Exception ex){}
+                            }
+                        }
+                        return true;
+                    } catch (IOException ioe) {
+                        Exceptions.printStackTrace(ioe);
+                    }
+                } else {
+                    // extension is already registered
                     return true;
-                } catch (IOException ioe) {
-                    Exceptions.printStackTrace(ioe);
                 }
-            } else {
-                // extension is already registered
-                return true;
             }
+        } finally {
+            
         }
         return false;
     }
