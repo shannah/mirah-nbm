@@ -15,7 +15,58 @@
       <echo message="In Mirah precompile for CN1 Lib"/>
       <delete dir="${build.dir}/mirah"/>
       <mkdir dir="${build.dir}/mirah"/>
-      <mirahc dest="${build.dir}/mirah" postrunjavac="false" macrojardir="lib/mirah/macros">
+      
+      <property name="mirah.tmp" location="${build.dir}/mirah_tmp"/>
+        <property name="mirah.tmp.macros" location="${mirah.tmp}/macros"/>
+        <property name="mirah.tmp.macros.src" location="${mirah.tmp.macros}/src"/>
+        <property name="mirah.tmp.macros.classes" location="${mirah.tmp.macros}/classes"/>
+        <delete dir="${mirah.tmp.macros.src}"/>
+        <mkdir dir="${mirah.tmp.macros.src}"/>
+        <copy todir="${mirah.tmp.macros.src}">
+            <fileset dir="${src.dir}" includes="**/macros/**" excludes="**/Bootstrap.mirah"/>
+        </copy>
+        <delete dir="${mirah.tmp.macros.classes}"/>
+        <mkdir dir="${mirah.tmp.macros.classes}"/>
+        <mirahc dest="${mirah.tmp.macros.classes}" postrunjavac="false" macrojardir="${mirah.macros.jardir}">
+            <javac classpath="${javac.classpath}" 
+                   bootclasspath="lib/CLDC11.jar"
+                   deprecation="${javac.deprecation}" 
+                   destdir="${mirah.tmp.macros.classes}" 
+                   encoding="${source.encoding}" 
+                   excludes="${excludes}" 
+                   includeantruntime="false" 
+                   includes="${includes}" 
+                   source="${javac.source}" 
+                   sourcepath="${empty.dir}" 
+                   srcdir="${mirah.tmp.macros.src}"
+                   target="${javac.target}">
+                
+            </javac>
+        </mirahc>
+        <delete dir="${mirah.tmp.macros.src}"/>
+        <mkdir dir="${mirah.tmp.macros.src}"/>
+        <copy todir="${mirah.tmp.macros.src}">
+            <fileset dir="${src.dir}" includes="**/macros/Bootstrap.mirah"/>
+        </copy>
+        <mirahc dest="${mirah.tmp.macros.classes}" postrunjavac="false" macrojardir="${mirah.macros.jardir}" macroclasspath="${mirah.tmp.macros.classes}">
+            <javac classpath="${javac.classpath}:${mirah.tmp.macros.classes}" 
+                   bootclasspath="lib/CLDC11.jar"
+                   deprecation="${javac.deprecation}" 
+                   destdir="${mirah.tmp.macros.classes}" 
+                   encoding="${source.encoding}" 
+                   excludes="${excludes}" 
+                   includeantruntime="false" 
+                   includes="${includes}" 
+                   source="${javac.source}" 
+                   sourcepath="${empty.dir}" 
+                   srcdir="${mirah.tmp.macros.src}"
+                   target="${javac.target}">
+                
+            </javac>
+        </mirahc>
+        
+      
+      <mirahc dest="${build.dir}/mirah" postrunjavac="false" macrojardir="lib/mirah/macros" macroclasspath="${mirah.tmp.macros.classes}">
             <javac classpath="${javac.classpath}" 
                    bootclasspath="lib/CLDC11.jar"
                    deprecation="${javac.deprecation}" 
@@ -32,9 +83,8 @@
             </javac>
         </mirahc>
         <copy todir="build/classes">
-          <fileset dir="build/mirah">
-            <include name="**"/>
-          </fileset>
+          <fileset dir="build/mirah" includes="**" excludes="**/macros/**"/>
+          
         </copy>
     </target>
     
@@ -51,7 +101,57 @@
         <echo>In Mirah Precompile for CN1 Project</echo>
         <mkdir dir="lib/impl/cls"/>
         <delete dir="${build.dir}/mirah"/>
-        <mirahc dest="lib/impl/cls" postrunjavac="false" macrodjardir="lib/mirah/macros">
+        
+        <property name="mirah.tmp" location="${build.dir}/mirah_tmp"/>
+        <property name="mirah.tmp.macros" location="${mirah.tmp}/macros"/>
+        <property name="mirah.tmp.macros.src" location="${mirah.tmp.macros}/src"/>
+        <property name="mirah.tmp.macros.classes" location="${mirah.tmp.macros}/classes"/>
+        <delete dir="${mirah.tmp.macros.src}"/>
+        <mkdir dir="${mirah.tmp.macros.src}"/>
+        <copy todir="${mirah.tmp.macros.src}">
+            <fileset dir="${src.dir}" includes="**/macros/**" excludes="**/Bootstrap.mirah"/>
+        </copy>
+        <delete dir="${mirah.tmp.macros.classes}"/>
+        <mkdir dir="${mirah.tmp.macros.classes}"/>
+        <mirahc dest="${mirah.tmp.macros.classes}" postrunjavac="false" macrojardir="${mirah.macros.jardir}">
+            <javac classpath="${javac.classpath}:${mirah.tmp.macros.classes}" 
+                   bootclasspath="lib/CLDC11.jar"
+                   deprecation="${javac.deprecation}" 
+                   destdir="${mirah.tmp.macros.classes}" 
+                   encoding="${source.encoding}" 
+                   excludes="${excludes}" 
+                   includeantruntime="false" 
+                   includes="${includes}" 
+                   source="${javac.source}" 
+                   sourcepath="${empty.dir}" 
+                   srcdir="${mirah.tmp.macros.src}" 
+                   target="${javac.target}">
+                
+            </javac>
+        </mirahc>
+        <delete dir="${mirah.tmp.macros.src}"/>
+        <mkdir dir="${mirah.tmp.macros.src}"/>
+        <copy todir="${mirah.tmp.macros.src}">
+            <fileset dir="${src.dir}" includes="**/macros/Bootstrap.mirah"/>
+        </copy>
+        <mirahc dest="${mirah.tmp.macros.classes}" postrunjavac="false" macrojardir="${mirah.macros.jardir}" macroclasspath="${mirah.tmp.macros.classes}">
+            <javac classpath="${javac.classpath}" 
+                   bootclasspath="lib/CLDC11.jar"
+                   deprecation="${javac.deprecation}" 
+                   destdir="${mirah.tmp.macros.classes}" 
+                   encoding="${source.encoding}" 
+                   excludes="${excludes}" 
+                   includeantruntime="false" 
+                   includes="${includes}" 
+                   source="${javac.source}" 
+                   sourcepath="${empty.dir}" 
+                   srcdir="${mirah.tmp.macros.src}" 
+                   target="${javac.target}">
+                
+            </javac>
+        </mirahc>
+        
+        <mirahc dest="lib/impl/cls" postrunjavac="false" macrojardir="lib/mirah/macros" macroclasspath="${mirah.tmp.macros.classes}">
             <javac classpath="${javac.classpath}" 
                    bootclasspath="lib/CLDC11.jar"
                    deprecation="${javac.deprecation}" 
@@ -68,6 +168,10 @@
             </javac>
         </mirahc>
         
+        <delete>
+            <fileset dir="lib/impl/cls" includes="**/macros/**"/>
+        </delete>
+        <antcall target="copy-libs"/>
         
        
     </target>

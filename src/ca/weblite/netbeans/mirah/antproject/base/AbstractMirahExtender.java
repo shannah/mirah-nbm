@@ -90,13 +90,11 @@ import org.openide.util.Parameters;
  * @author Martin Janicek
  */
 public abstract class AbstractMirahExtender implements MirahExtenderImplementation {
-
-
+    
     private static final String EXTENSIBLE_TARGET_NAME = "-pre-pre-compile"; // NOI18N
     private static final String MIRAH_EXTENSION_ID = "mirah"; // NOI18N
     private static final String PROJECT_PROPERTIES_PATH = "nbproject/project.properties"; // NOI18N
-    private static final String CN1_LIBRARY_PROPERTIES_PATH = "codenameone_library.properties";
-    
+    private static final String CN1_LIBRARY_PROPERTIES_PATH = "codenameone_library.properties";  
     private static final String EXCLUDE_PROPERTY = "build.classes.excludes"; // NOI18N
     private static final String DISABLE_COMPILE_ON_SAVE = "compile.on.save.unsupported.mirah"; // NOI18N
     private static final String EXCLUSION_PATTERN = "**/*.mirah"; // NOI18N
