@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <!-- Initialization Task.  Loads the MirahcTask -->
+    <target name="mirah-init" depends="init">
+        <taskdef name="mirahc" classpath="${libs.mirah-all.classpath}:${javac.classpath}" classname="ca.weblite.mirah.ant.MirahcTask"/>
+    </target>
+    
+    <!-- Pre and post compile targets for Codename One Libraries
+    CN1 libs should be compiled to the build/mirah directory using
+    the CLDC11.jar as the bootclasspath.  After compile, they should
+    be copied to the build/classes directory. -->
+    <property file="codenameone_library.properties"/>
+    <property file="codenameone_settings.properties"/>
+    <target name="mirah-precompile-cn1lib" depends="mirah-init" if="codename1.is_library">
+      <echo message="In Mirah precompile for CN1 Lib"/>
+      <delete dir="${build.dir}/mirah"/>
+      <mkdir dir="${build.dir}/mirah"/>
+      <mirahc dest="${build.dir}/mirah" postrunjavac="false" macrojardir="lib/mirah/macros">
+            <javac classpath="${javac.classpath}" 
+                   bootclasspath="lib/CLDC11.jar"
+                   deprecation="${javac.deprecation}" 
+                   destdir="${build.classes.dir}" 
+                   encoding="${source.encoding}" 
+                   excludes="${excludes}" 
+                   includeantruntime="false" 
+                   includes="${includes}" 
+                   source="${javac.source}" 
+                   sourcepath="${empty.dir}" 
+                   srcdir="${src.dir}" 
+                   target="${javac.target}">
+                
+            </javac>
+        </mirahc>
+        <copy todir="build/classes">
+          <fileset dir="build/mirah">
+            <include name="**"/>
+          </fileset>
+        </copy>
+    </target>
+    
+    <target name="mirah-postcompile-cn1lib" depends="mirah-init" if="codename1.is_library">
+      <echo>In postcompile cn1lib</echo>
+      <copy todir="build/classes">
+        <fileset dir="build/mirah">
+          <include name="**"/>
+        </fileset>
+      </copy>
+    </target>
+    
+    <target name="mirah-precompile" depends="mirah-init" if="codename1.displayName">
+        <echo>In Mirah Precompile for CN1 Project</echo>
+        <mkdir dir="lib/impl/cls"/>
+        <delete dir="${build.dir}/mirah"/>
+        <mirahc dest="lib/impl/cls" postrunjavac="false" macrodjardir="lib/mirah/macros">
+            <javac classpath="${javac.classpath}" 
+                   bootclasspath="lib/CLDC11.jar"
+                   deprecation="${javac.deprecation}" 
+                   destdir="lib/impl/cls" 
+                   encoding="${source.encoding}" 
+                   excludes="${excludes}" 
+                   includeantruntime="false" 
+                   includes="${includes}" 
+                   source="${javac.source}" 
+                   sourcepath="${empty.dir}" 
+                   srcdir="${src.dir}" 
+                   target="${javac.target}">
+                
+            </javac>
+        </mirahc>
+        
+        
+       
+    </target>
+   
+</project>

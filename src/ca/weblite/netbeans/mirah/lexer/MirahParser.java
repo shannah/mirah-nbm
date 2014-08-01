@@ -121,6 +121,8 @@ public class MirahParser extends Parser {
     
     
     
+    
+    
     public void reparse(Snapshot snapshot, String content) throws ParseException {
         
         
@@ -133,6 +135,7 @@ public class MirahParser extends Parser {
         FileObject src = snapshot.getSource().getFileObject();
         
         Project project = FileOwnerQuery.getOwner(src);
+        
         FileObject projectDirectory = project.getProjectDirectory();
         FileObject buildDir = projectDirectory.getFileObject("build");
         
@@ -186,18 +189,31 @@ public class MirahParser extends Parser {
             
         }
         
+        
+        String macroPath = new StringBuilder()
+        
+                .append(buildDir.getPath())
+                .append(File.separator)
+                .append("mirah_tmp") 
+                .append(File.separator)
+                .append("macros")
+                .append(File.separator)
+                .append("classes")
+                .append(File.pathSeparator)
+                .toString()
+                ;
+        
         String cp = ".";
         if ( classPath.length() >= 1 ){
             cp = classPath.toString().substring(0, classPath.length()-1);
         }
-        compiler.setClasspath(cp);
-        compiler.setMacroClasspath(cp);
+        compiler.setClasspath(macroPath+File.pathSeparator+cp);
+        
+        System.out.println("Setting macro classpath to "+cp);
+        compiler.setMacroClasspath(macroPath.substring(0, macroPath.length()-1));
         DocumentDebugger debugger = new DocumentDebugger();
         
         compiler.setDebugger(debugger);
-        
-        
-        
         
         
         

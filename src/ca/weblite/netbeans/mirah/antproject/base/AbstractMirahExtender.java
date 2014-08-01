@@ -76,6 +76,7 @@ import org.openide.filesystems.FileUtil;
 import org.openide.filesystems.URLMapper;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.EditableProperties;
+
 import org.openide.util.Exceptions;
 import org.openide.util.Mutex;
 import org.openide.util.MutexException;
@@ -94,10 +95,13 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
     private static final String EXTENSIBLE_TARGET_NAME = "-pre-pre-compile"; // NOI18N
     private static final String MIRAH_EXTENSION_ID = "mirah"; // NOI18N
     private static final String PROJECT_PROPERTIES_PATH = "nbproject/project.properties"; // NOI18N
+    private static final String CN1_LIBRARY_PROPERTIES_PATH = "codenameone_library.properties";
+    
     private static final String EXCLUDE_PROPERTY = "build.classes.excludes"; // NOI18N
     private static final String DISABLE_COMPILE_ON_SAVE = "compile.on.save.unsupported.mirah"; // NOI18N
     private static final String EXCLUSION_PATTERN = "**/*.mirah"; // NOI18N
     private static final String MIRAH_BUILD_PATH_PROPERTY = "mirah.build.dir";
+    private static final String MIRAH_MACROS_JARDIR_PROPERTY = "mirah.macros.jardir";
     
 
     private final Project project;
@@ -129,7 +133,7 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
     @Override
     public boolean activate() {
         
-        boolean out = addClasspath() & addExcludes() & addBuildScript() /*& addDisableCompileOnSaveProperty()*/;
+        boolean out = addClasspath() & addExcludes() & addBuildScript() & addMacrosClasspath()/*& addDisableCompileOnSaveProperty()*/;
         
         return out;
     }
@@ -318,6 +322,21 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
         return false;
     }
 
+    protected final boolean addMacrosClasspath(){
+        try {
+            EditableProperties props = getEditableProperties(project, PROJECT_PROPERTIES_PATH);
+            props.setProperty(MIRAH_MACROS_JARDIR_PROPERTY, "lib/mirah/macros"); // NOI18N
+            storeEditableProperties(project, PROJECT_PROPERTIES_PATH, props);
+            FileObject projectFO = project.getProjectDirectory();
+            
+            FileUtil.createFolder(new File(projectFO.getPath(), "lib/mirah/macros"));
+            return true;
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return false;
+    }
+    
     /**
      * Wraps javac into the mirahc using imported mirah-build.xml. Adds mirah-build.xml
      * to the project, modifies build-impl.xml with respect to mirah compiler. This method
@@ -336,8 +355,59 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
                 AntBuildExtender.Extension extension = extender.getExtension(MIRAH_EXTENSION_ID);
                 if (extension == null) {
                     FileObject destDirFO = project.getProjectDirectory().getFileObject("nbproject"); // NOI18N
+                    FileObject projectFO = project.getProjectDirectory();
                     try {
                         GeneratedFilesHelper helper = new GeneratedFilesHelper(project.getProjectDirectory());
+                        // Check if this is a codename one project
+                        FileObject cn1PropertiesFO = projectFO.getFileObject("codenameone_settings", "properties");
+                        FileObject cn1LibraryPropertiesFO = projectFO.getFileObject("codenameone_library", "properties");
+                        boolean isCodename1Lib = cn1LibraryPropertiesFO != null;
+                        boolean isCodename1Proj = cn1PropertiesFO != null;
+                        if ( isCodename1Lib ){
+                            addCN1LibProperty();
+                        }
+                        if ( isCodename1Lib || isCodename1Proj){
+                            // This is a codename one project
+                            // With Codename One projects we don't want to override Javac.
+                            // Instead we will do a precompile and add the .class files to the 
+                            // lib/cls/impl directory so that they will be treated like 
+                            // a .cn1lib file.
+                            FileObject cn1buildFO = destDirFO.getFileObject("mirah-build-cn1", "xml");
+                            OutputStream os = null;
+                            if ( cn1buildFO == null ){
+                                os = destDirFO.createAndOpen("mirah-build-cn1.xml");
+                            } else {
+                                os = cn1buildFO.getOutputStream();
+                            }
+                            InputStream input = AbstractMirahExtender.class.getResourceAsStream("/ca/weblite/netbeans/mirah/antproject/resources/mirah-build-cn1.xml");
+                            try {
+                                FileUtil.copy(input, os);
+                                cn1buildFO = destDirFO.getFileObject("mirah-build-cn", "xml");
+                            } finally {
+                                try {
+                                    os.close();
+                                } catch ( Exception ex){}
+                                try {
+                                    input.close();
+
+                                } catch ( Exception ex){}
+                            }
+                            
+                            if ( cn1buildFO != null ){
+                                AntBuildExtender.Extension cn1extension = extender.getExtension("mirah-cn1-build");
+                                if ( cn1extension == null ){
+                                    cn1extension = extender.addExtension("mirah-cn1-build", cn1buildFO);
+                                    cn1extension.addDependency(EXTENSIBLE_TARGET_NAME, "mirah-precompile");
+                                    cn1extension.addDependency(EXTENSIBLE_TARGET_NAME, "mirah-precompile-cn1lib");
+                                    cn1extension.addDependency("-pre-pre-jar", "mirah-postcompile-cn1lib");
+                                    
+                                    
+                                }
+                                
+                            }
+                            
+                        }
+                        
                         helper.generateBuildScriptFromStylesheet("nbproject/mirah-build.xml", getMirahBuildXls());
                         FileObject destFileFO = destDirFO.getFileObject("mirah-build", "xml"); // NOI18N
                         extension = extender.addExtension(MIRAH_EXTENSION_ID, destFileFO);
@@ -348,8 +418,8 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
                         if ( !contents.contains("mirah-build.xml")){
                             // Codename One projects don't seem to be regenerating the build-impl.xml file automatically
                             // so we have to use this ugly regex workaround to updating it ourselves. 
-                            contents = contents.replaceAll("<project [^>]*>", "$0\n <import file=\"mirah-build.xml\"/>");
-                            contents = contents.replaceAll("(<target depends=\".*?)(\"[^>]* name=\"-pre-pre-compile\">)", "$1,-mirah-init-macrodef-javac$2");
+                            contents = contents.replaceAll("<project [^>]*>", "$0\n <import file=\"mirah-build-cn1.xml\"/><import file=\"mirah-build.xml\"/>");
+                            contents = contents.replaceAll("(<target depends=\".*?)(\"[^>]* name=\"-pre-pre-compile\">)", "$1,mirah-precompile,mirah-precompile-cn1lib,-mirah-init-macrodef-javac$2");
                             PrintWriter os = null;
                             try {
                                 os = new PrintWriter(buildImplFO.getOutputStream());
@@ -420,6 +490,18 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
             EditableProperties props = getEditableProperties(project, PROJECT_PROPERTIES_PATH);
             props.put(DISABLE_COMPILE_ON_SAVE, "true");
             storeEditableProperties(project, PROJECT_PROPERTIES_PATH, props);
+            return true;
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return false;
+    }
+    
+    private final boolean addCN1LibProperty(){
+        try {
+            EditableProperties props = getEditableProperties(project, CN1_LIBRARY_PROPERTIES_PATH);
+            props.put("codename1.is_library", "true");
+            storeEditableProperties(project, CN1_LIBRARY_PROPERTIES_PATH, props);
             return true;
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);

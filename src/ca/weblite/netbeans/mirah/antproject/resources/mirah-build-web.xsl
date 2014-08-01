@@ -120,8 +120,45 @@ made subject to such option by the copyright holder.
                         </taskdef>
                         <property name="empty.dir" location="${{build.dir}}/empty"/>
                         <mkdir dir="${{empty.dir}}"/>
+                        
+                         <!-- Deal with macros first -->
+                        <!-- We're going to use the convention that any classes inside a "macros" package is considered to be macros -->
+                        <property name="mirah.tmp" location="${build.dir}/mirah_tmp"/>
+                        <property name="mirah.tmp.macros" location="${mirah.tmp}/macros"/>
+                        <property name="mirah.tmp.macros.src" location="${mirah.tmp.macros}/src"/>
+                        <property name="mirah.tmp.macros.classes" location="${mirah.tmp.macros}/classes"/>
+
+                        <delete dir="${mirah.tmp.macros.src}"/>
+                        <mkdir dir="${mirah.tmp.macros.src}"/>
+                        <copy todir="${mirah.tmp.macros.src}">
+                          <fileset dir="@{srcdir}" includes="**/macros/**" excludes="**/Bootstrap.mirah"/>
+                        </copy>
+                        <delete dir="${mirah.tmp.macros.classes}"/>
+                        <mkdir dir="${mirah.tmp.macros.classes}"/>
+
+                        <mirahc dest="${mirah.tmp.macros.classes}" macrojardir="${mirah.macros.jardir}">
+                            <javac srcdir="${mirah.tmp.macros.src}" classpath="@{classpath}" sourcepath="@{sourcepath}" includes="@{includes}" excludes="@{excludes}" debug="@{debug}" deprecation="${javac.deprecation}" encoding="${source.encoding}" source="${javac.source}" target="${javac.target}">
+                                <compilerarg line="${javac.compilerargs}"/>
+                                <customize/>
+                            </javac>
+                        </mirahc>
+
+                        <!-- Now for macro bootstrapping code -->
+                        <delete dir="${mirah.tmp.macros.src}"/>
+                        <mkdir dir="${mirah.tmp.macros.src}"/>
+                        <copy todir="${mirah.tmp.macros.src}">
+                          <fileset dir="@{srcdir}" includes="**/macros/Bootstrap.mirah"/>
+                        </copy>
+                        <mirahc dest="${mirah.tmp.macros.classes}" macrojardir="${mirah.macros.jardir}" macroclasspath="${mirah.tmp.macros.classes}">
+                            <javac srcdir="${mirah.tmp.macros.src}" classpath="@{classpath}:${mirah.tmp.macros.classes}" sourcepath="@{sourcepath}" includes="@{includes}" excludes="@{excludes}" debug="@{debug}" deprecation="${javac.deprecation}" encoding="${source.encoding}" source="${javac.source}" target="${javac.target}">
+                                <compilerarg line="${javac.compilerargs}"/>
+                                <customize/>
+                            </javac>
+                        </mirahc>
+                        
                         <mirahc>
                            <xsl:attribute name="dest">${build.dir}/mirah</xsl:attribute>
+                           <xsl:attribute name="macrojardir">${mirah.macros.jardir}</xsl:attribute>
                             <javac>
                                 <xsl:attribute name="srcdir">@{srcdir}</xsl:attribute>
                                 <xsl:attribute name="classpath">@{classpath}</xsl:attribute>
@@ -156,6 +193,7 @@ made subject to such option by the copyright holder.
                             <xsl:attribute name="todir">@{destdir}</xsl:attribute>
                             <fileset>
                                 <xsl:attribute name="dir">${build.dir}/mirah</xsl:attribute>
+                                <xsl:attribute name="excludes">**/macros/**.mirah</xsl:attribute>
                             </fileset>
                         </copy>
                     </sequential>
