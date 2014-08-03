@@ -8,11 +8,14 @@ package ca.weblite.netbeans.mirah.cc;
 
 import ca.weblite.netbeans.mirah.lexer.MirahParser;
 import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.List;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import mirah.impl.Tokens;
 import mirah.lang.ast.ClassDefinition;
+import mirah.lang.ast.FieldDeclaration;
 import mirah.lang.ast.Node;
 import org.mirah.typer.ResolvedType;
 import org.netbeans.api.lexer.Token;
@@ -37,6 +40,8 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
         this.tAtPos = tAtPos;
     }
     
+   
+    
     @Override
     protected void query(CompletionResultSet crs, Document doc, int caretOffset) {
         BaseDocument bdoc = (BaseDocument)doc;
@@ -60,6 +65,8 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                 MirahTokenId tId = MirahTokenId.get(Tokens.tIDENTIFIER.ordinal());
                 MirahTokenId tNL = MirahTokenId.get(Tokens.tNL.ordinal());
                 MirahTokenId tWS = MirahTokenId.WHITESPACE;
+                int bol = MirahCodeCompleter.getBeginningOfLine(doc, caretOffset);
+                int eol = MirahCodeCompleter.getEndOfLine(doc, caretOffset);
                 
                 Token<MirahTokenId> foundToken = null;
                 int tokenStart = -1;
@@ -91,55 +98,50 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                     cancel(crs);
                     return;
                 }
-                cancel(crs);
-                return;
-                /*
-                if ( foundToken.id() == tInstanceVar ){
-                    String varName = doc.getText(tokenStart, tokenLen);
-                    
-                    Node foundNode = MirahCodeCompleter.findNode(dbg, tokenStart+tokenLen);
+                FieldDeclaration[] fields = MirahCodeCompleter.findFields(dbg, tAtPos);
+               
+                if ( fields.length == 0 ){
 
-                    if ( foundNode == null ){
-                        Source src = Source.create(doc);
-                        MirahParser parser = new MirahParser();
-                        try {
-                            Snapshot snapshot = src.createSnapshot();
-                            String text = snapshot.getText().toString();
-                            StringBuilder sb = new StringBuilder();
-                            sb.append(text.substring(0, dotPos));
-                            for ( int i=dotPos; i<eol; i++){
-                                sb.append(' ');
-                            }
-                            sb.append(text.substring(eol));
-
-                            parser.reparse(snapshot, sb.toString());
-
-                        } catch (ParseException ex){
-                            Exceptions.printStackTrace(ex);
+                    Source src = Source.create(doc);
+                    MirahParser parser = new MirahParser();
+                    try {
+                        Snapshot snapshot = src.createSnapshot();
+                        String text = snapshot.getText().toString();
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(text.substring(0, tokenStart));
+                        for ( int i=tokenStart; i<eol; i++){
+                            sb.append(' ');
                         }
+                        sb.append(text.substring(eol));
 
-                        dbg = MirahParser.getDocumentDebugger(doc);
-                        //printNodes(dbg.compiler.compiler(), rightEdgeFinal);
-                        foundNode = MirahCodeCompleter.findNode(dbg, subjectToken.offset(hi)+subjectToken.length());
-                        
+                        parser.reparse(snapshot, sb.toString());
+
+                    } catch (ParseException ex){
+                        Exceptions.printStackTrace(ex);
                     }
+
+                    dbg = MirahParser.getDocumentDebugger(doc);
+                    //printNodes(dbg.compiler.compiler(), rightEdgeFinal);
+                    fields = MirahCodeCompleter.findFields(dbg, tAtPos);
                     
-                    if ( foundNode != null ){
-                        ClassDefinition cls = (ClassDefinition)foundNode.findAncestor(ClassDefinition.class);
-                        System.out.println("Found class definition "+cls);
-
-                    } else {
-                        System.out.println("Could not find node");
-                    }
                     
                 }
                 
+                if ( fields.length == 0 ){
+                    cancel(crs);
+                } else {
+
+
+                    for ( FieldDeclaration dec : fields ){
+                        crs.addItem(new MirahPropertyCompletionItem(dec, tokenStart, tokenLen));
+                    }
+                    crs.finish();
+                }
                 
-                cancel(crs);
-                        */
+                return;
             } catch ( BadLocationException ble){
                 cancel(crs);
-            }
+            } 
         } 
     }
     
@@ -159,7 +161,7 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                 TokenSequence<?> ts = tsList.get(i);
                 if (ts.languagePath().innerLanguage() == MirahTokenId.getLanguage()) {
                     TokenSequence<MirahTokenId> javaInnerTS = (TokenSequence<MirahTokenId>) ts;
-                    bd.readUnlock();
+                    //bd.readUnlock();
                     return javaInnerTS;
                 }
             }
@@ -167,6 +169,7 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
             return null;
         } finally {
             bd.readUnlock();
+             
         }
     }
     

@@ -26,9 +26,13 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import mirah.impl.Tokens;
+import mirah.lang.ast.AttrAssign;
 import mirah.lang.ast.Call;
 import mirah.lang.ast.ClassDefinition;
 import mirah.lang.ast.Constant;
+import mirah.lang.ast.ElemAssign;
+import mirah.lang.ast.FieldAssign;
+import mirah.lang.ast.FieldDeclaration;
 import mirah.lang.ast.MethodDefinition;
 import mirah.lang.ast.Next;
 import mirah.lang.ast.Node;
@@ -80,6 +84,24 @@ import org.openide.util.Exceptions;
 public class MirahCodeCompleter implements CompletionProvider {
     private static final Logger LOG = Logger.getLogger(MirahCodeCompleter.class.getCanonicalName());
     
+    
+    static FieldDeclaration[] findFields(final DocumentDebugger dbg, final int rightEdge){
+        final ArrayList<FieldDeclaration> foundNodes = new ArrayList<FieldDeclaration>();
+        for( Object node : dbg.compiler.compiler().getParsedNodes() ){
+            if ( node instanceof Node ){
+                ((Node)node).accept(new NodeScanner(){
+                    @Override
+                    public boolean enterFieldDeclaration(FieldDeclaration node, Object arg) {
+                        foundNodes.add(node);
+                        return super.enterFieldDeclaration(node, arg);
+                    }
+                  
+                }, null);
+            }
+        };
+        
+        return foundNodes.toArray(new FieldDeclaration[0]);
+    }
     static Node findNode(final DocumentDebugger dbg, final int rightEdge){
         final Node[] foundNode = new Node[1];
         for( Object node : dbg.compiler.compiler().getParsedNodes() ){
@@ -102,14 +124,6 @@ public class MirahCodeCompleter implements CompletionProvider {
                         } 
                         return super.enterDefault(node, arg); //To change body of generated methods, choose Tools | Templates.
                     }
-
-                    
-
-                    
-                    
-                    
-
-
                 }, null);
                 //walkTree((Node)node);
 
