@@ -10,9 +10,11 @@ import ca.weblite.netbeans.mirah.lexer.MirahParser;
 import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
 import mirah.impl.Tokens;
 import mirah.lang.ast.ClassDefinition;
 import mirah.lang.ast.FieldDeclaration;
@@ -35,19 +37,62 @@ import org.openide.util.Exceptions;
  */
 public class PropertyCompletionQuery extends AsyncCompletionQuery{
     final int tAtPos;
+    private String filter;
+    List<FieldDeclaration> matches = new ArrayList<FieldDeclaration>();
     
     public PropertyCompletionQuery(int tAtPos){
         this.tAtPos = tAtPos;
     }
-    
-   
+    /*
+     @Override
+    protected boolean canFilter(JTextComponent component) {
+        
+        int currentPos = component.getCaretPosition();
+        if ( currentPos <= tAtPos){
+            return false;
+        }
+
+        try {
+            char c = component.getText(currentPos, 1).charAt(0);
+            switch ( c){
+                case '.':
+                case ':':
+                case '(':
+                case ';':
+
+                    return false;
+            }
+        } catch (BadLocationException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        try {
+            filter = component.getText(tAtPos, currentPos-tAtPos).trim();
+        } catch (BadLocationException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return filter != null;
+    }
+
+    @Override
+    protected void filter(CompletionResultSet resultSet) {
+        for ( FieldDeclaration field : matches){
+            if ( field.name().identifier().toLowerCase().indexOf(filter.toLowerCase()) == 0 ){
+                resultSet.addItem(new MirahPropertyCompletionItem(field, tAtPos, filter.length()));
+            }
+
+        }
+        resultSet.finish();
+
+    }
+
+   */
     
     @Override
     protected void query(CompletionResultSet crs, Document doc, int caretOffset) {
         BaseDocument bdoc = (BaseDocument)doc;
         //System.out.println("In property completion query");
         MirahParser.DocumentDebugger dbg = MirahParser.getDocumentDebugger(doc);
-                
+        //System.out.println("In query");       
         if ( dbg != null ){
             //System.out.println("Debugger is not null");
             try {
@@ -71,7 +116,7 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                 Token<MirahTokenId> foundToken = null;
                 int tokenStart = -1;
                 int tokenLen = -1;
-                
+                filter = null;
                 //System.out.println("About to walk back the tree "+toks.offset()+" "+tAtPos);
                 while ( toks.offset() >= tAtPos ){
                     //System.out.println("OFFSET "+toks.offset());
@@ -81,6 +126,9 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                         foundToken = tok;
                         tokenStart = toks.offset();
                         tokenLen = tok.length();
+                        //System.out.println("About to get filter");
+                        filter = doc.getText(tokenStart+1, caretOffset-tokenStart-1);
+                        //System.out.println("Filter is "+filter);
                         break;
                         
                     }
@@ -131,9 +179,12 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                     cancel(crs);
                 } else {
 
-
+                    matches.clear();
                     for ( FieldDeclaration dec : fields ){
-                        crs.addItem(new MirahPropertyCompletionItem(dec, tokenStart, tokenLen));
+                        if ( filter == null || dec.name().identifier().startsWith(filter)){
+                            crs.addItem(new MirahPropertyCompletionItem(dec, tokenStart, tokenLen));
+                        }
+                        matches.add(dec);
                     }
                     crs.finish();
                 }
@@ -142,7 +193,9 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
             } catch ( BadLocationException ble){
                 cancel(crs);
             } 
-        } 
+        } else {
+            cancel(crs);
+        }
     }
     
     private void cancel(CompletionResultSet crs){
