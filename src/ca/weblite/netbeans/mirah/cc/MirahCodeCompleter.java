@@ -85,16 +85,20 @@ public class MirahCodeCompleter implements CompletionProvider {
     private static final Logger LOG = Logger.getLogger(MirahCodeCompleter.class.getCanonicalName());
     
     
-    static FieldDeclaration[] findFields(final DocumentDebugger dbg, final int rightEdge){
+    static FieldDeclaration[] findFields(final DocumentDebugger dbg, final int rightEdge, final boolean isClassVar){
         final ArrayList<FieldDeclaration> foundNodes = new ArrayList<FieldDeclaration>();
         for( Object node : dbg.compiler.compiler().getParsedNodes() ){
             if ( node instanceof Node ){
                 ((Node)node).accept(new NodeScanner(){
                     @Override
                     public boolean enterFieldDeclaration(FieldDeclaration node, Object arg) {
-                        foundNodes.add(node);
+                        if ( node.isStatic() == isClassVar ){
+                            foundNodes.add(node);
+                        }
                         return super.enterFieldDeclaration(node, arg);
                     }
+                    
+                    
                   
                 }, null);
             }
@@ -156,6 +160,7 @@ public class MirahCodeCompleter implements CompletionProvider {
             MirahTokenId tWhitespace = MirahTokenId.WHITESPACE;
             MirahTokenId tIdentifier = MirahTokenId.get(Tokens.tIDENTIFIER.ordinal());
             MirahTokenId tInstanceVar = MirahTokenId.get(Tokens.tInstVar.ordinal());
+            MirahTokenId tClassVar = MirahTokenId.get(Tokens.tClassVar.ordinal());
             MirahTokenId tAt = MirahTokenId.get(Tokens.tAt.ordinal());
             MirahTokenId tDot = MirahTokenId.get(Tokens.tDot.ordinal());
             
@@ -164,6 +169,7 @@ public class MirahCodeCompleter implements CompletionProvider {
             activators.add(tAt);
             activators.add(tInstanceVar);
             activators.add(MirahTokenId.get(Tokens.tDef.ordinal()));
+            activators.add(tClassVar);
             
             
             
@@ -197,7 +203,7 @@ public class MirahCodeCompleter implements CompletionProvider {
                 return null;
             }
             
-            if ( activator.id() == tAt || activator.id() == tInstanceVar ){
+            if ( activator.id() == tAt || activator.id() == tInstanceVar || activator.id() == tClassVar ){
                 //System.out.println("Activator was @");
                 if ( hasWhitespace ){
                     return null;

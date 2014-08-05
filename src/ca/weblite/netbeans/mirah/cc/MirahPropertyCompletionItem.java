@@ -9,17 +9,11 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
-import java.lang.reflect.Method;
 import javax.swing.ImageIcon;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyledDocument;
 import mirah.lang.ast.FieldDeclaration;
-import mirah.lang.ast.Node;
-import mirah.lang.ast.NodeFilter;
-import mirah.lang.ast.NodeVisitor;
-import mirah.lang.ast.SimpleNodeVisitor;
-import mirah.lang.ast.SimpleString;
 import org.netbeans.api.editor.completion.Completion;
 import org.netbeans.lib.editor.codetemplates.api.CodeTemplate;
 import org.netbeans.lib.editor.codetemplates.api.CodeTemplateManager;
@@ -38,13 +32,15 @@ public class MirahPropertyCompletionItem implements CompletionItem {
     private int caretOffset;
     private int length;
     private FieldDeclaration property;
+    private boolean isClassVar;
     private static ImageIcon fieldIcon = new ImageIcon(ImageUtilities.loadImage("ca/weblite/netbeans/mirah/1391571312_application-x-ruby.png"));
     private static Color fieldColor = Color.decode("0x0000B2");
 
-    public MirahPropertyCompletionItem(FieldDeclaration m, int caretOffset, int len) {
+    public MirahPropertyCompletionItem(FieldDeclaration m, int caretOffset, int len, boolean isClassVar) {
         this.property = m;
         this.caretOffset = caretOffset;
         this.length = len;
+        this.isClassVar = isClassVar;
         
     }
 
@@ -55,11 +51,16 @@ public class MirahPropertyCompletionItem implements CompletionItem {
         //return "Some field";  
     }
     
+    private String getNameWithAt(){
+        if ( isClassVar ) return "@@"+getFieldName();
+        return "@"+getFieldName();
+    }
+    
     @Override
     public void defaultAction(JTextComponent jtc) {
         CodeTemplateManager mgr = CodeTemplateManager.get(jtc.getDocument());
         StringBuilder sb = new StringBuilder();
-        sb.append("@").append(getFieldName());
+        sb.append(getNameWithAt());
         /*
         Class[] ptypes = method.getParameterTypes();
         
@@ -106,12 +107,12 @@ public class MirahPropertyCompletionItem implements CompletionItem {
 
     @Override
     public int getPreferredWidth(Graphics graphics, Font font) {
-        return CompletionUtilities.getPreferredWidth("@"+getFieldName(), null, graphics, font);
+        return CompletionUtilities.getPreferredWidth(getNameWithAt(), null, graphics, font);
     }
 
     @Override
     public void render(Graphics g, Font font, Color color, Color color1, int width, int height, boolean selected) {
-        CompletionUtilities.renderHtml(fieldIcon, "@"+getFieldName(), null, g, font,
+        CompletionUtilities.renderHtml(fieldIcon, getNameWithAt(), null, g, font,
                 (selected ? Color.white : fieldColor), width, height, selected);
     }
 

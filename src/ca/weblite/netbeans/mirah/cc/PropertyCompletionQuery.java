@@ -8,18 +8,12 @@ package ca.weblite.netbeans.mirah.cc;
 
 import ca.weblite.netbeans.mirah.lexer.MirahParser;
 import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
-import javax.swing.text.JTextComponent;
 import mirah.impl.Tokens;
-import mirah.lang.ast.ClassDefinition;
 import mirah.lang.ast.FieldDeclaration;
-import mirah.lang.ast.Node;
-import org.mirah.typer.ResolvedType;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenSequence;
@@ -101,6 +95,7 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
 
                 TokenSequence<MirahTokenId> toks = mirahTokenSequence(doc, caretOffset, true);
                 MirahTokenId tInstanceVar = MirahTokenId.get(Tokens.tInstVar.ordinal());
+                MirahTokenId tClassVar = MirahTokenId.get(Tokens.tClassVar.ordinal());
                 MirahTokenId tDot = MirahTokenId.get(Tokens.tDot.ordinal());
                 MirahTokenId tAt = MirahTokenId.get(Tokens.tAt.ordinal());
                 
@@ -114,6 +109,7 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                 int tokenStart = -1;
                 int tokenLen = -1;
                 filter = null;
+                boolean isClassVar = false;
                 while ( toks.offset() >= tAtPos ){
                     Token<MirahTokenId> tok = toks.token();
                     if ( tok.id() == tInstanceVar ){
@@ -123,6 +119,15 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                         filter = doc.getText(tokenStart+1, caretOffset-tokenStart-1);
                         break;
                         
+                    }
+                    
+                    if ( tok.id() == tClassVar ){
+                        isClassVar = true;
+                        foundToken = tok;
+                        tokenStart = toks.offset();
+                        tokenLen = tok.length();
+                        filter = doc.getText(tokenStart+2, caretOffset-tokenStart-2);
+                        break;
                     }
                     if ( tok.id() != tId && tok.id() != tAt ){
                         cancel(crs);
@@ -137,6 +142,12 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                         foundToken = tok;
                         tokenStart = tAtPos+1; // Not sure why we need to do +1.  May be a bug in lexer
                         tokenLen = 1;
+                        if ( "@".equals(doc.getText(tokenStart-1,1)) ){
+                            isClassVar = true;
+                            tokenStart--;
+                            tokenLen = 2;
+                        }
+                        
                         break;
                     }
                 }
@@ -145,7 +156,8 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                     cancel(crs);
                     return;
                 }
-                FieldDeclaration[] fields = MirahCodeCompleter.findFields(dbg, tAtPos);
+                
+                FieldDeclaration[] fields = MirahCodeCompleter.findFields(dbg, tAtPos, isClassVar);
                 if ( fields.length == 0 ){
 
                     Source src = Source.create(doc);
@@ -168,7 +180,7 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
 
                     dbg = MirahParser.getDocumentDebugger(doc);
                     //printNodes(dbg.compiler.compiler(), rightEdgeFinal);
-                    fields = MirahCodeCompleter.findFields(dbg, tAtPos);
+                    fields = MirahCodeCompleter.findFields(dbg, tAtPos, isClassVar);
                     
                     
                 }
@@ -180,7 +192,7 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                     matches.clear();
                     for ( FieldDeclaration dec : fields ){
                         if ( filter == null || dec.name().identifier().startsWith(filter)){
-                            crs.addItem(new MirahPropertyCompletionItem(dec, tokenStart, tokenLen));
+                            crs.addItem(new MirahPropertyCompletionItem(dec, tokenStart, tokenLen, isClassVar));
                         }
                         matches.add(dec);
                     }
