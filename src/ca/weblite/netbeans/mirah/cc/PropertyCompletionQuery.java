@@ -90,11 +90,8 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
     @Override
     protected void query(CompletionResultSet crs, Document doc, int caretOffset) {
         BaseDocument bdoc = (BaseDocument)doc;
-        //System.out.println("In property completion query");
         MirahParser.DocumentDebugger dbg = MirahParser.getDocumentDebugger(doc);
-        //System.out.println("In query");       
         if ( dbg != null ){
-            //System.out.println("Debugger is not null");
             try {
                 int p = caretOffset-1;
                 if ( p < 0 ){
@@ -117,18 +114,13 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                 int tokenStart = -1;
                 int tokenLen = -1;
                 filter = null;
-                //System.out.println("About to walk back the tree "+toks.offset()+" "+tAtPos);
                 while ( toks.offset() >= tAtPos ){
-                    //System.out.println("OFFSET "+toks.offset());
                     Token<MirahTokenId> tok = toks.token();
-                    //System.out.println("TOKEN is "+tok.id().name());
                     if ( tok.id() == tInstanceVar ){
                         foundToken = tok;
                         tokenStart = toks.offset();
                         tokenLen = tok.length();
-                        //System.out.println("About to get filter");
                         filter = doc.getText(tokenStart+1, caretOffset-tokenStart-1);
-                        //System.out.println("Filter is "+filter);
                         break;
                         
                     }
@@ -140,6 +132,13 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                         cancel(crs);
                         return;
                     }
+                    
+                    if ( tok.id() == tAt ){
+                        foundToken = tok;
+                        tokenStart = tAtPos+1; // Not sure why we need to do +1.  May be a bug in lexer
+                        tokenLen = 1;
+                        break;
+                    }
                 }
                 
                 if ( foundToken == null ){
@@ -147,7 +146,6 @@ public class PropertyCompletionQuery extends AsyncCompletionQuery{
                     return;
                 }
                 FieldDeclaration[] fields = MirahCodeCompleter.findFields(dbg, tAtPos);
-               
                 if ( fields.length == 0 ){
 
                     Source src = Source.create(doc);
