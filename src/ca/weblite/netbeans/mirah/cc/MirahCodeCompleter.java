@@ -6,6 +6,7 @@
 
 package ca.weblite.netbeans.mirah.cc;
 
+import ca.weblite.netbeans.mirah.lexer.MirahLanguageHierarchy;
 import ca.weblite.netbeans.mirah.lexer.MirahLexer;
 import ca.weblite.netbeans.mirah.lexer.MirahParser;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger;
@@ -50,6 +51,7 @@ import org.netbeans.api.editor.completion.Completion;
 
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.api.java.classpath.ClassPath;
+
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenSequence;
@@ -158,17 +160,20 @@ public class MirahCodeCompleter implements CompletionProvider {
             TokenSequence<MirahTokenId> toks = mirahTokenSequence(jtc.getDocument(), caretOffset, true);
             // Tokens that activate code completion
             MirahTokenId tWhitespace = MirahTokenId.WHITESPACE;
+            MirahTokenId tComment = MirahTokenId.get(Tokens.tComment.ordinal());
             MirahTokenId tIdentifier = MirahTokenId.get(Tokens.tIDENTIFIER.ordinal());
             MirahTokenId tInstanceVar = MirahTokenId.get(Tokens.tInstVar.ordinal());
             MirahTokenId tClassVar = MirahTokenId.get(Tokens.tClassVar.ordinal());
             MirahTokenId tAt = MirahTokenId.get(Tokens.tAt.ordinal());
             MirahTokenId tDot = MirahTokenId.get(Tokens.tDot.ordinal());
+            MirahTokenId tDef = MirahTokenId.get(Tokens.tDef.ordinal());
+            
             
             Set<MirahTokenId> activators = new HashSet<MirahTokenId>();
             activators.add(tDot);
             activators.add(tAt);
             activators.add(tInstanceVar);
-            activators.add(MirahTokenId.get(Tokens.tDef.ordinal()));
+            activators.add(tDef);
             activators.add(tClassVar);
             
             
@@ -178,12 +183,12 @@ public class MirahCodeCompleter implements CompletionProvider {
             int activatorLen = -1;
             boolean hasWhitespace = false;
             boolean hasIdentifier = false;
-            
-            while ( toks.token().id() == tIdentifier || toks.token().id() == tWhitespace || activators.contains(toks.token().id()) ){
+            while ( toks.token().id() == tIdentifier || toks.token().id() == tComment || toks.token().id() == tWhitespace || toks.token().id().ordinal() == MirahLanguageHierarchy.METHOD_DECLARATION || activators.contains(toks.token().id()) ){
+
                 Token<MirahTokenId> curr = toks.token();
-                if ( curr.id() == tWhitespace ){
+                if ( curr.id() == tWhitespace || curr.id() == tComment){
                     hasWhitespace = true;
-                } else if ( curr.id() == tIdentifier ){
+                } else if ( curr.id() == tIdentifier || curr.id().ordinal() == MirahLanguageHierarchy.METHOD_DECLARATION ){
                     hasIdentifier = true;
                 } else {
                     activator = toks.token();
@@ -197,14 +202,11 @@ public class MirahCodeCompleter implements CompletionProvider {
                 }
                 
             }
-            //System.out.println("Loop killed after token "+toks.token().id().name());
-            
             if ( activator == null ){
                 return null;
             }
             
             if ( activator.id() == tAt || activator.id() == tInstanceVar || activator.id() == tClassVar ){
-                //System.out.println("Activator was @");
                 if ( hasWhitespace ){
                     return null;
                 }
@@ -219,6 +221,8 @@ public class MirahCodeCompleter implements CompletionProvider {
                 return new AsyncCompletionTask(new MethodCompletionQuery(initialOffset), jtc);
                 
                 
+            } else if ( activator.id() == tDef ){
+                return new AsyncCompletionTask(new DefCompletionQuery(initialOffset), jtc);
             }
             
         } catch ( BadLocationException ble){
@@ -260,6 +264,8 @@ public class MirahCodeCompleter implements CompletionProvider {
                 
             }
         }
+        
+        
         return null;
     }
     

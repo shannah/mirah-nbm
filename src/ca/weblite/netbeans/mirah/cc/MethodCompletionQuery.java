@@ -204,11 +204,11 @@ public class MethodCompletionQuery extends AsyncCompletionQuery {
                 if ( foundNode != null ){
                     type = dbg.getType(foundNode);
 
-                    Node c = foundNode;
-                    while ( c != null ){
-
-                        c = c.parent();
-                    }
+                    //Node c = foundNode;
+                    //while ( c != null ){
+                    //
+                    //    c = c.parent();
+                    //}
 
                 }
 
