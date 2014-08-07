@@ -45,11 +45,12 @@ public class MethodCompletionQuery extends AsyncCompletionQuery {
     String filter = null;
     Class currentType = null;
     boolean isStatic;
-
+    FileObject file;
     final int initialOffset;
 
-    public MethodCompletionQuery(int initOff){
+    public MethodCompletionQuery(int initOff, FileObject file){
         this.initialOffset = initOff;
+        this.file = file;
     }
 
 
@@ -86,9 +87,10 @@ public class MethodCompletionQuery extends AsyncCompletionQuery {
 
     @Override
     protected void filter(CompletionResultSet resultSet) {
+        
         for ( Method m : currentType.getMethods()){
             if ( m.getName().toLowerCase().indexOf(filter.toLowerCase()) == 0 && isStatic == Modifier.isStatic(m.getModifiers()) ){
-                resultSet.addItem(new MirahMethodCompletionItem(m, initialOffset, filter.length()));
+                resultSet.addItem(new MirahMethodCompletionItem(file, m, initialOffset, filter.length()));
             }
 
         }
@@ -261,7 +263,7 @@ public class MethodCompletionQuery extends AsyncCompletionQuery {
                             }
                             for ( Method m : cls.getMethods()){
                                 if ( m.getName().startsWith(filter) && isStatic == Modifier.isStatic(m.getModifiers())){
-                                    crs.addItem(new MirahMethodCompletionItem(m, caretOffset, filter.length()));
+                                    crs.addItem(new MirahMethodCompletionItem(fileObject, m, caretOffset, filter.length()));
                                 }
                             }
                         }

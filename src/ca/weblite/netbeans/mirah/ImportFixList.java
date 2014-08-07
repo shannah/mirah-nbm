@@ -96,6 +96,7 @@ public class ImportFixList  implements LazyFixList, Runnable {
         };
         int priority = 10;
         for ( ClassPath cp : classPaths){
+            
             q.addQuery(new ClassIndex.ClassPathQuery(priority--, className, "", cp));
         }
 

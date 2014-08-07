@@ -12,14 +12,19 @@ import java.awt.event.KeyEvent;
 import java.lang.reflect.Method;
 import javax.swing.ImageIcon;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyledDocument;
 import org.netbeans.api.editor.completion.Completion;
 import org.netbeans.lib.editor.codetemplates.api.CodeTemplate;
 import org.netbeans.lib.editor.codetemplates.api.CodeTemplateManager;
 import org.netbeans.spi.editor.completion.CompletionItem;
+import org.netbeans.spi.editor.completion.CompletionResultSet;
 import org.netbeans.spi.editor.completion.CompletionTask;
+import org.netbeans.spi.editor.completion.support.AsyncCompletionQuery;
+import org.netbeans.spi.editor.completion.support.AsyncCompletionTask;
 import org.netbeans.spi.editor.completion.support.CompletionUtilities;
+import org.openide.filesystems.FileObject;
 import org.openide.util.Exceptions;
 import org.openide.util.ImageUtilities;
 
@@ -34,14 +39,25 @@ public class MirahMethodCompletionItem implements CompletionItem {
     private Method method;
     private static ImageIcon fieldIcon = new ImageIcon(ImageUtilities.loadImage("ca/weblite/netbeans/mirah/1391571312_application-x-ruby.png"));
     private static Color fieldColor = Color.decode("0x0000B2");
+    private FileObject file;
 
-    public MirahMethodCompletionItem(Method m, int caretOffset, int len) {
+    public MirahMethodCompletionItem(FileObject file, Method m, int caretOffset, int len) {
         this.method = m;
         this.caretOffset = caretOffset;
         this.length = len;
+        this.file = file; 
         
     }
 
+    
+    Method getMethod(){
+        return method;
+    }
+    
+    FileObject getFile(){
+        return file;
+    }
+    
     @Override
     public void defaultAction(JTextComponent jtc) {
         CodeTemplateManager mgr = CodeTemplateManager.get(jtc.getDocument());
@@ -139,7 +155,16 @@ public class MirahMethodCompletionItem implements CompletionItem {
 
     @Override
     public CompletionTask createDocumentationTask() {
-        return null;
+        return new AsyncCompletionTask(new AsyncCompletionQuery() {
+            @Override
+            protected void query(CompletionResultSet completionResultSet, Document document, int i) {
+                MethodCompletionDocumentation doc = new MethodCompletionDocumentation(MirahMethodCompletionItem.this);
+                // Get the text in this query to cache it so that it doesn't block the UI thread.
+                doc.getText();
+                completionResultSet.setDocumentation(doc);
+                completionResultSet.finish();
+            }
+        });
     }
 
     @Override

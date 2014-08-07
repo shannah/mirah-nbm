@@ -152,6 +152,7 @@ public class MirahCodeCompleter implements CompletionProvider {
                 return null;
             }
             String lastChar = jtc.getDocument().getText(p, 1);
+            FileObject fileObject = NbEditorUtilities.getFileObject(jtc.getDocument());
             while ( p > 0 && lastChar.trim().isEmpty()){
                 p--;
                 lastChar = jtc.getDocument().getText(p, 1);
@@ -218,7 +219,7 @@ public class MirahCodeCompleter implements CompletionProvider {
                     return null;
                 }
                 
-                return new AsyncCompletionTask(new MethodCompletionQuery(initialOffset), jtc);
+                return new AsyncCompletionTask(new MethodCompletionQuery(initialOffset, fileObject), jtc);
                 
                 
             } else if ( activator.id() == tDef ){
