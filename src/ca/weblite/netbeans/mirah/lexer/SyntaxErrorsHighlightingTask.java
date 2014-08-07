@@ -76,9 +76,13 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
             int line =-1;
             try {
                 
-                String[] pieces = syntaxError.position.substring(0, syntaxError.position.lastIndexOf(":")).split(":");
+                if ( syntaxError.position != null ){
+                    String[] pieces = syntaxError.position.substring(0, syntaxError.position.lastIndexOf(":")).split(":");
                 
-                line = Integer.parseInt(pieces[pieces.length-1]);
+                    line = Integer.parseInt(pieces[pieces.length-1]);
+                } else {
+                    line = 1;
+                }
                 
             } catch (NumberFormatException ex){
                 ex.printStackTrace();

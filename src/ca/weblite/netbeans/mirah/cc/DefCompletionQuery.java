@@ -141,7 +141,12 @@ public class DefCompletionQuery extends AsyncCompletionQuery {
             filter = "";
             for ( Method m : thisClass.getMethods()){
 
-                if ( m.getName().startsWith(filter) && !Modifier.isStatic(m.getModifiers())){
+                int modifiers = m.getModifiers();
+                if ( Modifier.isPrivate(modifiers) ){
+                    continue;
+                }
+                
+                if ( m.getName().startsWith(filter) && !Modifier.isStatic(m.getModifiers()) ){
                     crs.addItem(new MirahDefCompletionItem(m, defOffset, eol-defOffset));
                 }
             }
