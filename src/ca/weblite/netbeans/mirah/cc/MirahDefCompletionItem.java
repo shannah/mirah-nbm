@@ -5,6 +5,7 @@
  */
 package ca.weblite.netbeans.mirah.cc;
 
+import ca.weblite.netbeans.mirah.lexer.DocumentQuery;
 import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
 import java.awt.Color;
 import java.awt.Font;
@@ -94,46 +95,9 @@ public class MirahDefCompletionItem implements CompletionItem {
     }
     
     public List<String> getImports(Document doc) throws Exception {
-        //Document doc = source.getDocument(true);
-            TokenHierarchy<?> hi = TokenHierarchy.get(doc);
-            int caretOffset = 0;
-            TokenSequence<MirahTokenId> seq = mirahTokenSequence(doc, caretOffset, false);
-            
-            // Find the first package or import and place the import after that.
-            MirahTokenId PKG = MirahTokenId.get(Tokens.tPackage.ordinal());
-            MirahTokenId IMPORT = MirahTokenId.get(Tokens.tImport.ordinal());
-            MirahTokenId EOL = MirahTokenId.get(Tokens.tNL.ordinal());
-            
-            
-            
-            int pos = 0;
-            Token pkg = null;
-            Token firstImport = null;
-            List<String> out = new ArrayList<String>();
-            do {
-                Token curr = seq.token();
-                MirahTokenId currTok = (MirahTokenId)curr.id();
-                if ( IMPORT.equals(currTok)){
-                    while ( seq.moveNext() && seq.token().id().ordinal() != Tokens.tIDENTIFIER.ordinal()){
-                        
-                    }
-                    StringBuilder sb = new StringBuilder();
-                    do {
-                        sb.append(seq.token().text());
-                    } while ( 
-                            (
-                                seq.token().id().ordinal() == Tokens.tDot.ordinal() 
-                                || seq.token().id().ordinal() == Tokens.tIDENTIFIER.ordinal()
-                                
-                            ) && seq.moveNext()
-                            
-                    );
-                    out.add(sb.toString());
-                }
-                
-            } while ( seq.moveNext());
-            
-            return out;
+        DocumentQuery q = new DocumentQuery(doc);
+        return q.getImports();
+       
     }
     
     public void addImport(Document doc, String fullClassName) throws Exception {

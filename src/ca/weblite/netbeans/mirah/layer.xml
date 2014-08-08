@@ -22,6 +22,7 @@
                 </folder>
                 <file name="ca-weblite-netbeans-mirah-lexer-MirahParserFactory.instance"/>
                 <file name="ca-weblite-netbeans-mirah-lexer-SyntaxErrorsHighlightingTaskFactory.instance"/>
+                <!--<file name="ca-weblite-netbeans-mirah-lexer-CodeHintsTaskFactory.instance"/>-->
             </folder>
         </folder>
     </folder>

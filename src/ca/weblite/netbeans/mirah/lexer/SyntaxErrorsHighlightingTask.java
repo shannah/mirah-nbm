@@ -145,7 +145,12 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
             
             errors.add(errorDescription);
         }
+        
+        CodeHintsTask codeHints = new CodeHintsTask();
+        codeHints.run(t, se);
+        errors.addAll(codeHints.getErrors());
         HintsController.setErrors(document, "mirah", errors);
+        
     }
 
     @Override
