@@ -158,10 +158,12 @@ class CodeHintsTask extends ParserResultTask {
             StringBuilder sb = new StringBuilder();
             sb.append("\n");
             CodeFormatter fmt = new CodeFormatter();
+            Set<String> requiredImports = new HashSet<String>();
             for ( Method m : methods ){
                 //System.out.println("Formatting method "+m);
                 //System.out.println("Formatted "+fmt.formatMethod(m, indent, indentSize));
                 sb.append(fmt.formatMethod(m, indent, indentSize));
+                requiredImports.addAll(fmt.getRequiredImports(m));
             }
             //System.out.println(sb.toString());
             //System.out.println("Looking for next do from "+closure.position().startChar());
@@ -171,6 +173,9 @@ class CodeHintsTask extends ParserResultTask {
                 doc.insertString(nextDoPos, sb.toString(), new SimpleAttributeSet());
             }
             
+            for ( String importCls : requiredImports ){
+                q.addImport(importCls);
+            }
             
             return null;
             

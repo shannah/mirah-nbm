@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.SimpleAttributeSet;
 import mirah.impl.Tokens;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
@@ -82,6 +83,57 @@ public class DocumentQuery {
         return 0;
     }
     
+    public void addImport(String fqn) throws BadLocationException{
+        if ( requiresImport(fqn) ){
+            TokenHierarchy<?> hi = TokenHierarchy.get(doc);
+            int caretOffset = 0;
+            TokenSequence<MirahTokenId> seq = mirahTokenSequence(doc, caretOffset, false);
+            
+            // Find the first package or import and place the import after that.
+            MirahTokenId PKG = MirahTokenId.get(Tokens.tPackage.ordinal());
+            MirahTokenId IMPORT = MirahTokenId.get(Tokens.tImport.ordinal());
+            MirahTokenId EOL = MirahTokenId.get(Tokens.tNL.ordinal());
+            
+            
+            
+            int pos = 0;
+            Token pkg = null;
+            Token firstImport = null;
+            
+            do {
+                Token curr = seq.token();
+                MirahTokenId currTok = (MirahTokenId)curr.id();
+                if ( PKG.equals(currTok) ){
+                    pkg = curr;
+                } else if ( IMPORT.equals(currTok)){
+                    firstImport = curr;
+                }
+                
+            } while ( seq.moveNext());
+            
+            
+            if ( firstImport != null ){
+                try {
+                    doc.insertString(firstImport.offset(hi), "import "+fqn+"\n", new SimpleAttributeSet());
+                } catch (BadLocationException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            } else if ( pkg != null ){
+                seq.move(pkg.offset(hi));
+                while ( seq.moveNext() ){
+                    if ( EOL.equals(seq.token().id())){
+                        doc.insertString(seq.token().offset(hi), "\nimport "+fqn+"\n", new SimpleAttributeSet());
+                        break;
+                    }
+                }
+            } else {
+                doc.insertString(0, "import "+fqn+"\n", new SimpleAttributeSet());
+            }
+        }
+            
+            
+    }
+    
     public List<String> getImports() {
         //Document doc = source.getDocument(true);
             TokenHierarchy<?> hi = TokenHierarchy.get(doc);
@@ -124,6 +176,28 @@ public class DocumentQuery {
             } while ( seq.moveNext());
             
             return out;
+    }
+   
+    public boolean requiresImport(String fqn){
+        String pkg = "";
+        String simpleName = fqn;
+        if ( fqn.indexOf(".") != -1 ){
+            pkg = fqn.substring(0, fqn.lastIndexOf("."));
+            simpleName = fqn.substring(pkg.length()+1);
+        }
+        
+        String pkgGlob = pkg+".*";
+        
+        List<String> imports = getImports();
+        for ( String line : imports ){
+            if ( pkgGlob.equals(line)){
+                return false;
+            }
+            if ( fqn.equals(line)){
+                return false;
+            }
+        }
+        return true;
     }
     
     
