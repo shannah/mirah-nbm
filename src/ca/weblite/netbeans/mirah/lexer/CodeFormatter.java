@@ -17,7 +17,7 @@ import java.util.Set;
 public class CodeFormatter {
     public String formatMethod(Method m, int indent, int numSpacesPerIndent ){
         StringBuilder sb = new StringBuilder();
-        indent(sb, indent);
+        //indent(sb, indent);
         sb.append("def ").append(m.getName());
         int i=0;
         int len;
@@ -77,7 +77,7 @@ public class CodeFormatter {
         
     }
     
-    private void indent(StringBuilder sb, int indent){
+    public void indent(StringBuilder sb, int indent){
         for ( int i=0; i< indent; i++){
             sb.append(" ");
         }

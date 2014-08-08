@@ -21,6 +21,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.text.Document;
 import org.netbeans.api.java.classpath.ClassPath;
+import org.netbeans.api.lexer.Token;
+import org.netbeans.api.lexer.TokenHierarchy;
+import org.netbeans.editor.BaseDocument;
 
 import org.netbeans.modules.parsing.api.Snapshot;
 import org.netbeans.modules.parsing.api.Source;
@@ -81,6 +84,21 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
                 
                     line = Integer.parseInt(pieces[pieces.length-1]);
                 } else {
+                    
+                    // If we're here then it may be an inference error
+                    // Let's look through the document to see if we can find any
+                    // class references that don't have an import
+                    DocumentQuery q = new DocumentQuery(document);
+                    SourceQuery sq = new SourceQuery(document);
+                    List<Token<MirahTokenId>> lambdas = q.findLambdaTypes();
+                    for ( Token<MirahTokenId> tok : lambdas ){
+                        String className = String.valueOf(tok.text());
+                        String fqn = sq.getFQN(className, tok.offset(TokenHierarchy.get(document)));
+                        if ( q.requiresImport(fqn)){
+                            message = "cannot find class "+className;
+                        }
+                    }
+                    
                     line = 1;
                 }
                 

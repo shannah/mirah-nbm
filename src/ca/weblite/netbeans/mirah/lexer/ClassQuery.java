@@ -45,12 +45,12 @@ public class ClassQuery {
         
         for ( ClassPath cp : classPaths ){
             try {
-                Class cls = cp.getClassLoader(true).loadClass(fqn);
+                 Class cls = cp.getClassLoader(true).loadClass(fqn);
                 if ( cls != null ){
                     return cls;
                 }
-            } catch (ClassNotFoundException ex) {
-                Exceptions.printStackTrace(ex);
+            } catch (Throwable ex) {
+                //Exceptions.printStackTrace(ex);
             }
         }
         return null;

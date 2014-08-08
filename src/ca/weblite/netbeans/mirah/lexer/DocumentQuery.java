@@ -83,6 +83,28 @@ public class DocumentQuery {
         return 0;
     }
     
+    public List<Token<MirahTokenId>> findLambdaTypes(){
+        List<Token<MirahTokenId>> out = new ArrayList<Token<MirahTokenId>>();
+        TokenHierarchy<?> hi = TokenHierarchy.get(doc);
+        int caretOffset = 0;
+        TokenSequence<MirahTokenId> seq = getTokens(caretOffset, false);
+        
+        while ( seq.moveNext() ){
+            
+            if ( seq.token().id().ordinal() == Tokens.tIDENTIFIER.ordinal() 
+                    && "lambda".equals(String.valueOf(seq.token().text()))){
+                while ( seq.moveNext() ){
+                    if ( seq.token().id().ordinal() == Tokens.tCONSTANT.ordinal() ){
+                        out.add(seq.token());
+                        break;
+                    }
+                }
+            }
+        }
+        return out;
+    }
+    
+    
     public void addImport(String fqn) throws BadLocationException{
         if ( requiresImport(fqn) ){
             TokenHierarchy<?> hi = TokenHierarchy.get(doc);

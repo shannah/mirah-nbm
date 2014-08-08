@@ -147,28 +147,20 @@ class CodeHintsTask extends ParserResultTask {
 
         @Override
         public ChangeInfo implement() throws Exception {
-            //System.out.println("IMplementing fix....");
-            //System.out.println(methods);
             DocumentQuery q = new DocumentQuery(doc);
             int indent = q.getIndent(closure.position().startChar());
-            //System.out.println("Indent is "+indent);
-            
             int indentSize = IndentUtils.indentLevelSize(doc);
             indent+=indentSize;
             StringBuilder sb = new StringBuilder();
             sb.append("\n");
             CodeFormatter fmt = new CodeFormatter();
+            fmt.indent(sb, indent);
             Set<String> requiredImports = new HashSet<String>();
             for ( Method m : methods ){
-                //System.out.println("Formatting method "+m);
-                //System.out.println("Formatted "+fmt.formatMethod(m, indent, indentSize));
                 sb.append(fmt.formatMethod(m, indent, indentSize));
                 requiredImports.addAll(fmt.getRequiredImports(m));
             }
-            //System.out.println(sb.toString());
-            //System.out.println("Looking for next do from "+closure.position().startChar());
             int nextDoPos = q.getAfterNextDo(closure.position().startChar());
-            //System.out.println("Next do pos is "+nextDoPos);
             if ( nextDoPos != -1 ){
                 doc.insertString(nextDoPos, sb.toString(), new SimpleAttributeSet());
             }
