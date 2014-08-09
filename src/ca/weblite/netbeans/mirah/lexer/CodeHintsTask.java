@@ -81,6 +81,7 @@ class CodeHintsTask extends ParserResultTask {
             
             
             Set<Method> missingMethods = clsQuery.getUnimplementedMethodsRequiredByInterfaces();
+            missingMethods.addAll(clsQuery.getAbstractMethods());
             
             if ( !missingMethods.isEmpty() ){
                 
