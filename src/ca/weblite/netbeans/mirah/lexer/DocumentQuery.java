@@ -247,6 +247,54 @@ public class DocumentQuery {
     }
     
     
+    public int getBeforePrevEnd(int caretOffset ){
+        TokenSequence<MirahTokenId> seq = getTokens(caretOffset, true);
+        if ( seq.token().id().ordinal() == Tokens.tEnd.ordinal()){
+            seq.movePrevious();
+            return seq.token().offset(TokenHierarchy.get(doc));
+        }
+        while ( seq.movePrevious()){
+            //System.out.println("Tok is "+seq.token());
+            if ( seq.token().id().ordinal() == Tokens.tEnd.ordinal() ){
+                //System.out.println("Found do... checking if there is something after");
+                if ( seq.movePrevious() ){
+                    return seq.token().offset(TokenHierarchy.get(doc));
+                } else {
+                    return -1;
+                }
+            }
+        }
+        return -1;
+    }
+    
+    
+    public String getPackageName(int caretOffset){
+         TokenSequence<MirahTokenId> seq = getTokens(caretOffset, true);
+         while ( seq.movePrevious()){
+            //System.out.println("Tok is "+seq.token());
+            if ( seq.token().id().ordinal() == Tokens.tPackage.ordinal() ){
+                //System.out.println("Found do... checking if there is something after");
+                StringBuilder sb = null;
+                while (seq.moveNext()){
+                    if ( sb == null && seq.token().id().ordinal() == Tokens.tIDENTIFIER.ordinal()  ){
+                        sb = new StringBuilder();
+                        sb.append(seq.token().text());
+                    } else if ( sb != null 
+                            && ( seq.token().id().ordinal() == Tokens.tIDENTIFIER.ordinal()
+                              || seq.token().id().ordinal() == Tokens.tDot.ordinal())){
+                     
+                        sb.append(seq.token().text());
+                    } else if ( sb != null ){
+                        return sb.toString();
+                    }
+                }
+                break;
+            }
+        }
+        return null;
+    }
+    
+    
     /**
      * Get token sequence positioned over a token.
      *

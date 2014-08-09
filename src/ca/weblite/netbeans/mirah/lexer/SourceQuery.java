@@ -147,6 +147,7 @@ public class SourceQuery implements List<Node>{
         
     
     public SourceQuery findClass(final String name){
+        
         final List<Node> found = new ArrayList<Node>();
         if ( results == null ){
             if ( dbg == null ){
@@ -206,7 +207,6 @@ public class SourceQuery implements List<Node>{
         
         @Override
         public boolean enterClosureDefinition(ClosureDefinition node, Object arg) {
-            //System.out.println("Closure "+node);
             if ( className == null ){
                 found.add(node);
             }
@@ -361,7 +361,6 @@ public class SourceQuery implements List<Node>{
             Set<String> foundClasses = new HashSet<String>();
             for ( ClassPath cp : classpaths ){
                 final boolean[] complete = new boolean[]{false};
-                //System.out.println("Checking classpath "+cp+" for class "+className);
                 Future results = new Future(){
 
                     @Override
@@ -371,7 +370,6 @@ public class SourceQuery implements List<Node>{
                     
                 };
                 index.findClass(new ClassPathQuery(100, className, "", cp), results);
-                //System.out.println("Matches "+results.getMatches());
                 foundClasses.addAll(results.getMatches());
             }
             
@@ -472,22 +470,18 @@ public class SourceQuery implements List<Node>{
         sb.append(m.name().identifier());
         for ( int i=0; i<m.arguments().required_size(); i++){
             if ( m.arguments().required(i) == null){
-                //System.out.println("Required arg for method "+m+" is null");
                 continue;
             }
             if ( m.arguments().required(i).type() == null ){
-                //System.out.println("Type of arg "+i+" for method "+m+" is null");
                 continue;
             }
             if ( m.arguments().required(i).type().typeref() == null ){
-                //System.out.println("Typeref of arg for method "+m+" is null");
                 continue;
             }
             
             String argType = getFQN(m.arguments().required(i).type().typeref().name(), m.position().startChar());
             sb.append("_").append(argType);
         }
-        //System.out.println("Method ID is "+sb.toString());
         return sb.toString();
     }
 

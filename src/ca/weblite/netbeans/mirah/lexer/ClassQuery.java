@@ -8,13 +8,13 @@ package ca.weblite.netbeans.mirah.lexer;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.openide.filesystems.FileObject;
-import org.openide.util.Exceptions;
 
 /**
  *
@@ -41,11 +41,15 @@ public class ClassQuery {
     }
     
     public static Class findClass(String fqn, FileObject fo){
+        return findClass(fqn, fo, true );
+    }
+    
+    public static Class findClass(String fqn, FileObject fo, boolean cache){
         ClassPath[] classPaths = getClassPaths(fo);
         
         for ( ClassPath cp : classPaths ){
             try {
-                 Class cls = cp.getClassLoader(true).loadClass(fqn);
+                 Class cls = cp.getClassLoader(cache).loadClass(fqn);
                 if ( cls != null ){
                     return cls;
                 }
@@ -59,8 +63,8 @@ public class ClassQuery {
     
     
     
-    public ClassQuery(String className, FileObject fo){
-        this.cls = findClass(className, fo);
+    public ClassQuery(String className, FileObject fo, boolean cache){
+        this.cls = findClass(className, fo, cache);
     }
     
     public Set<Method> getMethods(){
@@ -93,6 +97,41 @@ public class ClassQuery {
             }
         }
         return out;
+    }
+    
+    public Set<Class> getInterfaces(){
+        
+        //// BROKEN!!!!  Not finding any interfaces for any classes at all
+        
+        Set<Class> out = new HashSet<Class>();
+        
+        //out.addAll(Arrays.asList(cls.getInterfaces()));
+        Class p = cls;
+        while ( p != null ){
+            out.addAll(Arrays.asList(p.getInterfaces()));
+            p = p.getSuperclass();
+        }
+        return out; 
+    }
+    
+    public Set<Method> getUnimplementedMethodsRequiredByInterfaces(){
+        Map<String,Method> required = new HashMap<String,Method>();
+        for ( Class i : getInterfaces()){
+            ClassQuery iq = new ClassQuery(i);
+            for ( Method m : iq.getMethods()){
+                String mid = getMethodId(m);
+                required.put(mid, m);
+            }
+        }
+        for ( Method m : getMethods() ){
+            String mid = getMethodId(m);
+            required.remove(mid);
+        }
+        
+        HashSet<Method> out = new HashSet<Method>();
+        out.addAll(required.values());
+        return out;
+        
     }
     
     public Set<Method> getProtectedMethods(){
