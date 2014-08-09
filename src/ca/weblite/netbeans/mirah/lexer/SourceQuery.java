@@ -23,6 +23,10 @@ import java.util.Set;
 import javax.swing.text.Document;
 import mirah.lang.ast.ClassDefinition;
 import mirah.lang.ast.ClosureDefinition;
+import mirah.lang.ast.FieldAccess;
+import mirah.lang.ast.FieldDeclaration;
+import mirah.lang.ast.LocalAssignment;
+import mirah.lang.ast.LocalDeclaration;
 import mirah.lang.ast.MethodDefinition;
 import mirah.lang.ast.Node;
 import mirah.lang.ast.Package;
@@ -47,14 +51,18 @@ public class SourceQuery implements List<Node>{
         
     }
     
+    
+    
     public SourceQuery(Document doc, List<Node> results){
         this.doc = doc;
+        this.dbg = MirahParser.getDocumentDebugger(doc);
         this.results = new ArrayList<Node>();
         this.results.addAll(results);
     }
     
     public SourceQuery(Document doc, Node root){
         this.doc = doc;
+        this.dbg = MirahParser.getDocumentDebugger(doc);
         this.results = new ArrayList<Node>();
         this.results.add(root);
     }
@@ -67,6 +75,32 @@ public class SourceQuery implements List<Node>{
             ((Node)node).accept(scanner, null);
         }
         return new SourceQuery(doc, scanner.found);
+    }
+    
+    public SourceQuery findMethods(int offset){
+        MethodOffsetScanner scanner = new MethodOffsetScanner();
+        scanner.offset = offset;
+        for( Object node : dbg.compiler.compiler().getParsedNodes() ){
+            ((Node)node).accept(scanner, null);
+        }
+        return new SourceQuery(doc, scanner.found);
+    }
+    
+    public SourceQuery findMethod(int offset){
+        MethodDefinition cdef = null;
+        int currRange = -1;
+        for ( Node n : findMethods(offset)){
+            if ( cdef == null
+                    || n.position().endChar()- n.position().startChar() < currRange ){
+                cdef = (MethodDefinition)n;
+                currRange = n.position().endChar()-n.position().startChar();
+            }
+        }
+        List<Node> found = new ArrayList<Node>();
+        if ( cdef != null ){
+            found.add(cdef);
+        }
+        return new SourceQuery(doc, found);
     }
     
     public SourceQuery findClass(int offset){
@@ -121,6 +155,13 @@ public class SourceQuery implements List<Node>{
             }
             
         });
+    }
+    
+    public String getType(){
+        if ( results != null && !results.isEmpty() ){
+            return dbg.getType(results.get(0)).name();
+        }
+        return null;
     }
     
     public SourceQuery findParentClosureOrClass(){
@@ -199,10 +240,9 @@ public class SourceQuery implements List<Node>{
     }
     
     
-    private static class ClosureScanner extends NodeScanner {
+    private static class ClosureScanner extends BaseScanner {
 
         private String className;
-        private ArrayList<Node> found = new ArrayList<Node>();
         
         
         @Override
@@ -236,10 +276,10 @@ public class SourceQuery implements List<Node>{
 
     };
     
-    private static class MethodScanner extends NodeScanner {
+    private static class MethodScanner extends BaseScanner {
 
         private String methodName;
-        private ArrayList<Node> found = new ArrayList<Node>();
+        
 
         @Override
         public boolean enterMethodDefinition(MethodDefinition node, Object arg) {
@@ -261,9 +301,71 @@ public class SourceQuery implements List<Node>{
     };
     
     
-    private static class ClassScanner extends NodeScanner {
-        private int offset;
-        private ArrayList<Node> found = new ArrayList<Node>();
+    private static class FieldDefScanner extends BaseScanner {
+
+        private String fieldName;
+        
+
+        @Override
+        public boolean enterFieldDeclaration(FieldDeclaration node, Object arg) {
+            if ( fieldName == null ){
+                found.add(node);
+            }
+            
+            else if ( node.name() != null ){
+                if ( "*".equals(fieldName) ){
+                    found.add(node);
+                } else if ( fieldName.equals(node.name().identifier())
+                        || fieldName.equals("@"+node.name().identifier())){
+                    found.add(node);
+                }
+            } 
+            
+            return super.enterFieldDeclaration(node, arg); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        
+    };
+    
+    private static class LocalVarScanner extends BaseScanner {
+
+        private String varName;
+
+        @Override
+        public boolean enterLocalAssignment(LocalAssignment node, Object arg) {
+            if ( varName == null ){
+                found.add(node);
+            }
+            
+            else if ( node.name() != null ){
+                if ( "*".equals(varName) ){
+                    found.add(node);
+                } else if ( varName.equals(node.name().identifier())){
+                    found.add(node);
+                }
+            } 
+            return super.enterLocalAssignment(node, arg); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        
+        
+     
+        
+
+        
+        
+       
+
+        
+    };
+    
+    private static class BaseScanner extends NodeScanner {
+        int offset = -1;
+        ArrayList<Node> found = new ArrayList<Node>();
+    }
+    
+    private static class ClassScanner extends BaseScanner {
+        
 
         @Override
         public boolean enterClassDefinition(ClassDefinition node, Object arg) {
@@ -279,37 +381,44 @@ public class SourceQuery implements List<Node>{
         
     }
     
+    private static class MethodOffsetScanner extends BaseScanner {
+
+        @Override
+        public boolean enterMethodDefinition(MethodDefinition node, Object arg) {
+            if ( node.position() != null 
+                    && node.position().startChar() <= offset
+                    && node.position().endChar() > offset ){
+                found.add(node);
+            }
+            return super.enterMethodDefinition(node, arg); //To change body of generated methods, choose Tools | Templates.
+        }
+        
+    }
+    
     
     public SourceQuery findClosures(final String className){
         ClosureScanner scanner = new ClosureScanner();
         scanner.className = className;
-        if ( results == null ){
-            if ( dbg == null ){
-                return new SourceQuery(doc, scanner.found);
-            }
-            for( Object node : dbg.compiler.compiler().getParsedNodes() ){
-
-
-
-                if ( node instanceof Node ){
-                    ((Node)node).accept(scanner, null);
-                }
-            }
-        } else {
-            for ( Node res : results ){
-                res.accept(scanner, null);
-            }
-        }
-        
-        
-        
-        return new SourceQuery(doc, scanner.found);
+        return find(scanner);
     }
     
     
     public SourceQuery findMethods(final String methodName){
         MethodScanner scanner = new MethodScanner();
         scanner.methodName = methodName;
+        return find(scanner);
+    }
+    
+    
+    public SourceQuery findLocalVars(final String varname){
+        LocalVarScanner scanner = new LocalVarScanner();
+        scanner.varName = varname;
+        return find(scanner);
+    }
+    
+    
+    
+    private SourceQuery find(BaseScanner scanner){
         if ( results == null ){
             if ( dbg == null ){
                 return new SourceQuery(doc, scanner.found);
@@ -331,6 +440,30 @@ public class SourceQuery implements List<Node>{
         return new SourceQuery(doc, scanner.found);
     }
     
+    
+    public SourceQuery findFieldDefinitions(final String fieldName){
+        FieldDefScanner scanner = new FieldDefScanner();
+        scanner.fieldName = fieldName;
+        if ( results == null ){
+            if ( dbg == null ){
+                return new SourceQuery(doc, scanner.found);
+            }
+            for( Object node : dbg.compiler.compiler().getParsedNodes() ){
+
+
+
+                if ( node instanceof Node ){
+                    ((Node)node).accept(scanner, null);
+                }
+            }
+        } else {
+            for ( Node res : results ){
+                res.accept(scanner, null);
+            }
+        }
+        
+        return new SourceQuery(doc, scanner.found);
+    }
     
    
     public String getFQN(String className, int offset){
