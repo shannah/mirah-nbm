@@ -6,6 +6,7 @@
 
 package ca.weblite.netbeans.mirah.cc;
 
+import ca.weblite.netbeans.mirah.lexer.ClassQuery;
 import ca.weblite.netbeans.mirah.lexer.MirahLanguageHierarchy;
 import ca.weblite.netbeans.mirah.lexer.MirahParser;
 import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
@@ -139,12 +140,20 @@ public class DefCompletionQuery extends AsyncCompletionQuery {
             }
 
             filter = "";
-            for ( Method m : thisClass.getMethods()){
+            
+            Class cls = thisClass;
+            if ( cls.getSuperclass() != null ){
+                cls = cls.getSuperclass();
+            }
+            
+            ClassQuery cq = new ClassQuery(cls);
+            
+            for ( Method m : cq.getAccessibleMethods(thisClass)){
 
-                int modifiers = m.getModifiers();
-                if ( Modifier.isPrivate(modifiers) ){
-                    continue;
-                }
+                //int modifiers = m.getModifiers();
+                //if ( Modifier.isPrivate(modifiers) ){
+                //    continue;
+                //}
                 
                 if ( m.getName().startsWith(filter) && !Modifier.isStatic(m.getModifiers()) ){
                     crs.addItem(new MirahDefCompletionItem(m, defOffset, eol-defOffset));
