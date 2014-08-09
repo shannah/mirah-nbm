@@ -68,8 +68,8 @@ public class MirahLexer implements Lexer<MirahTokenId>{
             try {
                 tok = lexer.lex(lastPos);
                 
-            } catch ( NullPointerException npe ){
-                npe.printStackTrace();
+            } catch ( Exception npe ){
+                //npe.printStackTrace();
                 
                 int len = 1;
                 lastPos++;
