@@ -6,14 +6,18 @@
 
 package ca.weblite.netbeans.mirah.typinghooks;
 
+import ca.weblite.netbeans.mirah.lexer.DocumentQuery;
+import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
 import java.awt.event.ActionEvent;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.TextAction;
+import mirah.impl.Tokens;
 import org.netbeans.api.editor.mimelookup.MimeLookup;
 import org.netbeans.api.editor.mimelookup.MimePath;
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.api.editor.mimelookup.MimeRegistrations;
+import org.netbeans.api.lexer.TokenSequence;
 import org.netbeans.editor.BaseDocument;
 import org.netbeans.modules.editor.indent.api.Indent;
 import org.netbeans.spi.editor.typinghooks.TypedBreakInterceptor;
@@ -37,7 +41,13 @@ public class MirahTypedBreakInterceptor implements TypedBreakInterceptor{
     public void insert(MutableContext context) throws BadLocationException {
         int dotPos = context.getCaretOffset();
         Document doc = context.getDocument();
-
+        DocumentQuery dq = new DocumentQuery(doc);
+        TokenSequence<MirahTokenId> seq = dq.getTokens(dotPos, false);
+        boolean inJavadoc = false;
+        System.out.println("Token is "+seq.token()+" "+seq.token().id().name());
+        if ( seq.token() != null ){
+            inJavadoc = (seq.token().id().ordinal() == Tokens.tJavaDoc.ordinal());
+        }
         BaseDocument baseDoc = (BaseDocument) context.getDocument();
         if (MirahTypingCompletion.isAddRightBrace(baseDoc, dotPos)) {
             boolean insert[] = {true};
@@ -61,6 +71,8 @@ public class MirahTypedBreakInterceptor implements TypedBreakInterceptor{
             context.getComponent().getCaret().setDot(dotPos);
         } else if (MirahTypingCompletion.blockCommentCompletion(context)) {
             blockCommentComplete(doc, dotPos, context);
+        } else if ( inJavadoc ){
+            doc.insertString(dotPos, "*", null);
         }
         isJavadocTouched = MirahTypingCompletion.javadocBlockCompletion(context);
         if (isJavadocTouched) {

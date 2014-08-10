@@ -27,6 +27,7 @@ public class MirahLexer implements Lexer<MirahTokenId>{
     private boolean inMethodDeclaration = false;
     private boolean inTypeHint = false;
     private int lastToken = -1;
+    private int lastNonWhiteToken = -1;
     
     
     private static final Logger LOG = Logger.getLogger(MirahLexer.class.getCanonicalName());
@@ -66,7 +67,8 @@ public class MirahLexer implements Lexer<MirahTokenId>{
         if ( tok == null ){
             alreadyStarted = false;
             try {
-                tok = lexer.lex(lastPos);
+                tok = lexer.lex(lastPos, false);
+                
                 
             } catch ( Exception npe ){
                 //npe.printStackTrace();
@@ -101,7 +103,7 @@ public class MirahLexer implements Lexer<MirahTokenId>{
             if ( inTypeHint && (ordinal == Tokens.tCONSTANT.ordinal() || Tokens.tIDENTIFIER.ordinal() == ordinal) ){
                 inTypeHint = false;
                 ordinal = MirahLanguageHierarchy.TYPE_HINT;
-            } else if ( ordinal == Tokens.tColon.ordinal() && (lastToken == Tokens.tIDENTIFIER.ordinal() || lastToken == Tokens.tRParen.ordinal()) ){
+            } else if ( ordinal == Tokens.tColon.ordinal() && (lastNonWhiteToken == Tokens.tIDENTIFIER.ordinal() || lastNonWhiteToken == Tokens.tRParen.ordinal()) ){
                 inTypeHint = true;
                 
             }
@@ -110,6 +112,9 @@ public class MirahLexer implements Lexer<MirahTokenId>{
             int len = tok.endpos-tok.startpos;
             lastPos = tok.endpos;
             lastToken = tok.type.ordinal();
+            if ( tok.type.ordinal() < Tokens.tEOF.ordinal() ){
+                lastNonWhiteToken = tok.type.ordinal();
+            }
             tok = null;
             
             //if ( lastPos == strLen ){
