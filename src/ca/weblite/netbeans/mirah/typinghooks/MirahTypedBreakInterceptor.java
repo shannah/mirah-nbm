@@ -44,7 +44,6 @@ public class MirahTypedBreakInterceptor implements TypedBreakInterceptor{
         DocumentQuery dq = new DocumentQuery(doc);
         TokenSequence<MirahTokenId> seq = dq.getTokens(dotPos, false);
         boolean inJavadoc = false;
-        System.out.println("Token is "+seq.token()+" "+seq.token().id().name());
         if ( seq.token() != null ){
             inJavadoc = (seq.token().id().ordinal() == Tokens.tJavaDoc.ordinal());
         }
@@ -72,7 +71,14 @@ public class MirahTypedBreakInterceptor implements TypedBreakInterceptor{
         } else if (MirahTypingCompletion.blockCommentCompletion(context)) {
             blockCommentComplete(doc, dotPos, context);
         } else if ( inJavadoc ){
-            doc.insertString(dotPos, "*", null);
+            context.setText("\n * ", 0, 4);
+            //System.out.println("Adding *");
+            
+            //doc.insertString(context.getBreakInsertOffset(), "* ", null);
+            
+            //Indent.get(doc).indentNewLine(dotPos);
+            //context.getComponent().getCaret().setDot(dotPos);
+            //System.out.println("* added");
         }
         isJavadocTouched = MirahTypingCompletion.javadocBlockCompletion(context);
         if (isJavadocTouched) {
@@ -81,9 +87,35 @@ public class MirahTypedBreakInterceptor implements TypedBreakInterceptor{
     }
     private void blockCommentComplete(Document doc, int dotPos, MutableContext context) throws BadLocationException {
         // note that the formater will add one line of javadoc
-        doc.insertString(dotPos, "*/", null); // NOI18N
-        Indent.get(doc).indentNewLine(dotPos);
-        context.getComponent().getCaret().setDot(dotPos);
+        //doc.insertString(dotPos, "*/", null); // NOI18N
+        //Indent.get(doc).indentNewLine(dotPos);
+        //context.getComponent().getCaret().setDot(dotPos);
+        DocumentQuery dq = new DocumentQuery(doc);
+        int bol = dq.getBOL(dotPos-1);
+        int eol = dq.getEOL(bol);
+        String sep = "\n";
+        
+        int indent = 1;
+        int i =bol;
+        while ( i > 0 && i< eol && Character.isWhitespace(doc.getText(i, 1).charAt(0) ) ){
+            indent++;
+            i++;
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append(sep);
+        //for ( int j=0; j<indent; j++){
+        //    sb.append(" ");
+       // }
+        sb.append(" * ").append(sep);
+        int cursorPos = sb.length()-1;
+        for ( int j=0; j<indent; j++){
+            sb.append(" ");
+        }
+        sb.append("*/");
+        String tx = sb.toString();
+        context.setText(tx, 0, cursorPos);
+        
     }
 
 
