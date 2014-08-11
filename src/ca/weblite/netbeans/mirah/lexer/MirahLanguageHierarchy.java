@@ -154,7 +154,7 @@ public class MirahLanguageHierarchy extends LanguageHierarchy<MirahTokenId>{
             Tokens.tDollar, Tokens.tInstVarBacktick, Tokens.tClassVarBacktick, Tokens.tComma, Tokens.tStar, Tokens.tStars, 
             Tokens.tAmper, Tokens.tAmpers, Tokens.tPipe, Tokens.tPipes, Tokens.tRocket, Tokens.tCharacter, Tokens.tEscape, 
             Tokens.tStringContent, Tokens.tStrEvBegin, Tokens.tRegexBegin, Tokens.tRegexEnd, Tokens.tHereDocId, 
-            Tokens.tHereDocBegin, Tokens.tHereDocEnd, Tokens.tUNKNOWN, Tokens.tEOF, Tokens.tComment, Tokens.tJavaDoc, Tokens.tWhitespace};
+            Tokens.tHereDocBegin, Tokens.tHereDocEnd, Tokens.tUNKNOWN, Tokens.tEOF, Tokens.tComment, Tokens.tJavaDoc, Tokens.tWhitespace, Tokens.tPartialComment};
         
         tokens = new ArrayList<MirahTokenId>();
         for ( Tokens t : toks ){
