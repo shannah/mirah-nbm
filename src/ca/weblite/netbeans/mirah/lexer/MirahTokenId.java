@@ -6,8 +6,11 @@
 
 package ca.weblite.netbeans.mirah.lexer;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import mirah.impl.Tokens;
 import org.netbeans.api.lexer.Language;
 import org.netbeans.api.lexer.TokenId;
@@ -30,6 +33,12 @@ public class MirahTokenId implements TokenId {
     public static final MirahTokenId SQUOTE = get(Tokens.tSQuote.ordinal());
     public static final MirahTokenId DQUOTE = get(Tokens.tDQuote.ordinal());
     public static final MirahTokenId NL = get(Tokens.tNL.ordinal());
+    public static final Set<MirahTokenId> WHITESPACE_AND_COMMENTS = new HashSet<MirahTokenId>(Arrays.asList(new MirahTokenId[]{
+       get(Tokens.tWhitespace),
+       get(Tokens.tComment),
+       get(Tokens.tJavaDoc)
+    }));
+    
     
     public static enum Enum {
         RPAREN,
@@ -98,6 +107,10 @@ public class MirahTokenId implements TokenId {
     
     public static MirahTokenId get(int id){
         return MirahLanguageHierarchy.getToken(id);
+    }
+    
+    public static MirahTokenId get(Tokens tok){
+        return MirahTokenId.get(tok.ordinal());
     }
 
     @Override

@@ -6,8 +6,10 @@
 
 package ca.weblite.netbeans.mirah.typinghooks;
 
+import ca.weblite.netbeans.mirah.lexer.DocumentQuery;
 import ca.weblite.netbeans.mirah.lexer.MirahLanguageHierarchy;
 import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -24,6 +26,8 @@ import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenSequence;
 import org.netbeans.editor.BaseDocument;
 import org.netbeans.lib.editor.util.swing.DocumentUtilities;
+import org.netbeans.modules.editor.indent.api.Indent;
+import org.netbeans.modules.editor.indent.api.IndentUtils;
 import org.netbeans.spi.editor.typinghooks.DeletedTextInterceptor;
 import org.netbeans.spi.editor.typinghooks.TypedBreakInterceptor;
 import org.netbeans.spi.editor.typinghooks.TypedTextInterceptor;
@@ -159,12 +163,70 @@ public class MirahTypingCompletion {
     
     static boolean isAddEnd(BaseDocument doc, int caretOffset) throws BadLocationException {
         
+        int indentSize = IndentUtils.indentLevelSize(doc);
+        DocumentQuery dq = new DocumentQuery(doc);
+        if ( caretOffset > 0 ){
+            TokenSequence<MirahTokenId> seq = dq.getTokens(caretOffset-1, false);
+            if ( DocumentQuery.findPrevious(
+                    seq, 
+                    null, 
+                    null,
+                    MirahTokenId.get(Tokens.tNL)
+            )){
+                int bol = seq.offset();
+                seq.moveNext();
+                
+                // See if the if statement is the first statement on 
+                // the line... only then do we add an auto end
+                if ( DocumentQuery.findNext(
+                        seq,
+                        MirahTokenId.WHITESPACE_AND_COMMENTS,
+                        MirahTokenId.get(Tokens.tNL),
+                        MirahTokenId.get(Tokens.tIf)
+                        )){
+                    int ifOffset = seq.token().offset(TokenHierarchy.get(doc));
+                    
+                    int indent = dq.getIndent(ifOffset);
+                    //System.out.println("Indent is "+indent);
+                    // Look for an end
+                    if ( DocumentQuery.findNext( seq, null, MirahTokenId.get(Tokens.tNL), MirahTokenId.get(Tokens.tEnd))){
+                        //System.out.println("Found end on this line");
+                        return false;
+                    }
+                    
+                    seq.move(ifOffset);
+                    seq.moveNext();
+                    DocumentQuery.consumeLine(seq);
+                    seq.moveNext();
+                    if ( seq.token() != null ){
+                        int nextIndent = dq.getIndent(seq.token().offset(TokenHierarchy.get(doc)));
+                        //System.out.println("Next indent is"+nextIndent);
+                        if ( nextIndent != indent+indentSize ){
+                            return true;
+                        } else {
+                            return false;
+                        }
+                        
+                    }
+                    // We now have an if statement
+                    // Let's see if the next line is already indented
+                    
+                    
+                    
+                    return true;
+                }
+            }
+            
+        }
+        
+        //System.out.println("isAddEnd: "+doc.getText(bol, eol-bol));
+        
         MirahTokenId[] starts = new MirahTokenId[]{
              MirahTokenId.get(Tokens.tDo.ordinal()),
              MirahTokenId.get(Tokens.tClass.ordinal()),
              MirahTokenId.get(Tokens.tInterface.ordinal()),
              MirahTokenId.get(Tokens.tDef.ordinal()),
-             MirahTokenId.get(Tokens.tIf.ordinal()),
+             //MirahTokenId.get(Tokens.tIf.ordinal()),
              MirahTokenId.get(Tokens.tCase.ordinal()),
              MirahTokenId.get(Tokens.tWhile.ordinal()),
              MirahTokenId.get(Tokens.tBegin.ordinal())

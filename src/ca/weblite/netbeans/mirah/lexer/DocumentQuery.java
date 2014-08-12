@@ -7,7 +7,10 @@
 package ca.weblite.netbeans.mirah.lexer;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
@@ -25,9 +28,22 @@ import org.openide.util.Exceptions;
 public class DocumentQuery {
     
     Document doc;
+    Set<MirahTokenId> skipTokens = new HashSet<MirahTokenId>();
     
     public DocumentQuery(Document doc){
         this.doc = doc;
+    }
+    
+    public void addSkipToken(MirahTokenId tok){
+        skipTokens.add(tok);
+    }
+    
+    public void removeSkipToken(MirahTokenId tok){
+        skipTokens.remove(tok);
+    }
+    
+    public void clearSkipTokens(){
+        skipTokens.clear();
     }
     
     public int getEOL(int offset){
@@ -227,6 +243,90 @@ public class DocumentQuery {
         return mirahTokenSequence(doc, caretOffset, backwardBias);
     }
     
+    public static void consumeLine(TokenSequence<MirahTokenId> sequence){
+        while (sequence.token() != null && sequence.moveNext() ){
+            if ( sequence.token() != null && sequence.token().id().ordinal() == Tokens.tNL.ordinal()){
+                return;
+            }
+        }
+    }
+    
+    /*
+    public int getIndent(int offset){
+        TokenSequence<MirahTokenId> seq = getTokens(offset, false);
+        while ( seq.token() != null && seq.token().id().ordinal() != Tokens.tNL.ordinal()){
+            seq.movePrevious();
+        }
+        if ( seq.token() == null ){
+            return 0;
+        }
+        int bol = seq.token().offset(TokenHierarchy.get(doc));
+        while ( seq.token() != null && seq.token().id().ordinal() != Tokens.tWhitespace.ordinal()){
+            seq.moveNext();
+        }
+        if ( seq.token() == null ){
+            return 0;
+        }
+        return seq.token().offset(TokenHierarchy.get(doc))-bol;
+    }*/
+    
+    public static boolean findNext(TokenSequence<MirahTokenId> sequence,
+            Set<MirahTokenId> skipTokens,
+            MirahTokenId endToken,
+            MirahTokenId needleToken){
+        return findNext(sequence, skipTokens, Collections.singleton(endToken), Collections.singleton(needleToken) );
+    }
+    public static boolean findNext(TokenSequence<MirahTokenId> sequence,
+            Set<MirahTokenId> skipTokens,
+            Set<MirahTokenId> endTokens,
+            Set<MirahTokenId> needleTokens){
+        while ( true ){
+            if ( sequence.token() == null ){
+                return false;
+            }
+            
+            MirahTokenId tok = sequence.token().id();
+            if ( needleTokens.contains(tok)){
+                return true;
+            }
+            if ( skipTokens != null && !skipTokens.contains(tok) ){
+                return false;
+            }
+            if ( endTokens != null && endTokens.contains(tok)){
+                return false;
+            }
+            sequence.moveNext();
+        }
+    }
+    public static boolean findPrevious(TokenSequence<MirahTokenId> sequence,
+            Set<MirahTokenId> skipTokens,
+            MirahTokenId endToken,
+            MirahTokenId needleToken){
+        return findPrevious(sequence, skipTokens, Collections.singleton(endToken), Collections.singleton(needleToken) );
+    }
+    public static boolean findPrevious(TokenSequence<MirahTokenId> sequence,
+            Set<MirahTokenId> skipTokens,
+            Set<MirahTokenId> endTokens,
+            Set<MirahTokenId> needleTokens){
+        while ( true ){
+            if ( sequence.token() == null ){
+                return false;
+            }
+            
+            MirahTokenId tok = sequence.token().id();
+            if ( needleTokens.contains(tok)){
+                return true;
+            }
+            if ( skipTokens != null && !skipTokens.contains(tok) ){
+                return false;
+            }
+            if ( endTokens != null && endTokens.contains(tok)){
+                return false;
+            }
+            sequence.movePrevious();
+        }
+    }
+    
     
     
     public int getAfterNextDo(int caretOffset){
@@ -325,5 +425,9 @@ public class DocumentQuery {
         } finally {
             bdoc.readUnlock();
         }
+    }
+
+    private TokenSequence<MirahTokenId> getTokens(int caretOffset) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
