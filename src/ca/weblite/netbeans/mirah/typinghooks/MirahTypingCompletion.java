@@ -72,14 +72,17 @@ public class MirahTypingCompletion {
         return balance;
     }
     
+    
+    
     /**
      * Returns position of the first unpaired closing paren/brace/bracket from the caretOffset
      * till the end of caret row. If there is no such element, position after the last non-white
      * character on the caret row is returned.
      */
     static int getRowOrBlockEnd(BaseDocument doc, int caretOffset, boolean[] insert) throws BadLocationException {
+        
         int rowEnd = org.netbeans.editor.Utilities.getRowLastNonWhite(doc, caretOffset);
-        if (rowEnd == -1 || caretOffset >= rowEnd) {
+        if (rowEnd == -1 || caretOffset >= rowEnd+1) {
             return caretOffset;
         }
         rowEnd += 1;
@@ -90,8 +93,6 @@ public class MirahTypingCompletion {
         if (ts == null) {
             return caretOffset;
         }
-        
-        //int lParen = 999;
         
         while (ts.offset() < rowEnd) {
             final int id = ts.token().id().ordinal();
@@ -114,7 +115,10 @@ public class MirahTypingCompletion {
             }
         }
 
-        insert[0] = false;
+        if ( parenBalance > 0 || bracketBalance > 0 || braceBalance > 0 ){
+            doc.insertString(rowEnd+1, "\n", null);
+            return rowEnd+1;
+        }
         return rowEnd;
     }
     

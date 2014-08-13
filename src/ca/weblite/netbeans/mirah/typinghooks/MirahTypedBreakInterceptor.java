@@ -59,6 +59,7 @@ public class MirahTypedBreakInterceptor implements TypedBreakInterceptor{
         } else if ( MirahTypingCompletion.isAddEnd(baseDoc, dotPos)){
             boolean insert[] = {true};
             int end = MirahTypingCompletion.getRowOrBlockEnd(baseDoc, dotPos, insert);
+            
             if (insert[0]) {
                 
                 doc.insertString(end, "end", null); // NOI18N
