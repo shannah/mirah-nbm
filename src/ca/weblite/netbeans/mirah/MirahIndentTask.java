@@ -3,7 +3,9 @@ package ca.weblite.netbeans.mirah;
 
 
 import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -148,20 +150,35 @@ public class MirahIndentTask implements IndentTask  {
         openers.add(MirahTokenId.get(Tokens.tDef.ordinal()));
         openers.add(MirahTokenId.get(Tokens.tInterface.ordinal()));
         
-        int numOpeners = 0;
-        toks = mirahTokenSequence(context.document(), context.caretOffset(), true);
-        while ( toks.offset() > prevLineStart ){
+        LinkedList<MirahTokenId> foundOpeners = new LinkedList<MirahTokenId>();
+        boolean equalsEncountered = false;
+        
+        //int numOpeners = 0;
+        toks = mirahTokenSequence(context.document(), prevLineStart, false);
+        
+        while ( toks.offset() < currLineStart ){
             Token<MirahTokenId> tok = toks.token();
-            if ( tok.id() == tEnd ){
-                numOpeners--;
-            } else if ( openers.contains(tok.id())){
-                numOpeners++;
+            if ( tok.id().ordinal() == Tokens.tEQ.ordinal()){
+                equalsEncountered = true;
             }
-            toks.movePrevious(); 
+            
+            
+            if ( tok.id() == tEnd ){
+                //numOpeners--;
+                if ( !foundOpeners.isEmpty()){
+                    foundOpeners.pop();
+                }
+            } else if ( openers.contains(tok.id()) &&
+                    !(tok.id().ordinal() == Tokens.tIf.ordinal() && equalsEncountered)
+                    ){
+                //numOpeners++;
+                foundOpeners.push(tok.id());
+            }
+            toks.moveNext(); 
         }
         
-        if ( numOpeners > 0){
-            indent += indentSize;
+        if ( !foundOpeners.isEmpty()){
+            indent += foundOpeners.size()*indentSize;
         } 
         
         toks = mirahTokenSequence(context.document(), context.caretOffset(), false);
@@ -173,7 +190,8 @@ public class MirahIndentTask implements IndentTask  {
         closers.add(MirahTokenId.get(Tokens.tElse.ordinal()));
         closers.add(MirahTokenId.get(Tokens.tElsif.ordinal()));
         closers.add(MirahTokenId.get(Tokens.tWhen.ordinal()));
-        
+        toks.move(currLineStart);
+        toks.moveNext();
         while ( toks.offset() < currLineEnd ){
             if ( closers.contains(toks.token().id())){
                 indent -= indentSize;
