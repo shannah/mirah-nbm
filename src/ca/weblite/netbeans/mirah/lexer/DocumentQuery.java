@@ -430,4 +430,34 @@ public class DocumentQuery {
     private TokenSequence<MirahTokenId> getTokens(int caretOffset) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+    
+    
+    public MirahTokenId firstNonWhiteToken(int offset){
+        int eol = getEOL(offset+1);
+        TokenSequence<MirahTokenId> seq = getTokens(offset, false);
+        
+        while ( seq.token() != null && seq.offset() < eol ){
+            if ( !MirahTokenId.WHITESPACE_AND_COMMENTS.contains(seq.token().id())){
+                return seq.token().id();
+            }
+            seq.moveNext();
+        }
+        return null;
+        
+        
+    }
+    
+    public MirahTokenId lastNonWhiteTokenOfLine(int offset){
+        int bol = getBOL(offset+1);
+        int eol = getEOL(bol+1);
+        TokenSequence<MirahTokenId> seq = getTokens(offset, false);
+        MirahTokenId lastNonWhite = null;
+        while ( seq.token() != null && seq.offset() < eol ){
+             if ( !MirahTokenId.WHITESPACE_AND_COMMENTS.contains(seq.token().id())){
+                 lastNonWhite = seq.token().id();
+             }
+             seq.moveNext();
+        }
+        return lastNonWhite;
+    }
 }

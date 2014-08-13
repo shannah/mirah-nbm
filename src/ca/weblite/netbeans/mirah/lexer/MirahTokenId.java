@@ -69,6 +69,40 @@ public class MirahTokenId implements TokenId {
         enumMap.put(DQUOTE, Enum.DQUOTE);
     }
     
+    public static final Set<MirahTokenId> CONTINUATION_TOKENS = set(
+            Tokens.tOr,
+            Tokens.tAnd,
+            Tokens.tDo,
+            Tokens.tAmper,
+            Tokens.tColon,
+            Tokens.tColons,
+            Tokens.tDot,
+            Tokens.tGE,
+            Tokens.tGT,
+            Tokens.tLE,
+            Tokens.tLT,
+            Tokens.tOpAssign,
+            Tokens.tOrEq,
+            Tokens.tAndEq,
+            Tokens.tLLShift,
+            Tokens.tLShift,
+            Tokens.tRShift,
+            Tokens.tPlus,
+            Tokens.tPipes,
+            Tokens.tPipe,
+            Tokens.tPercent,
+            Tokens.tMinus,
+            Tokens.tStar,
+            Tokens.tStars,
+            Tokens.tNE,
+            Tokens.tIn,
+            Tokens.tSlash,
+            Tokens.tComma,
+            Tokens.tLParen,
+            Tokens.tLBrack,
+            Tokens.tLBrace
+    );
+    
     private final String        name;
     private final String        primaryCategory;
     private final int           id;
@@ -136,6 +170,16 @@ public class MirahTokenId implements TokenId {
     public Enum asEnum(){
         return enumMap.get(this);
     }
+    
+    
+    public static Set<MirahTokenId> set(Tokens... toks){
+        HashSet<MirahTokenId> out = new HashSet<MirahTokenId>();
+        for ( Tokens t : toks ){
+            out.add(MirahTokenId.get(t));
+        }
+        return out;
+    }
+    
     
     
 }

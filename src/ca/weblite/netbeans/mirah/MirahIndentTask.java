@@ -3,7 +3,6 @@ package ca.weblite.netbeans.mirah;
 
 
 import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,6 +11,7 @@ import java.util.logging.Logger;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Position;
+import javax.swing.text.StyledDocument;
 import mirah.impl.Tokens;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
@@ -20,6 +20,7 @@ import org.netbeans.modules.editor.indent.api.IndentUtils;
 import org.netbeans.modules.editor.indent.spi.Context;
 import org.netbeans.modules.editor.indent.spi.ExtraLock;
 import org.netbeans.modules.editor.indent.spi.IndentTask;
+import ca.weblite.netbeans.mirah.lexer.DocumentQuery;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -38,9 +39,367 @@ public class MirahIndentTask implements IndentTask  {
         this.context = ctx;
         
     }
-
-    @Override
+    
+    
+    /*
+    private static class LineProperty {
+        static final int TYPE_CONTINUATION=0;
+        static final int TYPE_INDENT=1;
+        WeakReference parentRow;
+        int type = 0;
+        
+        LineProperty(javax.swing.text.Element parentRow, int type){
+            this.parentRow = new WeakReference(parentRow);
+            this.type = type;
+        }
+        
+        javax.swing.text.Element parentRow(){
+            if ( parentRow != null && parentRow.get() != null ){
+                return (javax.swing.text.Element)parentRow.get();
+            }
+            return null;
+        }
+        
+        public String toString(){
+            return "Parent : "+parentRow;
+        }
+    }
+    
+    
+    private static Map<javax.swing.text.Element, LineProperty> lineProperties(Document doc){
+        Object props = doc.getProperty("LINE_PROPERTIES");
+        if ( props == null ){
+            props = new WeakHashMap<javax.swing.text.Element, LineProperty>();
+            doc.putProperty("LINE_PROPERTIES", props);
+            
+        }
+        return (Map<javax.swing.text.Element, LineProperty>)props;
+    }
+    */
     public void reindent() throws BadLocationException {
+        
+        /*
+        1. Single Indent This Line
+            - Last line is def, if, else, elsif,  begin, do, rescue, class, interface
+        2. Double Indent This Line
+            - Last line is hanging def, if, elsif, rescue, class, or enterface
+        3. Single un-indent last line
+            - Last line was a finished double-indent from previous hanging def, if, elsif, rescue, class or interface
+            - Last line was rescue, end, or ensure and was -- change indent to match opener
+        4. 
+        
+        
+        */
+        if ( context.startOffset() <= 0 ){
+            return;
+        }
+        int indentSize = IndentUtils.indentLevelSize(context.document());
+        
+        int prevLineStart = context.lineStartOffset(context.startOffset()-1);
+        int prevIndent = context.lineIndent(prevLineStart);
+        int currLineStart = context.lineStartOffset(context.startOffset());
+        int currLineEnd = currLineStart;
+        while ( currLineEnd < context.document().getLength() && !"\n".equals(context.document().getText(currLineEnd, 1))){
+            currLineEnd++;
+        }
+        int prevLineLen = currLineStart - prevLineStart-1;
+        if ( prevLineLen < 0){
+            prevLineLen = 0;
+        }
+        
+        int prevLineEnd = prevLineStart+prevLineLen;
+        
+        int currLineLen = currLineEnd-currLineStart;
+        if ( currLineLen < 0 ){
+            currLineLen = 0;
+        }
+        
+        javax.swing.text.Element paragraph = ((StyledDocument)context.document()).getParagraphElement(currLineStart);
+        javax.swing.text.Element lastParagraph = ((StyledDocument)context.document()).getParagraphElement(prevLineStart);
+        
+        int indent = prevIndent;
+        
+        DocumentQuery dq = new DocumentQuery(context.document());
+        
+        TokenSequence<MirahTokenId> seq = dq.getTokens(prevLineStart, false);
+        
+        // First first non-white token
+        MirahTokenId firstNonWhiteToken = null;
+        int firstNonWhiteOffset = -1;
+        while ( seq.offset() < prevLineEnd && seq.token() != null){
+            MirahTokenId curr = seq.token().id();
+            if ( !MirahTokenId.WHITESPACE_AND_COMMENTS.contains(curr)){
+                firstNonWhiteToken = curr;
+                firstNonWhiteOffset = seq.offset();
+                break;
+            }
+            seq.moveNext();
+        }
+        
+        Set<MirahTokenId> conditionals = MirahTokenId.set(
+                Tokens.tIf,
+                Tokens.tElsif,
+                Tokens.tUnless,
+                Tokens.tWhile
+                
+        );
+        
+        
+        Set<MirahTokenId> blockBeginTokens = MirahTokenId.set(
+                Tokens.tClass,
+                Tokens.tInterface,
+                Tokens.tDef,
+                Tokens.tIf
+                
+        );
+        
+        if ( firstNonWhiteToken != null && blockBeginTokens.contains(firstNonWhiteToken)){
+            // This is a def
+            int parenMatch = 0;
+            int brackMatch = 0;
+            int braceMatch = 0;
+            int saveOffset = seq.offset();
+            MirahTokenId lastNonWhiteToken = null;
+            while ( seq.offset() < prevLineEnd && seq.token() != null ){
+                int ordinal = seq.token().id().ordinal();
+                if ( ordinal == Tokens.tLBrace.ordinal()){
+                    braceMatch++;
+                } else if ( ordinal == Tokens.tLBrack.ordinal()){
+                    brackMatch++;
+                } else if ( ordinal == Tokens.tLParen.ordinal()){
+                    parenMatch++;
+                } else if ( ordinal == Tokens.tRBrace.ordinal()){
+                    braceMatch--;
+                } else if ( ordinal == Tokens.tRBrack.ordinal()){
+                    brackMatch--;
+                } else if ( ordinal == Tokens.tRParen.ordinal()){
+                    parenMatch--;
+                }
+                
+                if ( !MirahTokenId.WHITESPACE_AND_COMMENTS.contains(seq.token().id())){
+                    lastNonWhiteToken = seq.token().id();
+                }
+                seq.moveNext();
+            }
+            
+            Set<MirahTokenId> continuers = MirahTokenId.CONTINUATION_TOKENS;
+            
+            if ( parenMatch > 0 || brackMatch > 0 || braceMatch > 0 || continuers.contains(lastNonWhiteToken) ){
+                //lineProperties(context.document()).put(paragraph, new LineProperty(lastParagraph, LineProperty.TYPE_CONTINUATION));
+                indent += indentSize*2;
+            } else {
+                //lineProperties(context.document()).put(paragraph, new LineProperty(lastParagraph, LineProperty.TYPE_INDENT));
+                indent += indentSize;
+            }
+        }
+        /*
+        else if ( firstNonWhiteToken != null && conditionals.contains(firstNonWhiteToken)){
+            // This is an if, elsif, or while token...  these all have similar 
+            // requirements to see if it is left hanging.
+            int parenMatch = 0;
+            int brackMatch = 0;
+            int braceMatch = 0;
+            int saveOffset = seq.offset();
+            MirahTokenId lastNonWhiteToken = null;
+            while ( seq.offset() < prevLineEnd && seq.token() != null ){
+                int ordinal = seq.token().id().ordinal();
+                if ( ordinal == Tokens.tLBrace.ordinal()){
+                    braceMatch++;
+                } else if ( ordinal == Tokens.tLBrack.ordinal()){
+                    brackMatch++;
+                } else if ( ordinal == Tokens.tLParen.ordinal()){
+                    parenMatch++;
+                } else if ( ordinal == Tokens.tRBrace.ordinal()){
+                    braceMatch--;
+                } else if ( ordinal == Tokens.tRBrack.ordinal()){
+                    brackMatch--;
+                } else if ( ordinal == Tokens.tRParen.ordinal()){
+                    parenMatch--;
+                }
+                
+                if ( !MirahTokenId.WHITESPACE_AND_COMMENTS.contains(seq.token().id())){
+                    lastNonWhiteToken = seq.token().id();
+                }
+                seq.moveNext();
+            }
+            Set<MirahTokenId> continuers = MirahTokenId.CONTINUATION_TOKENS;
+            
+            //int indent = prevIndent;
+            
+            if ( parenMatch > 0 || brackMatch > 0 || braceMatch > 0 || continuers.contains(lastNonWhiteToken) ){
+                
+                //lineProperties(context.document()).put(paragraph, new LineProperty(lastParagraph, LineProperty.TYPE_CONTINUATION));
+                indent += indentSize*2;
+            } else {
+                //lineProperties(context.document()).put(paragraph, new LineProperty(lastParagraph, LineProperty.TYPE_INDENT));
+                indent += indentSize;
+            }
+            
+            //context.modifyIndent(currLineStart, indent);
+        
+        }*/ else {
+            MirahTokenId lastNonWhite = dq.lastNonWhiteTokenOfLine(prevLineStart);
+            Set<MirahTokenId> continuers = MirahTokenId.CONTINUATION_TOKENS;
+            if ( !continuers.contains(lastNonWhite)){
+                // The last line is not itself a continuation... check
+                // if the previous line was.
+                javax.swing.text.Element par = ((StyledDocument)context.document()).getParagraphElement(prevLineStart-1);
+                javax.swing.text.Element rootPar = null;
+                while ( par != null ){
+                    lastNonWhite = dq.lastNonWhiteTokenOfLine(par.getStartOffset());
+                    
+                    if ( continuers.contains(lastNonWhite)){
+                        rootPar = par;
+                        int newOff = par.getStartOffset()-1;
+                        if ( newOff >=0 ){
+                            par = ((StyledDocument)context.document()).getParagraphElement(newOff);
+                        } else {
+                            par = null;
+                        }
+                    } else {
+                        par = null;
+                    }
+                }
+                
+                if ( rootPar != null ){
+                    // We found the root of the continuation.
+                    int rootLineStart = context.lineStartOffset(rootPar.getStartOffset());
+                    int rootLineIndent = context.lineIndent(rootLineStart);
+                    MirahTokenId firstTokInRoot = dq.firstNonWhiteToken(rootLineStart);
+                    if ( blockBeginTokens.contains(firstTokInRoot)){
+                        indent = rootLineIndent+indentSize;
+                    } else {
+                        indent = rootLineIndent;
+                    }
+                }
+            } else {
+                // This line is a continuation
+                // Check and see if the previous line was also a continuation
+                // The last line is not itself a continuation... check
+                // if the previous line was.
+                javax.swing.text.Element par = ((StyledDocument)context.document()).getParagraphElement(prevLineStart-1);
+                javax.swing.text.Element rootPar = null;
+                while ( par != null ){
+                    lastNonWhite = dq.lastNonWhiteTokenOfLine(par.getStartOffset());
+                    
+                    if ( continuers.contains(lastNonWhite)){
+                        rootPar = par;
+                        int newOff = par.getStartOffset()-1;
+                        if ( newOff >=0 ){
+                            par = ((StyledDocument)context.document()).getParagraphElement(newOff);
+                        } else {
+                            par = null;
+                        }
+                    } else {
+                        par = null;
+                    }
+                }
+                
+                if ( rootPar == null ){
+                    // The prev line is the original continuation
+                    //int rootLineStart = context.lineStartOffset(rootPar.getStartOffset());
+                    //int rootLineIndent = context.lineIndent(rootLineStart);
+                    indent = prevIndent+indentSize;
+                }
+                
+                
+            }
+        }
+        
+        
+        
+       
+        Set<MirahTokenId> closers = MirahTokenId.set(Tokens.tElse, Tokens.tElsif, Tokens.tWhen, Tokens.tEnd, Tokens.tRescue, Tokens.tEnsure);
+        seq = dq.getTokens(currLineStart, false);
+        //seq.move(currLineStart);
+        //seq.moveNext();
+        //int indent = prevIndent;
+        firstNonWhiteToken = null;
+         while ( seq.offset() < currLineEnd ){
+            if ( !MirahTokenId.WHITESPACE_AND_COMMENTS.contains(seq.token().id())){
+                firstNonWhiteToken = seq.token().id();
+                break;
+            }
+            seq.moveNext();
+        }
+        
+         
+        Set<MirahTokenId> ifChildren = MirahTokenId.set(Tokens.tElsif, Tokens.tElse);
+        Set<MirahTokenId> exceptionTokens = MirahTokenId.set(Tokens.tRescue, Tokens.tEnsure);
+        
+         
+        if ( firstNonWhiteToken != null && firstNonWhiteToken.ordinal() == Tokens.tEnd.ordinal()){
+            Set<MirahTokenId> begins = MirahTokenId.set(Tokens.tDef, Tokens.tIf, Tokens.tClass, Tokens.tInterface, Tokens.tDo, Tokens.tBegin);
+            
+            int balance = 0;
+            while ( seq.offset() > 0 && seq.token() != null ){
+                MirahTokenId tok = seq.token().id();
+                if ( tok.ordinal() == Tokens.tEnd.ordinal() ){
+                    balance++;
+                } else if ( begins.contains(tok)){
+                    balance--;
+                    if ( balance <= 0 ){
+                        int off = seq.offset();
+                        //if ( off > 0 ) off--;
+                        indent = context.lineIndent(context.lineStartOffset(off));
+                        break;
+                    }
+                }
+                seq.movePrevious();
+            }
+        } else if ( firstNonWhiteToken != null && ifChildren.contains(firstNonWhiteToken)){
+            Set<MirahTokenId> begins = MirahTokenId.set(Tokens.tIf);
+            
+            int balance = 0;
+            while ( seq.offset() > 0 && seq.token() != null ){
+                MirahTokenId tok = seq.token().id();
+                if ( tok.ordinal() == Tokens.tEnd.ordinal() ){
+                    balance++;
+                } else if ( begins.contains(tok)){
+                    balance--;
+                    if ( balance < 0 ){
+                        indent = context.lineIndent(seq.offset());
+                        break;
+                    }
+                }
+                seq.movePrevious();
+            }
+        } else if ( firstNonWhiteToken != null && exceptionTokens.contains(firstNonWhiteToken)){
+            Set<MirahTokenId> begins = MirahTokenId.set(Tokens.tDef, Tokens.tIf, Tokens.tClass, Tokens.tInterface, Tokens.tDo, Tokens.tBegin);
+            
+            int balance = 0;
+            while ( seq.offset() > 0 && seq.token() != null ){
+                MirahTokenId tok = seq.token().id();
+                if ( tok.ordinal() == Tokens.tEnd.ordinal() ){
+                    balance++;
+                } else if ( begins.contains(tok)){
+                    balance--;
+                    if ( balance < 0 ){
+                        indent = context.lineIndent(seq.offset());
+                        break;
+                    }
+                }
+                seq.movePrevious();
+            }
+        }
+         /*
+        if ( firstNonWhiteToken != null && closers.contains(firstNonWhiteToken)){
+            indent -= indentSize;
+            
+        }
+        */
+       
+        if ( indent >= 0 ){
+            context.modifyIndent(currLineStart, indent);
+        }
+        
+        
+        
+        
+        
+    }
+    
+    public void reindent_old() throws BadLocationException {
         
         if ( context.startOffset() <= 0 ){
             return;
@@ -64,10 +423,7 @@ public class MirahIndentTask implements IndentTask  {
         if ( currLineLen < 0 ){
             currLineLen = 0;
         }
-        //String prevLine = context.document().getText(prevLineStart, prevLineLen);
-        //String currLine = context.document().getText(currLineStart, currLineEnd-currLineStart);
-        
-        
+       
         
         // Two questions:
         // 1. Do we need to adjust the indent of the previous line.
@@ -226,7 +582,6 @@ public class MirahIndentTask implements IndentTask  {
     private static TokenSequence<MirahTokenId> mirahTokenSequence(Document doc, int caretOffset, boolean backwardBias) {
         TokenHierarchy<?> hi = TokenHierarchy.get(doc);
         List<TokenSequence<?>> tsList = hi.embeddedTokenSequences(caretOffset, backwardBias);
-        //System.out.println(tsList+" off "+caretOffset+" back: "+backwardBias);
         // Go from inner to outer TSes
         for (int i = tsList.size() - 1; i >= 0; i--) {
             TokenSequence<?> ts = tsList.get(i);
