@@ -394,6 +394,111 @@ public class MirahIndentTask implements IndentTask  {
         }
         
         
+        // Now let's modify the indentation of the previous line
+        MirahTokenId prevFirstNonWhite = dq.firstNonWhiteToken(prevLineStart);
+        Set<MirahTokenId> reorgs = MirahTokenId.set(Tokens.tEnd, Tokens.tRescue, Tokens.tEnsure, Tokens.tElse, Tokens.tElsif);
+        Set<MirahTokenId> ifEnders = MirahTokenId.set(Tokens.tElse, Tokens.tElsif);
+        Set<MirahTokenId> exceptionEnds = MirahTokenId.set(Tokens.tRescue, Tokens.tEnsure);
+        boolean changePrevLineIndent = false;
+        int changePrevLineIndentTo = 0;
+        if ( prevFirstNonWhite != null && prevFirstNonWhite.ordinal() == Tokens.tEnd.ordinal()){
+            // Let's find the matching line
+            int startOff = prevLineStart;
+            if ( startOff > 0 ) startOff--;
+            seq = dq.getTokens(startOff, false);
+            Set<MirahTokenId> openers = MirahTokenId.set(Tokens.tDo, Tokens.tIf, Tokens.tDef, Tokens.tBegin, Tokens.tClass, Tokens.tInterface);
+            int balance = 0;
+            while ( seq.token() != null && seq.offset() > 0 ){
+                int ord = seq.token().id().ordinal();
+                if ( ord == Tokens.tEnd.ordinal()){
+                    balance++;
+                } else if ( openers.contains(seq.token().id())){
+                    if ( ord == Tokens.tIf.ordinal() ){
+                        // If statements don't necessarily have a close block.. only if the "if" is the first nonwhite of the line
+                        MirahTokenId firstNonWhiteOfIfLine = dq.firstNonWhiteToken(context.lineStartOffset(seq.offset()));
+                        if ( firstNonWhiteOfIfLine != null && firstNonWhiteOfIfLine.ordinal() == Tokens.tIf.ordinal() ){
+                            balance--;
+                        }
+                    } else {
+                        balance--;
+                    }
+                    if ( balance < 0 ){
+                        // We found the line that we need to match it with
+                        changePrevLineIndentTo = context.lineIndent(context.lineStartOffset(seq.offset()));
+                        changePrevLineIndent = true;
+                        break;
+                        
+                    }
+                }
+                seq.movePrevious();
+            }
+        } else if ( prevFirstNonWhite != null && ifEnders.contains(prevFirstNonWhite) ){
+            int startOff = prevLineStart;
+            if ( startOff > 0 ) startOff--;
+            seq = dq.getTokens(startOff, false);
+            Set<MirahTokenId> openers = MirahTokenId.set(Tokens.tIf);
+            int balance = 0;
+            while ( seq.token() != null && seq.offset() > 0 ){
+                int ord = seq.token().id().ordinal();
+                if ( ord == Tokens.tEnd.ordinal()){
+                    balance++;
+                } else if ( openers.contains(seq.token().id())){
+                    if ( ord == Tokens.tIf.ordinal() ){
+                        // If statements don't necessarily have a close block.. only if the "if" is the first nonwhite of the line
+                        MirahTokenId firstNonWhiteOfIfLine = dq.firstNonWhiteToken(context.lineStartOffset(seq.offset()));
+                        if ( firstNonWhiteOfIfLine != null && firstNonWhiteOfIfLine.ordinal() == Tokens.tIf.ordinal() ){
+                            balance--;
+                        }
+                    } else {
+                        balance--;
+                    }
+                    if ( balance < 0 ){
+                        // We found the line that we need to match it with
+                        changePrevLineIndentTo = context.lineIndent(context.lineStartOffset(seq.offset()));
+                        changePrevLineIndent = true;
+                        break;
+                        
+                    }
+                }
+                seq.movePrevious();
+            }
+        } else if ( prevFirstNonWhite != null && exceptionEnds.contains(prevFirstNonWhite)){
+            int startOff = prevLineStart;
+            if ( startOff > 0 ) startOff--;
+            seq = dq.getTokens(startOff, false);
+            Set<MirahTokenId> openers = MirahTokenId.set(Tokens.tBegin);
+            int balance = 0;
+            while ( seq.token() != null && seq.offset() > 0 ){
+                int ord = seq.token().id().ordinal();
+                if ( ord == Tokens.tEnd.ordinal()){
+                    balance++;
+                } else if ( openers.contains(seq.token().id())){
+                    if ( ord == Tokens.tIf.ordinal() ){
+                        // If statements don't necessarily have a close block.. only if the "if" is the first nonwhite of the line
+                        MirahTokenId firstNonWhiteOfIfLine = dq.firstNonWhiteToken(context.lineStartOffset(seq.offset()));
+                        if ( firstNonWhiteOfIfLine != null && firstNonWhiteOfIfLine.ordinal() == Tokens.tIf.ordinal() ){
+                            balance--;
+                        }
+                    } else {
+                        balance--;
+                    }
+                    if ( balance < 0 ){
+                        // We found the line that we need to match it with
+                        changePrevLineIndentTo = context.lineIndent(context.lineStartOffset(seq.offset()));
+                        changePrevLineIndent = true;
+                        break;
+                        
+                    }
+                }
+                seq.movePrevious();
+            }
+        }
+        
+        if ( changePrevLineIndent ){
+            context.modifyIndent(prevLineStart, changePrevLineIndentTo);
+        }
+        
+        
         
         
         
