@@ -5,11 +5,14 @@
  */
 package ca.weblite.netbeans.mirah.cc;
 
+import ca.weblite.netbeans.mirah.lexer.ClassQuery;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
@@ -40,12 +43,14 @@ public class MirahMethodCompletionItem implements CompletionItem {
     private static ImageIcon fieldIcon = new ImageIcon(ImageUtilities.loadImage("ca/weblite/netbeans/mirah/1391571312_application-x-ruby.png"));
     private static Color fieldColor = Color.decode("0x0000B2");
     private FileObject file;
+    final private Class cls;
 
-    public MirahMethodCompletionItem(FileObject file, Method m, int caretOffset, int len) {
+    public MirahMethodCompletionItem(FileObject file, Method m, int caretOffset, int len, Class cls) {
         this.method = m;
         this.caretOffset = caretOffset;
         this.length = len;
         this.file = file; 
+        this.cls = cls;
         
     }
 
@@ -100,6 +105,7 @@ public class MirahMethodCompletionItem implements CompletionItem {
     }
     
     private String formatMethod(Method m){
+        ClassQuery cq = new ClassQuery(cls);
         
         StringBuilder sb = new StringBuilder();
         sb.append(m.getName());
@@ -108,7 +114,18 @@ public class MirahMethodCompletionItem implements CompletionItem {
             return sb.toString();
         }
         sb.append("(");
+        List<String> pnames = null;
+        try {
+            pnames = cq.getParameterNames(method, file);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        int i=0;
         for ( Class c : ptypes ){
+            if ( pnames != null && pnames.size() > i){
+                sb.append(pnames.get(i)).append(":");
+            }
+            i++;
             sb.append(c.getSimpleName());
             sb.append(",");
         }
@@ -120,12 +137,24 @@ public class MirahMethodCompletionItem implements CompletionItem {
     }
     
     private String formatMethodForList(Method m){
+        ClassQuery cq = new ClassQuery(cls);
         StringBuilder sb = new StringBuilder();
         sb.append(m.getName());
         Class[] ptypes = m.getParameterTypes();
+        List<String> pnames = null;
+        try {
+            pnames = cq.getParameterNames(method, file);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        int i=0;
         if ( ptypes.length > 0 ){
             sb.append("(");
             for ( Class c : ptypes ){
+                 if ( pnames != null && pnames.size() > i){
+                    sb.append(pnames.get(i)).append(":");
+                }
+                i++;
                 sb.append(c.getSimpleName());
                 sb.append(", ");
             }

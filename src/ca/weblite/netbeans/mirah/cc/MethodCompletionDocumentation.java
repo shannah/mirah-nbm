@@ -6,26 +6,14 @@
 
 package ca.weblite.netbeans.mirah.cc;
 
-import ca.weblite.netbeans.mirah.source.JavaSourceAdapters;
-import java.lang.annotation.Annotation;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ElementVisitor;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
-import javax.lang.model.type.TypeMirror;
 import javax.swing.Action;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.queries.JavadocForBinaryQuery;
-import org.netbeans.api.java.source.ClasspathInfo;
-import org.netbeans.api.java.source.SourceUtils;
 import org.netbeans.spi.editor.completion.CompletionDocumentation;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Exceptions;
@@ -186,6 +174,16 @@ public class MethodCompletionDocumentation implements CompletionDocumentation {
                     for ( URL jdocRoot : JavadocForBinaryQuery.findJavadoc(rootFO.toURL()).getRoots()){
                         try {
                             htmlFile = new URL(jdocRoot + javadocClassPath);
+                            InputStream is = null;
+                            try {
+                                is = htmlFile.openStream();
+                            } catch (IOException ex){
+                                htmlFile = null;
+                            } finally {
+                                try {
+                                    is.close();
+                                } catch ( Exception ex){}
+                            }
                         } catch (MalformedURLException ex) {
                             Exceptions.printStackTrace(ex);
                         }

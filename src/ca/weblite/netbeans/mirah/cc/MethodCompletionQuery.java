@@ -90,7 +90,7 @@ public class MethodCompletionQuery extends AsyncCompletionQuery {
         
         for ( Method m : currentType.getMethods()){
             if ( m.getName().toLowerCase().indexOf(filter.toLowerCase()) == 0 && isStatic == Modifier.isStatic(m.getModifiers()) ){
-                resultSet.addItem(new MirahMethodCompletionItem(file, m, initialOffset, filter.length()));
+                resultSet.addItem(new MirahMethodCompletionItem(file, m, initialOffset, filter.length(), currentType));
             }
 
         }
@@ -263,7 +263,7 @@ public class MethodCompletionQuery extends AsyncCompletionQuery {
                             }
                             for ( Method m : cls.getMethods()){
                                 if ( m.getName().startsWith(filter) && isStatic == Modifier.isStatic(m.getModifiers())){
-                                    crs.addItem(new MirahMethodCompletionItem(fileObject, m, caretOffset, filter.length()));
+                                    crs.addItem(new MirahMethodCompletionItem(fileObject, m, caretOffset, filter.length(), cls));
                                 }
                             }
                         }
