@@ -225,6 +225,20 @@ public class MirahTypingCompletion {
         
         //System.out.println("isAddEnd: "+doc.getText(bol, eol-bol));
         
+        
+        if ( caretOffset <= 1){
+            return false;
+        }
+        int prevBOL = dq.getBOL(caretOffset-1);
+        
+        int nextBOL = dq.getBOL(caretOffset);
+        if ( dq.getIndent(prevBOL) < dq.getIndent(nextBOL)){
+            return false;
+        }
+        
+        
+        
+        
         MirahTokenId[] starts = new MirahTokenId[]{
              MirahTokenId.get(Tokens.tDo.ordinal()),
              MirahTokenId.get(Tokens.tClass.ordinal()),
@@ -233,7 +247,8 @@ public class MirahTypingCompletion {
              //MirahTokenId.get(Tokens.tIf.ordinal()),
              MirahTokenId.get(Tokens.tCase.ordinal()),
              MirahTokenId.get(Tokens.tWhile.ordinal()),
-             MirahTokenId.get(Tokens.tBegin.ordinal())
+             MirahTokenId.get(Tokens.tBegin.ordinal()),
+             MirahTokenId.get(Tokens.tUnless.ordinal())
         };
         boolean foundStart = false;
         for ( int i=0; i<starts.length; i++){

@@ -66,14 +66,14 @@ public class DocumentQuery {
         try {
             
             int len = doc.getLength();
-            while ( out >=0 && out < len && !"\n".equals(doc.getText(out, 1)) ){
+            while ( out >=0 && out < len-1 && !"\n".equals(doc.getText(out, 1)) ){
                 out--;
             }
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
         }
         try {
-            if ( "\n".equals(doc.getText(out, 1) )){
+            if ( out >=0 && out < doc.getLength()-1 && "\n".equals(doc.getText(out, 1) )){
                 out++;
             }
         } catch (BadLocationException ex) {

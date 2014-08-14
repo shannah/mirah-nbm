@@ -221,6 +221,9 @@ class TokenBalance implements TokenHierarchyListener {
 
         public int balance(T left) {
             TokenIdPair pair = id2Pair.get(left);
+            if ( pair == null ){
+                return 0;
+            }
             return (pair.left == left) ? pair.balance : Integer.MAX_VALUE;
         }
 
