@@ -69,6 +69,7 @@ public class MirahTypingCompletion {
         
         int balance = tb.balance(MirahTokenId.getLanguage(), leftTokenId);
         assert (balance != Integer.MAX_VALUE);
+        
         return balance;
     }
     
