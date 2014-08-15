@@ -209,7 +209,6 @@ public class MirahParser extends Parser {
         }
         compiler.setClasspath(macroPath+File.pathSeparator+cp);
         
-        System.out.println("Setting macro classpath to "+cp);
         compiler.setMacroClasspath(macroPath.substring(0, macroPath.length()-1));
         DocumentDebugger debugger = new DocumentDebugger();
         

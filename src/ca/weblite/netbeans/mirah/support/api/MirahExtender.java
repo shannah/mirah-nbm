@@ -60,6 +60,7 @@ import org.openide.util.Parameters;
 public final class MirahExtender {
 
     private MirahExtender() {
+        
     }
 
     /**

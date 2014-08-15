@@ -48,6 +48,7 @@ import org.openide.util.Exceptions;
 public class DefCompletionQuery extends AsyncCompletionQuery {
     boolean parsed = false;
     int tries = 0;
+    
     Object lock = new Object();
     String filter = null;
     Class currentType = null;
@@ -57,6 +58,7 @@ public class DefCompletionQuery extends AsyncCompletionQuery {
 
     public DefCompletionQuery(int initOff){
         this.initialOffset = initOff;
+        
     }
 
 
