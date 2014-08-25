@@ -17,6 +17,8 @@
       <mkdir dir="${build.dir}/mirah"/>
       
       <property name="mirah.tmp" location="${build.dir}/mirah_tmp"/>
+        <property name="mirah.java.stub.dir" location="${mirah.tmp}/java_stub_dir"/>
+        <property name="mirah.class.cache.dir" location="${mirah.tmp}/class_cache_dir"/>
         <property name="mirah.tmp.macros" location="${mirah.tmp}/macros"/>
         <property name="mirah.tmp.macros.src" location="${mirah.tmp.macros}/src"/>
         <property name="mirah.tmp.macros.classes" location="${mirah.tmp.macros}/classes"/>
@@ -27,7 +29,13 @@
         </copy>
         <delete dir="${mirah.tmp.macros.classes}"/>
         <mkdir dir="${mirah.tmp.macros.classes}"/>
-        <mirahc dest="${mirah.tmp.macros.classes}" postrunjavac="false" macrojardir="${mirah.macros.jardir}">
+        <mirahc dest="${mirah.tmp.macros.classes}" 
+                postrunjavac="false" 
+                macrojardir="${mirah.macros.jardir}"
+                javasourcespath="${src.dir}"
+                javastubdir="${mirah.java.stub.dir}"
+                classcachedir="${mirah.class.cache.dir}"    
+            >
             <javac classpath="${javac.classpath}" 
                    bootclasspath="lib/CLDC11.jar"
                    deprecation="${javac.deprecation}" 
@@ -48,7 +56,14 @@
         <copy todir="${mirah.tmp.macros.src}">
             <fileset dir="${src.dir}" includes="**/macros/Bootstrap.mirah"/>
         </copy>
-        <mirahc dest="${mirah.tmp.macros.classes}" postrunjavac="false" macrojardir="${mirah.macros.jardir}" macroclasspath="${mirah.tmp.macros.classes}">
+        <mirahc dest="${mirah.tmp.macros.classes}" 
+                postrunjavac="false" 
+                macrojardir="${mirah.macros.jardir}" 
+                macroclasspath="${mirah.tmp.macros.classes}"
+                javasourcespath="${src.dir}"
+                javastubdir="${mirah.java.stub.dir}"
+                classcachedir="${mirah.class.cache.dir}" 
+            >
             <javac classpath="${javac.classpath}:${mirah.tmp.macros.classes}" 
                    bootclasspath="lib/CLDC11.jar"
                    deprecation="${javac.deprecation}" 
@@ -66,7 +81,14 @@
         </mirahc>
         
       
-      <mirahc dest="${build.dir}/mirah" postrunjavac="false" macrojardir="lib/mirah/macros" macroclasspath="${mirah.tmp.macros.classes}">
+      <mirahc dest="${build.dir}/mirah" 
+              postrunjavac="false" 
+              macrojardir="lib/mirah/macros" 
+              macroclasspath="${mirah.tmp.macros.classes}"
+              javasourcespath="${src.dir}"
+              javastubdir="${mirah.java.stub.dir}"
+              classcachedir="${mirah.class.cache.dir}" 
+            >
             <javac classpath="${javac.classpath}" 
                    bootclasspath="lib/CLDC11.jar"
                    deprecation="${javac.deprecation}" 
@@ -103,6 +125,8 @@
         <delete dir="${build.dir}/mirah"/>
         
         <property name="mirah.tmp" location="${build.dir}/mirah_tmp"/>
+        <property name="mirah.java.stub.dir" location="${mirah.tmp}/java_stub_dir"/>
+        <property name="mirah.class.cache.dir" location="${mirah.tmp}/class_cache_dir"/>
         <property name="mirah.tmp.macros" location="${mirah.tmp}/macros"/>
         <property name="mirah.tmp.macros.src" location="${mirah.tmp.macros}/src"/>
         <property name="mirah.tmp.macros.classes" location="${mirah.tmp.macros}/classes"/>
@@ -113,7 +137,13 @@
         </copy>
         <delete dir="${mirah.tmp.macros.classes}"/>
         <mkdir dir="${mirah.tmp.macros.classes}"/>
-        <mirahc dest="${mirah.tmp.macros.classes}" postrunjavac="false" macrojardir="${mirah.macros.jardir}">
+        <mirahc dest="${mirah.tmp.macros.classes}" 
+                postrunjavac="false" 
+                macrojardir="${mirah.macros.jardir}"
+                javasourcespath="${src.dir}"
+                javastubdir="${mirah.java.stub.dir}"
+                classcachedir="${mirah.class.cache.dir}" 
+            >
             <javac classpath="${javac.classpath}:${mirah.tmp.macros.classes}" 
                    bootclasspath="lib/CLDC11.jar"
                    deprecation="${javac.deprecation}" 
@@ -134,7 +164,14 @@
         <copy todir="${mirah.tmp.macros.src}">
             <fileset dir="${src.dir}" includes="**/macros/Bootstrap.mirah"/>
         </copy>
-        <mirahc dest="${mirah.tmp.macros.classes}" postrunjavac="false" macrojardir="${mirah.macros.jardir}" macroclasspath="${mirah.tmp.macros.classes}">
+        <mirahc dest="${mirah.tmp.macros.classes}" 
+                postrunjavac="false" 
+                macrojardir="${mirah.macros.jardir}" 
+                macroclasspath="${mirah.tmp.macros.classes}"
+                javasourcespath="${src.dir}"
+                javastubdir="${mirah.java.stub.dir}"
+                classcachedir="${mirah.class.cache.dir}" 
+            >
             <javac classpath="${javac.classpath}" 
                    bootclasspath="lib/CLDC11.jar"
                    deprecation="${javac.deprecation}" 
@@ -151,7 +188,14 @@
             </javac>
         </mirahc>
         
-        <mirahc dest="lib/impl/cls" postrunjavac="false" macrojardir="lib/mirah/macros" macroclasspath="${mirah.tmp.macros.classes}">
+        <mirahc dest="lib/impl/cls" 
+                postrunjavac="false" 
+                macrojardir="lib/mirah/macros" 
+                macroclasspath="${mirah.tmp.macros.classes}"
+                javasourcespath="${src.dir}"
+                javastubdir="${mirah.java.stub.dir}"
+                classcachedir="${mirah.class.cache.dir}" 
+            >
             <javac classpath="${javac.classpath}" 
                    bootclasspath="lib/CLDC11.jar"
                    deprecation="${javac.deprecation}" 

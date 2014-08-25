@@ -144,6 +144,8 @@ made subject to such option by the copyright holder.
                         <!-- We're going to use the convention that any classes inside a "macros" package is considered to be macros -->
                         <property name="mirah.tmp" location="${{build.dir}}/mirah_tmp"/>
                         <property name="mirah.tmp.macros" location="${{mirah.tmp}}/macros"/>
+                        <property name="mirah.java.stub.dir" location="${{mirah.tmp}}/java_stub_dir"/>
+                        <property name="mirah.class.cache.dir" location="${{mirah.tmp}}/class_cache_dir"/>
                         <property name="mirah.tmp.macros.src" location="${{mirah.tmp.macros}}/src"/>
                         <property name="mirah.tmp.macros.classes" location="${{mirah.tmp.macros}}/classes"/>
 
@@ -155,7 +157,12 @@ made subject to such option by the copyright holder.
                         <delete dir="${{mirah.tmp.macros.classes}}"/>
                         <mkdir dir="${{mirah.tmp.macros.classes}}"/>
 
-                        <mirahc dest="${{mirah.tmp.macros.classes}}" macrojardir="${{mirah.macros.jardir}}">
+                        <mirahc dest="${{mirah.tmp.macros.classes}}" 
+                                macrojardir="${{mirah.macros.jardir}}"
+                                javasourcespath="${{src.dir}}"
+                                javastubdir="${{mirah.java.stub.dir}}"
+                                classcachedir="${{mirah.class.cache.dir}}"
+                            >
                             <javac srcdir="${{mirah.tmp.macros.src}}" classpath="@{{classpath}}" sourcepath="@{{sourcepath}}" includes="@{{includes}}" excludes="@{{excludes}}" debug="@{{debug}}" deprecation="${{javac.deprecation}}" encoding="${{source.encoding}}" source="${{javac.source}}" target="${{javac.target}}">
                                 <compilerarg line="${{javac.compilerargs}}"/>
                                 <customize/>
@@ -168,7 +175,13 @@ made subject to such option by the copyright holder.
                         <copy todir="${{mirah.tmp.macros.src}}">
                           <fileset dir="@{{srcdir}}" includes="**/macros/Bootstrap.mirah"/>
                         </copy>
-                        <mirahc dest="${{mirah.tmp.macros.classes}}" macrojardir="${{mirah.macros.jardir}}" macroclasspath="${{mirah.tmp.macros.classes}}">
+                        <mirahc dest="${{mirah.tmp.macros.classes}}" 
+                                macrojardir="${{mirah.macros.jardir}}" 
+                                macroclasspath="${{mirah.tmp.macros.classes}}"
+                                javasourcespath="${{src.dir}}"
+                                javastubdir="${{mirah.java.stub.dir}}"
+                                classcachedir="${{mirah.class.cache.dir}}"
+                            >
                             <javac srcdir="${{mirah.tmp.macros.src}}" classpath="@{{classpath}}:${{mirah.tmp.macros.classes}}" sourcepath="@{{sourcepath}}" includes="@{{includes}}" excludes="@{{excludes}}" debug="@{{debug}}" deprecation="${{javac.deprecation}}" encoding="${{source.encoding}}" source="${{javac.source}}" target="${{javac.target}}">
                                 <compilerarg line="${{javac.compilerargs}}"/>
                                 <customize/>
@@ -180,6 +193,9 @@ made subject to such option by the copyright holder.
                             <xsl:attribute name="dest">${build.dir}/mirah</xsl:attribute>
                             <xsl:attribute name="macrojardir">${mirah.macros.jardir}</xsl:attribute>
                             <xsl:attribute name="macroclasspath">${mirah.tmp.macros.classes}</xsl:attribute>
+                            <xsl:attribute name="javastubdir">${mirah.java.stub.dir}</xsl:attribute>
+                            <xsl:attribute name="classcachedir">${mirah.class.cache.dir}</xsl:attribute>
+                             <xsl:attribute name="javasourcespath">@{srcdir}</xsl:attribute>
                             <javac>
                                 <xsl:attribute name="srcdir">@{srcdir}</xsl:attribute>
                                 <xsl:attribute name="classpath">@{classpath}</xsl:attribute>

@@ -109,6 +109,7 @@ public class DefCompletionQuery extends AsyncCompletionQuery {
                 }
                 return;
             }
+            
             String thisClassName = getThisClass(doc, caretOffset);
             if ( thisClassName == null ){
                 crs.finish();

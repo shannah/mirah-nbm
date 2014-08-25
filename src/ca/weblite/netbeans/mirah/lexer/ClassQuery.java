@@ -80,15 +80,17 @@ public class ClassQuery {
     public Set<Method> getMethods(){
         if ( methods == null ){
             methods = new HashMap<String,Method>();
-            
+           
             Class c = cls;
             while ( c != null ){
-                for (Method m : c.getDeclaredMethods()){
-                    String mid = getMethodId(m);
-                    if ( !methods.containsKey(mid)){
-                        methods.put(mid, m);
+                try {
+                    for (Method m : c.getDeclaredMethods()){
+                        String mid = getMethodId(m);
+                        if ( !methods.containsKey(mid)){
+                            methods.put(mid, m);
+                        }
                     }
-                }
+                } catch ( Throwable ex){}
                 if ( c.getSuperclass() == c ){
                     break;
                 }

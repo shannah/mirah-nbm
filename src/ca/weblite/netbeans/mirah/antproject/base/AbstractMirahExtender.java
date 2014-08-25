@@ -42,7 +42,7 @@
 
 package ca.weblite.netbeans.mirah.antproject.base;
 
-import ca.weblite.mirah.ant.MirahCompiler2;
+import ca.weblite.asm.WLMirahCompiler;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,15 +66,12 @@ import org.netbeans.api.project.ant.AntBuildExtender;
 import org.netbeans.api.project.libraries.Library;
 import org.netbeans.api.project.libraries.LibraryManager;
 import ca.weblite.netbeans.mirah.support.spi.MirahExtenderImplementation;
-import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.net.URI;
-import org.netbeans.spi.project.ProjectFactory;
 import org.netbeans.spi.project.support.ant.GeneratedFilesHelper;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.filesystems.URLMapper;
-import org.openide.modules.InstalledFileLocator;
 import org.openide.util.EditableProperties;
 
 import org.openide.util.Exceptions;
@@ -120,7 +117,7 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
      */
     @Override
     public boolean isActive() {
-        URL loc = MirahCompiler2.class.getProtectionDomain().getCodeSource().getLocation();
+        URL loc = WLMirahCompiler.class.getProtectionDomain().getCodeSource().getLocation();
        
         AntBuildExtender extender = project.getLookup().lookup(AntBuildExtender.class);
         boolean out = extender != null && extender.getExtension(MIRAH_EXTENSION_ID) != null;
@@ -208,7 +205,7 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
             List<URL> uriContent = library.getContent("classpath"); // NOI18N
             
             try {
-                if (containsClass(uriContent, "ca.weblite.mirah.ant.MirahCompiler2")) { // NOI18N
+                if (containsClass(uriContent, "ca.weblite.mirah.ant.WLMirahCompiler")) { // NOI18N
                     return library;
                 }
             } catch (IOException ex) {
