@@ -118,6 +118,12 @@ public abstract class AbstractMirahWizard extends AbstractFileWizard {
         if (!MirahExtender.isActive(proj)) {
             MirahExtender.activate(proj);
         }
+        System.out.println("About to check if mirah is current");
+        
+        if (!MirahExtender.isCurrent(proj)){
+            System.out.println("Mirah is not current");
+            MirahExtender.update(proj);
+        }
 
         handle.finish();
         return Collections.singleton(createdFile);

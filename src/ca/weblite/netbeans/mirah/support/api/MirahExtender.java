@@ -82,6 +82,15 @@ public final class MirahExtender {
         return false;
     }
 
+    public static boolean isCurrent(@NonNull Project project){
+        Parameters.notNull("project", project);
+        MirahExtenderImplementation extender = project.getLookup().lookup(MirahExtenderImplementation.class);
+        if (extender != null) {
+            return extender.isCurrent();
+        }
+        return false;
+    }
+    
     /**
      * Activates Mirah support for the given {@link Project}.
      *
@@ -96,6 +105,17 @@ public final class MirahExtender {
         MirahExtenderImplementation extender = project.getLookup().lookup(MirahExtenderImplementation.class);
         if (extender != null) {
             return extender.activate();
+        }
+        return false;
+    }
+    
+    
+    public static boolean update(@NonNull Project project) {
+        Parameters.notNull("project", project); //NOI18N
+
+        MirahExtenderImplementation extender = project.getLookup().lookup(MirahExtenderImplementation.class);
+        if (extender != null) {
+            return extender.update();
         }
         return false;
     }

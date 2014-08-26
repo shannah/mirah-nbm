@@ -67,6 +67,7 @@ public class BuildScriptHelper {
     
     public static void refreshBuildScript(Project project, URL stylesheet, boolean checkProjectXml) {
         if (MirahExtender.isActive(project)) {
+            
             GeneratedFilesHelper helper = new GeneratedFilesHelper(project.getProjectDirectory());
             try {
                 int flags = helper.getBuildScriptState(MIRAH_BUILD_XML, stylesheet);
@@ -91,6 +92,8 @@ public class BuildScriptHelper {
                 Exceptions.printStackTrace(ex);
             }
         }
+        
+        
     }
 
     private static boolean hasBuildScriptFrom65(Project project, String resource) throws IOException {

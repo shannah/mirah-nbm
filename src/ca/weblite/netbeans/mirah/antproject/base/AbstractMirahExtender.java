@@ -97,6 +97,8 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
     private static final String EXCLUSION_PATTERN = "**/*.mirah"; // NOI18N
     private static final String MIRAH_BUILD_PATH_PROPERTY = "mirah.build.dir";
     private static final String MIRAH_MACROS_JARDIR_PROPERTY = "mirah.macros.jardir";
+    private static final String VERSION_PROPERTY = "mirah.plugin.version";
+    private static final int PLUGIN_VERSION=1;
     
 
     private final Project project;
@@ -575,4 +577,52 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
         } catch (MutexException ex) {
         }
     }
+
+    @Override
+    public boolean isCurrent(){
+        try {
+            EditableProperties props = getEditableProperties(project, PROJECT_PROPERTIES_PATH);
+            int version = 0;
+            if ( props.containsKey(VERSION_PROPERTY) ){
+                try {
+                    version = Integer.parseInt(props.getProperty(VERSION_PROPERTY));
+                } catch ( Throwable t){}
+            }
+            System.out.println("The current version is "+version);
+            return isActive() &&  version >= PLUGIN_VERSION;
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+        
+    }
+
+    @Override
+    public boolean update(){
+        try {
+            EditableProperties props = getEditableProperties(project, PROJECT_PROPERTIES_PATH);
+            int version = 0;
+            if ( props.containsKey(VERSION_PROPERTY) ){
+                try {
+                    version = Integer.parseInt(props.getProperty(VERSION_PROPERTY));
+                } catch ( Throwable t){}
+            }
+            
+            if ( !removeBuildScript() || !addBuildScript()){
+                return false;
+            }
+            
+            if ( version < PLUGIN_VERSION){
+                props.setProperty(VERSION_PROPERTY, String.valueOf(PLUGIN_VERSION));
+                storeEditableProperties(project, PROJECT_PROPERTIES_PATH, props);
+            }
+            
+            
+            return true;
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+            return false;
+        }
+    }
+    
+    
 }

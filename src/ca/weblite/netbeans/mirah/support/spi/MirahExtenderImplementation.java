@@ -88,4 +88,8 @@ public interface MirahExtenderImplementation {
      * @return {@code true} if deactivation were successful, {@code false} otherwise
      */
     public boolean deactivate();
+    
+    public boolean isCurrent();
+    public boolean update();
+    
 }
