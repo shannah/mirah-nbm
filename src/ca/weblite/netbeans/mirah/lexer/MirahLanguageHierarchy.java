@@ -48,6 +48,7 @@ public class MirahLanguageHierarchy extends LanguageHierarchy<MirahTokenId>{
         Tokens.tDo,
         Tokens.tImplements,
         Tokens.tBEGIN,
+        Tokens.tBegin,
         Tokens.tEND,
         Tokens.tClass,
         Tokens.tDo,

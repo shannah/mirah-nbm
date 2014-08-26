@@ -168,6 +168,26 @@ public class MirahTypingCompletion {
     
     static boolean isAddEnd(BaseDocument doc, int caretOffset) throws BadLocationException {
         
+        Set<MirahTokenId> assignmentTokens = MirahTokenId.set(
+                Tokens.tOpAssign,
+                Tokens.tOrEq,
+                Tokens.tAndEq,
+                Tokens.tPipes,
+                Tokens.tPlus,
+                Tokens.tMinus,
+                Tokens.tEEEQ,
+                Tokens.tEEQ,
+                Tokens.tGE,
+                Tokens.tLT,
+                Tokens.tIn,
+                Tokens.tGT,
+                Tokens.tLE,
+                Tokens.tAmpers,
+                Tokens.tNE,
+                Tokens.tQuestion,
+                Tokens.tEQ
+        );
+        
         int indentSize = IndentUtils.indentLevelSize(doc);
         DocumentQuery dq = new DocumentQuery(doc);
         if ( caretOffset > 0 ){
@@ -185,16 +205,35 @@ public class MirahTypingCompletion {
                 // the line... only then do we add an auto end
                 if ( DocumentQuery.findNext(
                         seq,
-                        MirahTokenId.WHITESPACE_AND_COMMENTS,
+                        null,//MirahTokenId.WHITESPACE_AND_COMMENTS,
                         MirahTokenId.get(Tokens.tNL),
                         MirahTokenId.get(Tokens.tIf)
                         )){
                     int ifOffset = seq.token().offset(TokenHierarchy.get(doc));
                     
+                    MirahTokenId ifPrefixToken = null;
+                    int ifPrefixOffset = -1;
+                    while ( seq.movePrevious() && seq.offset() > bol ){
+                        if ( !MirahTokenId.WHITESPACE_AND_COMMENTS.
+                                contains(seq.token().id())){
+                            ifPrefixToken = seq.token().id();
+                            ifPrefixOffset = seq.offset();
+                            break;
+                        }
+                    }
+                    if ( ifPrefixToken != null && 
+                            !assignmentTokens.contains(ifPrefixToken)){
+                        return false;
+                    }
+                    
                     int indent = dq.getIndent(ifOffset);
                     //System.out.println("Indent is "+indent);
                     // Look for an end
-                    if ( DocumentQuery.findNext( seq, null, MirahTokenId.get(Tokens.tNL), MirahTokenId.get(Tokens.tEnd))){
+                    if ( DocumentQuery.findNext( 
+                            seq, 
+                            null, 
+                            MirahTokenId.get(Tokens.tNL), 
+                            MirahTokenId.get(Tokens.tEnd))){
                         //System.out.println("Found end on this line");
                         return false;
                     }
