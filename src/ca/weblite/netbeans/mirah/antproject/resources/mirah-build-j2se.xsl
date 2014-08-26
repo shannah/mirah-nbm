@@ -198,6 +198,7 @@ made subject to such option by the copyright holder.
                              <xsl:attribute name="javasourcespath">@{srcdir}</xsl:attribute>
                             <javac>
                                 <xsl:attribute name="srcdir">@{srcdir}</xsl:attribute>
+                                <xsl:attribute name="destdir">@{destdir}</xsl:attribute>
                                 <xsl:attribute name="classpath">@{classpath}</xsl:attribute>
                                 <xsl:attribute name="sourcepath">@{sourcepath}</xsl:attribute>
                                 <xsl:attribute name="includes">@{includes}</xsl:attribute>
