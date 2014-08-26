@@ -159,7 +159,7 @@ made subject to such option by the copyright holder.
 
                         <mirahc dest="${{mirah.tmp.macros.classes}}" 
                                 macrojardir="${{mirah.macros.jardir}}"
-                                javasourcespath="${{src.dir}}"
+                                javasourcespath="@{{srcdir}}"
                                 javastubdir="${{mirah.java.stub.dir}}"
                                 classcachedir="${{mirah.class.cache.dir}}"
                             >
@@ -178,7 +178,7 @@ made subject to such option by the copyright holder.
                         <mirahc dest="${{mirah.tmp.macros.classes}}" 
                                 macrojardir="${{mirah.macros.jardir}}" 
                                 macroclasspath="${{mirah.tmp.macros.classes}}"
-                                javasourcespath="${{src.dir}}"
+                                javasourcespath="@{{srcdir}}"
                                 javastubdir="${{mirah.java.stub.dir}}"
                                 classcachedir="${{mirah.class.cache.dir}}"
                             >
