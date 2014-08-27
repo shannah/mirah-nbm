@@ -131,6 +131,9 @@ public class ImportFixList  implements LazyFixList, Runnable {
     class ImportFix implements Fix{
         private String fullClassName;
         ImportFix(String fqn){
+            if ( fqn.indexOf(".") == 0 ){
+                fqn = fqn.substring(1);
+            }
             this.fullClassName = fqn;
         }
 

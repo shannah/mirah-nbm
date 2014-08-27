@@ -120,6 +120,22 @@ public class DocumentQuery {
         return out;
     }
     
+    public List<Token<MirahTokenId>> findConstants(){
+        List<Token<MirahTokenId>> out = new ArrayList<Token<MirahTokenId>>();
+        TokenHierarchy<?> hi = TokenHierarchy.get(doc);
+        int caretOffset = 0;
+        TokenSequence<MirahTokenId> seq = getTokens(caretOffset, false);
+        
+        while ( seq.moveNext() ){
+            
+            if ( seq.token().id().ordinal() == Tokens.tCONSTANT.ordinal()){
+                out.add(seq.token());
+                
+            }
+        }
+        return out;
+    }
+    
     
     public void addImport(String fqn) throws BadLocationException{
         if ( requiresImport(fqn) ){
@@ -217,6 +233,9 @@ public class DocumentQuery {
     }
    
     public boolean requiresImport(String fqn){
+        if ( fqn == null ){
+            return false;
+        }
         String pkg = "";
         String simpleName = fqn;
         if ( fqn.indexOf(".") != -1 ){

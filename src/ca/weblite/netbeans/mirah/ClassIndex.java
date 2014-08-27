@@ -112,6 +112,9 @@ public class ClassIndex {
             return matches;
         }
         public void addMatch(String match){
+            while ( match.indexOf(".")==0 ){
+                match = match.substring(1);
+            }
             matches.add(match);
             resultsAdded();
         }
@@ -195,6 +198,9 @@ public class ClassIndex {
         } else {
             String path = fo.getPath();
             path = path.substring(root.getPath().length(), path.lastIndexOf("."));
+            if ( path.indexOf(".")==0){
+                path = path.substring(1);
+            }
             return path.replace("/", ".").replace("$", ".");
         }
     }

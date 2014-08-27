@@ -5,25 +5,17 @@
  */
 package ca.weblite.netbeans.mirah.lexer;
 
-import ca.weblite.netbeans.mirah.ClassIndex;
-import ca.weblite.netbeans.mirah.ClassIndex.ClassPathQuery;
-import ca.weblite.netbeans.mirah.ClassIndex.CompoundQuery;
 import ca.weblite.netbeans.mirah.ImportFixList;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.MirahParseDiagnostics.SyntaxError;
-import java.beans.PropertyChangeListener;
-import java.io.IOException;
-import java.net.URL;
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.text.Document;
-import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
-import org.netbeans.editor.BaseDocument;
 
 import org.netbeans.modules.parsing.api.Snapshot;
 import org.netbeans.modules.parsing.api.Source;
@@ -35,10 +27,7 @@ import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
 import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.HintsController;
-import org.netbeans.spi.editor.hints.LazyFixList;
 import org.netbeans.spi.editor.hints.Severity;
-import org.openide.filesystems.FileObject;
-import org.openide.util.Exceptions;
 import org.openide.util.RequestProcessor;
 
 /**
@@ -80,10 +69,22 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
             try {
                 
                 if ( syntaxError.position != null ){
+                    
                     String[] pieces = syntaxError.position.substring(0, syntaxError.position.lastIndexOf(":")).split(":");
-                
-                    line = Integer.parseInt(pieces[pieces.length-1]);
-                } else {
+                    String file = pieces[0];
+                    File f = new File(file);
+                    
+                    // Sometimes the error seems to cite a line in the mirah core source
+                    // files instead of the file that was being parsed.  check
+                    // for that here
+                    if ( source.getFileObject() != null && !source.getFileObject().getNameExt().equals(f.getName())){
+                        //System.out.println(source.getFileObject().getName()+" -- "+f.getName());
+                    } else {
+                    
+                        line = Integer.parseInt(pieces[pieces.length-1]);
+                    }
+                } 
+                if ( line == -1 ){
                     
                     // If we're here then it may be an inference error
                     // Let's look through the document to see if we can find any
@@ -92,6 +93,15 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
                     SourceQuery sq = new SourceQuery(document);
                     List<Token<MirahTokenId>> lambdas = q.findLambdaTypes();
                     for ( Token<MirahTokenId> tok : lambdas ){
+                        String className = String.valueOf(tok.text());
+                        String fqn = sq.getFQN(className, tok.offset(TokenHierarchy.get(document)));
+                        if ( q.requiresImport(fqn)){
+                            message = "cannot find class "+className;
+                        }
+                    }
+                    
+                    List<Token<MirahTokenId>> constants = q.findConstants();
+                    for ( Token<MirahTokenId> tok : constants ){
                         String className = String.valueOf(tok.text());
                         String fqn = sq.getFQN(className, tok.offset(TokenHierarchy.get(document)));
                         if ( q.requiresImport(fqn)){

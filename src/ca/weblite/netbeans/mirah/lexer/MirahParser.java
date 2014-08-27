@@ -24,6 +24,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.text.Document;
 import javax.tools.Diagnostic;
 import mirah.lang.ast.Node;
+import mirah.lang.ast.Super;
 import org.mirah.jvm.mirrors.debug.DebuggerInterface;
 import org.mirah.tool.Mirahc;
 import org.mirah.typer.ResolvedType;
@@ -479,11 +480,16 @@ public class MirahParser extends Parser {
                     
                     resolvedTypes.put(node, rt);
                     
+                    //System.out.println(node.position().startLine()+","+node.position().startChar()+":"+node.position().endLine()+","+node.position().endChar()+" Resolved type to "+rt);
+                    
                 }
                 
             });
         }
-
+        
+        
+        
+        
         @Override
         public void inferenceError(Context cntxt, Node node, TypeFuture tf) {
             
