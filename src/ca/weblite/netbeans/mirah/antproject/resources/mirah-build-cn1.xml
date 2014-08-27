@@ -118,6 +118,7 @@
         </fileset>
       </copy>
     </target>
+   
     
     <target name="mirah-precompile" depends="mirah-init" if="codename1.displayName">
         <echo>In Mirah Precompile for CN1 Project</echo>
@@ -217,6 +218,32 @@
         </delete>
         <antcall target="copy-libs"/>
         
+        
+        <!-- Compile the Tests While we're here-->
+        <mkdir dir="${build.test.classes.dir}" />
+        <mirahc dest="${build.test.classes.dir}" 
+                postrunjavac="false" 
+                macrojardir="lib/mirah/macros" 
+                macroclasspath="${mirah.tmp.macros.classes}"
+                javasourcespath="${test.src.dir}:${src.dir}"
+                javastubdir="${mirah.java.stub.dir}"
+                classcachedir="${mirah.class.cache.dir}" 
+            >
+            <javac classpath="${javac.classpath}" 
+                   bootclasspath="lib/CLDC11.jar"
+                   deprecation="${javac.deprecation}" 
+                   destdir="lib/impl/cls" 
+                   encoding="${source.encoding}" 
+                   excludes="${excludes}" 
+                   includeantruntime="false" 
+                   includes="${includes}" 
+                   source="${javac.source}" 
+                   sourcepath="${test.src.dir}" 
+                   srcdir="${test.src.dir}" 
+                   target="${javac.target}">
+                
+            </javac>
+        </mirahc>
        
     </target>
    

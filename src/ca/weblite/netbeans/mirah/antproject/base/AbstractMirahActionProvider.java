@@ -104,7 +104,7 @@ public abstract class AbstractMirahActionProvider implements ActionProvider {
         supportedActions.put(COMMAND_COMPILE_SINGLE, "compile-single"); // NOI18N
         supportedActions.put(COMMAND_TEST_SINGLE, "test-single");       // NOI18N
         supportedActions.put(COMMAND_DEBUG_TEST_SINGLE, "debug-test");  // NOI18N
-        supportedActions.put(COMMAND_TEST, "test");                     // NOI18N
+        //supportedActions.put(COMMAND_TEST, "test");                     // NOI18N
         addProjectSpecificActions(supportedActions);
     }
 
@@ -128,7 +128,7 @@ public abstract class AbstractMirahActionProvider implements ActionProvider {
                 supportedActions.remove(COMMAND_TEST);
             } else {
                 if (!supportedActions.containsKey(COMMAND_TEST)) {
-                    supportedActions.put(COMMAND_TEST, "test"); // NOI18N
+                   // supportedActions.put(COMMAND_TEST, "test"); // NOI18N
                 }
             }
         } else {
@@ -165,6 +165,7 @@ public abstract class AbstractMirahActionProvider implements ActionProvider {
 
     @Override
     public void invokeAction(final String command, final Lookup context) {
+        System.out.println("Invoking action "+command);
         final Runnable action = new Runnable() {
             @Override
             public void run() {
@@ -203,6 +204,7 @@ public abstract class AbstractMirahActionProvider implements ActionProvider {
     private String[] getTargetNames(String command, Lookup context, Properties p) {
         if (supportedActions.keySet().contains(command)) {
             if (command.equals(COMMAND_TEST)) {
+                System.out.println("Command is COMMAND_TEST");
                 return setupTestAll(p);
             }
 
@@ -223,7 +225,7 @@ public abstract class AbstractMirahActionProvider implements ActionProvider {
                 p.setProperty("javac.includes", clazz); // NOI18N
                 // Convert foo/FooTest.java -> foo.FooTest
                 if (clazz.endsWith(".mirah")) { // NOI18N
-                    clazz = clazz.substring(0, clazz.length() - 7);
+                    clazz = clazz.substring(0, clazz.length() - 6);
                 }
                 clazz = clazz.replace('/','.');
 
@@ -366,9 +368,12 @@ public abstract class AbstractMirahActionProvider implements ActionProvider {
 
     private String[] setupTestAll(Properties p) {
         // Convert foo/FooTest.java -> foo.FooTest
+        System.out.println("Setting up testAll");
         p.setProperty("test.binarytestincludes", "**/*Test.class"); // NOI18N
         p.setProperty("test.binaryexcludes", "**/*$*");             // NOI18N
-        p.setProperty("test.binaryincludes", "");                   // NOI18N
+        p.setProperty("test.binaryincludes", "");  
+        // NOI18N
+        System.out.println(p);
         return new String[] {"test-with-mirah"};                   // NOI18N
     }
 
@@ -377,7 +382,7 @@ public abstract class AbstractMirahActionProvider implements ActionProvider {
         FileObject root = getRoot(testSrcPath, files[0]);
         String path = FileUtil.getRelativePath(root, files[0]);
         // Convert foo/FooTest.java -> foo.FooTest
-        p.setProperty("test.binarytestincludes", path.substring(0, path.length() - 7) + ".class");  // NOI18N
+        p.setProperty("test.binarytestincludes", path.substring(0, path.length() - 6) + ".class");  // NOI18N
         p.setProperty("test.binaryexcludes", "**/*$*");                                             // NOI18N
         p.setProperty("test.binaryincludes", "");                                                   // NOI18N
         p.setProperty("javac.includes", ActionUtils.antIncludesList(files, root));                  // NOI18N
@@ -389,10 +394,10 @@ public abstract class AbstractMirahActionProvider implements ActionProvider {
         FileObject root = getRoot(testSrcPath, files[0]);
         String path = FileUtil.getRelativePath(root, files[0]);
         // Convert foo/FooTest.java -> foo.FooTest
-        p.setProperty("test.binarytestincludes", path.substring(0, path.length() - 7) + ".class");   // NOI18N
+        p.setProperty("test.binarytestincludes", path.substring(0, path.length() - 6) + ".class");   // NOI18N
         p.setProperty("test.binaryexcludes", "**/*$*");                                              // NOI18N
         p.setProperty("test.binaryincludes", "");                                                    // NOI18N
-        p.setProperty("test.class", path.substring(0, path.length() - 7).replace('/', '.'));         // NOI18N
+        p.setProperty("test.class", path.substring(0, path.length() - 6).replace('/', '.'));         // NOI18N
         p.setProperty("javac.includes", ActionUtils.antIncludesList(files, root));                   // NOI18N
         return new String[] {"debug-test"};                                                          // NOI18N
     }
@@ -402,7 +407,7 @@ public abstract class AbstractMirahActionProvider implements ActionProvider {
         FileObject root = getRoot(testSrcPath, files[0]);
         String path = FileUtil.getRelativePath(root, files[0]);
         // Convert foo/FooTest.java -> foo.FooTest
-        p.setProperty("compile.class", path.substring(0, path.length() - 7).replace('/', '.')); // NOI18N
+        p.setProperty("compile.class", path.substring(0, path.length() - 6).replace('/', '.')); // NOI18N
         p.setProperty("javac.includes", ActionUtils.antIncludesList(files, root)); // NOI18N
         return new String[] {"compile-single"}; // NOI18N
     }
