@@ -98,7 +98,7 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
     private static final String MIRAH_BUILD_PATH_PROPERTY = "mirah.build.dir";
     private static final String MIRAH_MACROS_JARDIR_PROPERTY = "mirah.macros.jardir";
     private static final String VERSION_PROPERTY = "mirah.plugin.version";
-    private static final int PLUGIN_VERSION=2;
+    private static final int PLUGIN_VERSION=3;
     
 
     private final Project project;

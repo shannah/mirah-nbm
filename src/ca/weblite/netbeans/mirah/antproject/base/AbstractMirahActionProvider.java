@@ -95,16 +95,32 @@ public abstract class AbstractMirahActionProvider implements ActionProvider {
     /** Map from commands to mirah targets */
     private final Map<String, String> supportedActions;
     private final Project project;
-
+    private boolean overrideTestTarget = true;
 
     public AbstractMirahActionProvider(Project project) {
         this.project = project;
+        FileObject destDirFO = project.getProjectDirectory().getFileObject("nbproject"); // NOI18N
+        FileObject projectFO = project.getProjectDirectory();
+        try {
+            GeneratedFilesHelper helper = new GeneratedFilesHelper(project.getProjectDirectory());
+            // Check if this is a codename one project
+            FileObject cn1PropertiesFO = projectFO.getFileObject("codenameone_settings", "properties");
+            FileObject cn1LibraryPropertiesFO = projectFO.getFileObject("codenameone_library", "properties");
+            boolean isCodename1Lib = cn1LibraryPropertiesFO != null;
+            boolean isCodename1Proj = cn1PropertiesFO != null;
+
+            if ( isCodename1Lib || isCodename1Proj){
+                overrideTestTarget = false;
+            }
+        } catch ( Exception ex){}
         this.supportedActions = new HashMap<String, String>();
 
         supportedActions.put(COMMAND_COMPILE_SINGLE, "compile-single"); // NOI18N
         supportedActions.put(COMMAND_TEST_SINGLE, "test-single");       // NOI18N
         supportedActions.put(COMMAND_DEBUG_TEST_SINGLE, "debug-test");  // NOI18N
-        //supportedActions.put(COMMAND_TEST, "test");                     // NOI18N
+        if ( overrideTestTarget ){
+            supportedActions.put(COMMAND_TEST, "test");
+        }                     // NOI18N
         addProjectSpecificActions(supportedActions);
     }
 
@@ -128,7 +144,9 @@ public abstract class AbstractMirahActionProvider implements ActionProvider {
                 supportedActions.remove(COMMAND_TEST);
             } else {
                 if (!supportedActions.containsKey(COMMAND_TEST)) {
-                   // supportedActions.put(COMMAND_TEST, "test"); // NOI18N
+                    if ( overrideTestTarget ){
+                        supportedActions.put(COMMAND_TEST, "test"); // NOI18N
+                    }
                 }
             }
         } else {
@@ -204,7 +222,6 @@ public abstract class AbstractMirahActionProvider implements ActionProvider {
     private String[] getTargetNames(String command, Lookup context, Properties p) {
         if (supportedActions.keySet().contains(command)) {
             if (command.equals(COMMAND_TEST)) {
-                System.out.println("Command is COMMAND_TEST");
                 return setupTestAll(p);
             }
 
