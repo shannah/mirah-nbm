@@ -6,12 +6,14 @@
 
 package ca.weblite.netbeans.mirah.cc;
 
+import ca.weblite.netbeans.mirah.lexer.DocumentQuery;
 import ca.weblite.netbeans.mirah.lexer.MirahLanguageHierarchy;
 import ca.weblite.netbeans.mirah.lexer.MirahLexer;
 import ca.weblite.netbeans.mirah.lexer.MirahParser;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger.PositionType;
 import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
+import ca.weblite.netbeans.mirah.lexer.SourceQuery;
 import java.awt.EventQueue;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -138,9 +140,61 @@ public class MirahCodeCompleter implements CompletionProvider {
         return foundNode[0];
     }
     
+    //@Override
+    public CompletionTask createTask2(int queryType, final JTextComponent jtc) {
+        if ( queryType == CompletionProvider.COMPLETION_QUERY_TYPE){
+            System.out.println("Request for completion query");
+        } else if ( queryType == CompletionProvider.DOCUMENTATION_QUERY_TYPE){
+            System.out.println("Request for documentation");
+        } else if ( queryType == CompletionProvider.TOOLTIP_QUERY_TYPE){
+            System.out.println("Request for tooltip");
+        }
+        
+        FileObject fileObject = NbEditorUtilities.getFileObject(jtc.getDocument());
+        int caretOffset = jtc.getCaretPosition();
+        
+        DocumentQuery dq = new DocumentQuery(jtc.getDocument());
+        SourceQuery sq = new SourceQuery(jtc.getDocument());
+        
+        TokenSequence<MirahTokenId> seq = dq.getTokens(caretOffset, true);
+        if ( seq.token() != null ){
+            int startPos = seq.offset();
+            int len = seq.token().length();
+            System.out.println("Start: "+startPos+" len "+len+" caret "+caretOffset);
+            
+            if ( seq.token().id().ordinal() == Tokens.tIDENTIFIER.ordinal()){
+                //String id = seq.token().text().toString();
+                //while ( seq.movePrevious() && MirahTokenId.WHITESPACE_AND_COMMENTS.contains(seq.token().id())){}
+                String type = dq.guessType(seq, fileObject);
+                System.out.println("Guessed type "+type);
+                
+                
+                
+                SourceQuery method = sq.findMethod(caretOffset);
+                System.out.println("Finding local var "+seq.token().text());
+                SourceQuery localVar = method.findLocalVars(String.valueOf(seq.token().text()));
+                if ( localVar.size() > 0 ){
+                    System.out.println("Found local var "+localVar.getType());
+                }
+                
+            } else if ( seq.token().id().ordinal() == Tokens.tCONSTANT.ordinal()){
+                System.out.println("Constant");
+            } else {
+                System.out.println("other");
+            }
+        }
+        
+        
+        
+        
+        return null;
+    }
+    
+    
     @Override
     public CompletionTask createTask(int queryType, final JTextComponent jtc) {
         if ( queryType != CompletionProvider.COMPLETION_QUERY_TYPE){
+            
             return null;
         }
         final int initialOffset = jtc.getCaretPosition();

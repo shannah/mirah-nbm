@@ -32,6 +32,7 @@ import mirah.lang.ast.Node;
 import mirah.lang.ast.Package;
 import mirah.lang.ast.NodeScanner;
 import org.netbeans.api.java.classpath.ClassPath;
+import org.netbeans.api.lexer.TokenSequence;
 import org.netbeans.modules.editor.NbEditorUtilities;
 import org.openide.util.Exceptions;
 
@@ -66,6 +67,8 @@ public class SourceQuery implements List<Node>{
         this.results = new ArrayList<Node>();
         this.results.add(root);
     }
+    
+    
     
     
     public SourceQuery findClasses(int offset){
@@ -157,12 +160,16 @@ public class SourceQuery implements List<Node>{
         });
     }
     
+    
+    
     public String getType(){
         if ( results != null && !results.isEmpty() ){
             return dbg.getType(results.get(0)).name();
         }
         return null;
     }
+    
+    
     
     public SourceQuery findParentClosureOrClass(){
         return findParent(new Object(){

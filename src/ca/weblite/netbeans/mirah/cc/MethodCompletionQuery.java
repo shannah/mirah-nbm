@@ -6,6 +6,7 @@
 
 package ca.weblite.netbeans.mirah.cc;
 
+import ca.weblite.netbeans.mirah.lexer.DocumentQuery;
 import ca.weblite.netbeans.mirah.lexer.MirahParser;
 import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
 import java.lang.reflect.Constructor;
@@ -87,7 +88,7 @@ public class MethodCompletionQuery extends AsyncCompletionQuery {
 
     @Override
     protected void filter(CompletionResultSet resultSet) {
-        
+        System.out.println("Filter "+filter);
         for ( Method m : currentType.getMethods()){
             if ( m.getName().toLowerCase().indexOf(filter.toLowerCase()) == 0 && isStatic == Modifier.isStatic(m.getModifiers()) ){
                 resultSet.addItem(new MirahMethodCompletionItem(file, m, initialOffset, filter.length(), currentType));
@@ -205,7 +206,13 @@ public class MethodCompletionQuery extends AsyncCompletionQuery {
                 ResolvedType type = null;
                 if ( foundNode != null ){
                     type = dbg.getType(foundNode);
-
+                    
+                    if ( type == null ){
+                        DocumentQuery dq = new DocumentQuery(bdoc);
+                        TokenSequence<MirahTokenId> seq = dq.getTokens(foundNode.position().endChar(), true);
+                        String typeName = dq.guessType(seq, file);
+                        //System.out.println("Type name guessed to be "+typeName);
+                    }
                     //Node c = foundNode;
                     //while ( c != null ){
                     //
@@ -255,15 +262,14 @@ public class MethodCompletionQuery extends AsyncCompletionQuery {
 
                         isStatic = foundNode instanceof Constant;
                         if ( cls != null ){
-
                             if ( isStatic && filter == null || "new".startsWith(filter)){
                                 for ( Constructor c : cls.getConstructors()){
-                                    crs.addItem(new MirahConstructorCompletionItem(c, caretOffset, filter.length()));
+                                    crs.addItem(new MirahConstructorCompletionItem(c, caretOffset-filter.length(), filter.length()));
                                 }
                             }
                             for ( Method m : cls.getMethods()){
                                 if ( m.getName().startsWith(filter) && isStatic == Modifier.isStatic(m.getModifiers())){
-                                    crs.addItem(new MirahMethodCompletionItem(fileObject, m, caretOffset, filter.length(), cls));
+                                    crs.addItem(new MirahMethodCompletionItem(fileObject, m, caretOffset-filter.length(), filter.length(), cls));
                                 }
                             }
                         }

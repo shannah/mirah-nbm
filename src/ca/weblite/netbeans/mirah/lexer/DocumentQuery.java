@@ -6,6 +6,7 @@
 
 package ca.weblite.netbeans.mirah.lexer;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -15,10 +16,12 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import mirah.impl.Tokens;
+import mirah.lang.ast.ClassDefinition;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenSequence;
 import org.netbeans.editor.BaseDocument;
+import org.openide.filesystems.FileObject;
 import org.openide.util.Exceptions;
 
 /**
@@ -478,5 +481,68 @@ public class DocumentQuery {
              seq.moveNext();
         }
         return lastNonWhite;
+    }
+    
+    private void skipWhitespaceBack(TokenSequence<MirahTokenId> seq){
+        while ( seq.movePrevious() && MirahTokenId.WHITESPACE_AND_COMMENTS.contains(seq.token().id())){}
+    }
+    
+    public String guessType(TokenSequence<MirahTokenId> seq, FileObject fo){
+        
+        MirahTokenId tok = seq.token().id();
+        int offset = seq.offset();
+        try {
+            if ( tok.ordinal() == Tokens.tIDENTIFIER.ordinal()){
+                String id = seq.token().text().toString();
+                skipWhitespaceBack(seq);
+                if ( seq.token().id().ordinal() == Tokens.tDot.ordinal()){
+                    skipWhitespaceBack(seq);
+                    if ( seq.token().id().ordinal() == Tokens.tIDENTIFIER.ordinal()){
+                        String prevType = guessType(seq, fo);
+                        if ( prevType == null ){
+                            return null;
+                        }
+                        ClassQuery cq = new ClassQuery(prevType, fo, true);
+                        for ( Method m : cq.getMethods()){
+                            if ( id.equals(m.getName()) ){
+                                return m.getReturnType().getName();
+                            }
+                        }
+                    }
+                } else {
+                    SourceQuery sq = new SourceQuery(doc);
+                    SourceQuery method = sq.findMethod(offset);
+                    if ( method.size() > 0 ){
+                        SourceQuery localVars = method.findLocalVars(id);
+                        String type = localVars.getType();
+                        if ( type != null ){
+                            return type;
+                        }
+                    }
+                    
+                    SourceQuery parent = sq.findClass(offset);
+                    if ( !parent.isEmpty()){
+                        System.out.println("Found parent class");
+                        ClassDefinition node = (ClassDefinition)parent.get(0);
+                        
+                        String type = parent.getFQN(node.name().identifier(), offset);
+                        if ( type != null && type.indexOf(".") == 0 ){
+                            type = type.substring(1);
+                        }
+                        System.out.println("fqn "+type);
+                        System.out.println("Parent type "+node.name().identifier());
+                        ClassQuery cq = new ClassQuery(type, fo, true);
+                        for ( Method m : cq.getMethods()){
+                            if ( id.equals(m.getName()) ){
+                                return m.getReturnType().getName();
+                            }
+                        }
+                    }
+                }
+            }
+        } finally {
+            while ( seq.offset() < offset && seq.moveNext()){}
+        }
+        return null;
     }
 }
