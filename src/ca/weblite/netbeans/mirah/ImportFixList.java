@@ -11,7 +11,9 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyledDocument;
@@ -108,7 +110,8 @@ public class ImportFixList  implements LazyFixList, Runnable {
                     fixes.clear();
 
                 }
-                List<String> matches = this.getMatches();
+                Set<String> matches = new HashSet<String>();
+                matches.addAll(this.getMatches());
                 for ( String match : matches ){
                     Fix fix = new ImportFix(match);
                     synchronized(fixes){

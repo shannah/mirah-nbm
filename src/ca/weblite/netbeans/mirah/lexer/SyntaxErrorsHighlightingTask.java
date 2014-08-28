@@ -9,7 +9,9 @@ import ca.weblite.netbeans.mirah.ImportFixList;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.MirahParseDiagnostics.SyntaxError;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -130,7 +132,7 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
                 
                 
                
-                List<Fix> imports = new ArrayList<Fix>();
+                //List<Fix> imports = new ArrayList<Fix>();
                 Pattern p = Pattern.compile("cannot find class ([a-zA-Z][a-zA-Z0-9\\.\\$]*)", Pattern.CASE_INSENSITIVE);
                 Matcher m = p.matcher(message);
                 

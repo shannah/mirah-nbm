@@ -6,7 +6,9 @@
 package ca.weblite.netbeans.mirah;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import org.netbeans.api.java.classpath.ClassPath;
@@ -106,12 +108,20 @@ public class ClassIndex {
     
     public abstract static class Future {
         List<String> matches = new ArrayList<String>();
+        Set<String> matchSet = new HashSet<String>();
         
         protected abstract void resultsAdded();
         public List<String> getMatches(){
             return matches;
         }
         public void addMatch(String match){
+            if ( matchSet.contains(match)){
+                System.out.println("Matchset already contains "+match);
+                return;
+            }
+            System.out.println("Adding match "+match);
+            matchSet.add(match);
+            System.out.println(matchSet);
             while ( match.indexOf(".")==0 ){
                 match = match.substring(1);
             }
