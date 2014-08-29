@@ -8,18 +8,25 @@ package ca.weblite.netbeans.mirah.lexer;
 
 
 import ca.weblite.asm.WLMirahCompiler;
+import ca.weblite.netbeans.mirah.RecompileQueue;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.WeakHashMap;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.Document;
 import javax.tools.Diagnostic;
@@ -40,7 +47,10 @@ import org.netbeans.modules.parsing.api.Task;
 import org.netbeans.modules.parsing.spi.ParseException;
 import org.netbeans.modules.parsing.spi.Parser;
 import org.netbeans.modules.parsing.spi.SourceModificationEvent;
+import org.openide.filesystems.FileChangeAdapter;
+import org.openide.filesystems.FileEvent;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 
 /**
  *
@@ -124,7 +134,40 @@ public class MirahParser extends Parser {
     
     
     
-    
+    private void copyIfChanged(File sourceRoot, File destRoot, File sourceFile) throws IOException {
+        if ( sourceFile.getName().endsWith(".class")){
+            String relativePath = sourceFile.getPath().substring(sourceRoot.getPath().length());
+            if ( relativePath.indexOf(File.separator) == 0 ){
+                relativePath = relativePath.substring(File.separator.length());
+            }
+            File destFile = new File(destRoot, relativePath);
+            if ( destFile.exists() && destFile.lastModified() < sourceFile.lastModified()){
+                FileInputStream fis = null;
+                FileOutputStream fos = null;
+                try {
+                    fis = new FileInputStream(sourceFile);
+                    fos = new FileOutputStream(destFile);
+                    FileUtil.copy(fis, fos);
+                } finally {
+                    if ( fis != null ){
+                        try {
+                            fis.close();
+                        } catch ( Exception ex){}
+                    }
+                    if ( fos != null ){
+                        try {
+                            fos.close();
+                            
+                        } catch ( Exception ex){}
+                    }
+                }
+            }
+        } else if ( sourceFile.isDirectory()){
+            for ( File child : sourceFile.listFiles()){
+                copyIfChanged(sourceRoot, destRoot, child);
+            }
+        }
+    }
     
     public void reparse(Snapshot snapshot, String content) 
             throws ParseException {
@@ -154,21 +197,37 @@ public class MirahParser extends Parser {
         if (buildClassPath != null ){
             buildClassPathStr = buildClassPath.toString();
         }
+        
         ClassPath srcClassPath = ClassPath.getClassPath(src, ClassPath.SOURCE);
         String srcClassPathStr = "";
         
         if ( srcClassPath != null ) srcClassPathStr = srcClassPath.toString();
+        String changedSourcePaths = RecompileQueue.getProjectQueue(project).getAndClearChangedSourcePaths();
+        if ( changedSourcePaths != null ){
+            Set<String> set = new HashSet<String>();
+            set.addAll(Arrays.asList(changedSourcePaths.split(Pattern.quote(File.pathSeparator))));
+            set.addAll(Arrays.asList(srcClassPathStr.split(Pattern.quote(File.pathSeparator))));
+            StringBuilder sb = new StringBuilder();
+            for ( String p : set ){
+                sb.append(p).append(File.pathSeparator);
+            }
+            srcClassPathStr = sb.substring(0, sb.length()-File.pathSeparator.length());
+        }
         compiler.setSourcePath(srcClassPathStr);
         
         String dest = buildClassPathStr;
+        FileObject mirahDir = null;
         try {
             if ( buildDir == null ){
                 buildDir = projectDirectory.createFolder("build");
             }
-            FileObject mirahDir = buildDir.getFileObject("mirah");
+            mirahDir = buildDir.getFileObject("mirah");
             if (mirahDir == null ){
                 mirahDir = buildDir.createFolder("mirah");
             }
+            File javaStubDir = new File(buildDir.getPath(), "mirah_tmp"+File.separator+"java_stub_dir");
+            javaStubDir.mkdirs();
+            compiler.setJavaStubDirectory(javaStubDir);
             dest = mirahDir.getPath();
         } catch (IOException ex){
             
@@ -234,12 +293,24 @@ public class MirahParser extends Parser {
         String srcText = content;
         
         compiler.addFakeFile(src.getPath(), srcText);
-        
+        FileChangeAdapter fileChangeListener = null;
         try {
+            
+        
+            
             compiler.compile(new String[0]);
+            if ( mirahDir != null ){
+                for (FileObject compileRoot : compileClassPath.getRoots()){
+                    if ( !compileRoot.getPath().endsWith(".jar") && compileRoot.isFolder() && !mirahDir.equals(compileRoot)){
+                        copyIfChanged(new File(mirahDir.getPath()), new File(compileRoot.getPath()), new File(mirahDir.getPath()));
+                    }
+                }
+            }
+            
+            
         } catch ( Exception ex){
             ex.printStackTrace();
-        }
+        } 
         
         synchronized(documentDebuggers){
             
@@ -480,7 +551,7 @@ public class MirahParser extends Parser {
                     
                     resolvedTypes.put(node, rt);
                     
-                    //System.out.println(node.position().startLine()+","+node.position().startChar()+":"+node.position().endLine()+","+node.position().endChar()+" Resolved type to "+rt);
+                    
                     
                 }
                 

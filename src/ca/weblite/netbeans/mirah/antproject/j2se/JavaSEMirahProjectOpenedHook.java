@@ -42,11 +42,15 @@
 
 package ca.weblite.netbeans.mirah.antproject.j2se;
 
+import ca.weblite.netbeans.mirah.RecompileQueue;
 import org.netbeans.api.project.Project;
 import ca.weblite.netbeans.mirah.antproject.common.BuildScriptHelper;
 import ca.weblite.netbeans.mirah.antproject.common.BuildScriptType;
 import org.netbeans.spi.project.ProjectServiceProvider;
 import org.netbeans.spi.project.ui.ProjectOpenedHook;
+import org.openide.filesystems.FileChangeAdapter;
+import org.openide.filesystems.FileEvent;
+import org.openide.util.Lookup;
 
 /**
  *
@@ -65,10 +69,24 @@ public class JavaSEMirahProjectOpenedHook extends ProjectOpenedHook {
 
     public JavaSEMirahProjectOpenedHook(Project project) {
         this.project = project;
+        System.out.println("Project Opened constructor");
     }
 
     @Override
     protected void projectOpened() {
+        project.getProjectDirectory().addRecursiveListener(new FileChangeAdapter(){
+
+            @Override
+            public void fileChanged(FileEvent fe) {
+                if ( fe.getFile().getPath().endsWith(".java")){
+                    System.out.println("Adding to compile queue "+fe.getFile());
+                    RecompileQueue.getProjectQueue(project).addChanged(fe.getFile());
+                }
+                super.fileChanged(fe); 
+            }
+            
+        });
+        
         BuildScriptHelper.refreshBuildScript(project, BuildScriptType.J2SE.getStylesheet(), true);
     }
 

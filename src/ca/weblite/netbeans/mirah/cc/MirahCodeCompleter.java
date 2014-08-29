@@ -8,48 +8,25 @@ package ca.weblite.netbeans.mirah.cc;
 
 import ca.weblite.netbeans.mirah.lexer.DocumentQuery;
 import ca.weblite.netbeans.mirah.lexer.MirahLanguageHierarchy;
-import ca.weblite.netbeans.mirah.lexer.MirahLexer;
-import ca.weblite.netbeans.mirah.lexer.MirahParser;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger;
-import ca.weblite.netbeans.mirah.lexer.MirahParser.DocumentDebugger.PositionType;
 import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
 import ca.weblite.netbeans.mirah.lexer.SourceQuery;
-import java.awt.EventQueue;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.logging.Logger;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import mirah.impl.Tokens;
-import mirah.lang.ast.AttrAssign;
-import mirah.lang.ast.Call;
-import mirah.lang.ast.ClassDefinition;
-import mirah.lang.ast.Constant;
-import mirah.lang.ast.ElemAssign;
-import mirah.lang.ast.FieldAssign;
 import mirah.lang.ast.FieldDeclaration;
-import mirah.lang.ast.MethodDefinition;
-import mirah.lang.ast.Next;
 import mirah.lang.ast.Node;
 import mirah.lang.ast.NodeFilter;
-import mirah.lang.ast.NodeList;
 import mirah.lang.ast.NodeScanner;
 import mirah.lang.ast.Position;
-import mirah.lang.ast.SimpleNodeVisitor;
-import mirah.lang.ast.SimpleString;
-import mirah.lang.ast.TypeName;
-import mirah.lang.ast.TypeRef;
-import org.mirah.tool.MirahCompiler;
 import org.mirah.typer.ResolvedType;
-import org.netbeans.api.editor.completion.Completion;
 
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.api.java.classpath.ClassPath;
@@ -57,27 +34,16 @@ import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenSequence;
+import org.netbeans.api.project.FileOwnerQuery;
+import org.netbeans.api.project.Project;
 import org.netbeans.editor.BaseDocument;
-import org.netbeans.editor.Utilities;
 
 import org.netbeans.modules.editor.NbEditorUtilities;
-import org.netbeans.modules.parsing.api.ParserManager;
-import org.netbeans.modules.parsing.api.ResultIterator;
-import org.netbeans.modules.parsing.api.Snapshot;
-import org.netbeans.modules.parsing.api.Source;
-import org.netbeans.modules.parsing.api.UserTask;
-import org.netbeans.modules.parsing.spi.ParseException;
-import org.netbeans.modules.parsing.spi.SourceModificationEvent;
-//import org.netbeans.modules.parsing.impl.Utilities;
-
-import org.netbeans.spi.editor.completion.CompletionItem;
 import org.netbeans.spi.editor.completion.CompletionProvider;
-import org.netbeans.spi.editor.completion.CompletionResultSet;
 import org.netbeans.spi.editor.completion.CompletionTask;
-import org.netbeans.spi.editor.completion.support.AsyncCompletionQuery;
 import org.netbeans.spi.editor.completion.support.AsyncCompletionTask;
+import org.netbeans.spi.java.classpath.support.ClassPathSupport;
 import org.openide.filesystems.FileObject;
-import org.openide.util.Exceptions;
 
 
 /**
@@ -87,7 +53,6 @@ import org.openide.util.Exceptions;
 @MimeRegistration(mimeType="text/x-mirah", service=CompletionProvider.class)
 public class MirahCodeCompleter implements CompletionProvider {
     private static final Logger LOG = Logger.getLogger(MirahCodeCompleter.class.getCanonicalName());
-    
     
     static FieldDeclaration[] findFields(final DocumentDebugger dbg, final int rightEdge, final boolean isClassVar){
         final ArrayList<FieldDeclaration> foundNodes = new ArrayList<FieldDeclaration>();
@@ -300,8 +265,16 @@ public class MirahCodeCompleter implements CompletionProvider {
     }
     
     static Class findClass(FileObject o, String name){
+        return findClass(o, name, true);
+    }
+    
+    static Class findClass(FileObject o, String name, boolean cache){
+        Project proj = FileOwnerQuery.getOwner(o);
+        FileObject projectDirectory = proj.getProjectDirectory();
+        
         ClassPath[] paths = new ClassPath[]{
             ClassPath.getClassPath(o, ClassPath.SOURCE),
+            ClassPathSupport.createClassPath(new File(projectDirectory.getPath(), "src").getPath()),
             ClassPath.getClassPath(o, ClassPath.EXECUTE),
             ClassPath.getClassPath(o, ClassPath.COMPILE),
             ClassPath.getClassPath(o, ClassPath.BOOT),
@@ -311,6 +284,7 @@ public class MirahCodeCompleter implements CompletionProvider {
         for ( int i=0; i<paths.length; i++){
             ClassPath cp = paths[i];
             try {
+                
                 Class c = cp.getClassLoader(true).loadClass(name);
                 if ( c != null ){
                     return c;
