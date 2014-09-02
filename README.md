@@ -8,9 +8,7 @@ A module to add Mirah support to Netbeans.
 
 Pre-alpha
 
-The module should allow you to use Mirah with your JavaSE, Java Web, and EJB projects.  You can try it with any type of Java project, but I have only tested with these three kinds.  I don't think it works right now with JavaFX projects - but if this is required, it isn't too hard to add support.
-
-Occasionally I still run into problems with the lexer locking up…  But as I continue to do Mirah development, I hope to get these resolved.
+This module includes both support for augmenting the build/compile process of certain NetBeans project types, and support for editing .mirah files in the code editor.  So far (Sept. 1, 2014) I have focused only on the Codename One and Java SE Application project types.  JavaEE and Java Web projects haven't been tested as thoroughly.
 
 ##Features
 
@@ -29,6 +27,7 @@ Occasionally I still run into problems with the lexer locking up…  But as I co
 * Method and property completion.
 * Import hints
 * Error highlighting
+* Abstract method completion
 
 ###Building
 
