@@ -57,7 +57,7 @@ Apache 2.0
 
 The following screencast demonstrates the use of the NetBeans Mirah plugin to develop a Codename One application using Mirah.
 
-<iframe width="560" height="315" src="//www.youtube.com/embed/uGgppdsMCjA" frameborder="0" allowfullscreen></iframe>
+[Codename One Mirah Poker Demo Screencast](http://youtu.be/uGgppdsMCjA)
 
 
 ###Creating a Mirah Class
