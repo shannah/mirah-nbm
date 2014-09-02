@@ -53,6 +53,13 @@ Apache 2.0
 
 ##Usage
 
+###Screencast 
+
+The following screencast demonstrates the use of the NetBeans Mirah plugin to develop a Codename One application using Mirah.
+
+<iframe width="560" height="315" src="//www.youtube.com/embed/uGgppdsMCjA" frameborder="0" allowfullscreen></iframe>
+
+
 ###Creating a Mirah Class
 
 1. Access the "New File" wizard inside an existing Java project.  (e.g. Select File > "New File…").
