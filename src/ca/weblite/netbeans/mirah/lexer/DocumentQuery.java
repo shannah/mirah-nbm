@@ -478,7 +478,11 @@ public class DocumentQuery {
              if ( !MirahTokenId.WHITESPACE_AND_COMMENTS.contains(seq.token().id())){
                  lastNonWhite = seq.token().id();
              }
+             int prevOffset = seq.offset();
              seq.moveNext();
+             if ( seq.offset() == prevOffset ){
+                 break;
+             }
         }
         return lastNonWhite;
     }
