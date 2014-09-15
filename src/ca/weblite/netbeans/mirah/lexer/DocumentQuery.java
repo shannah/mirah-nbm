@@ -392,7 +392,7 @@ public class DocumentQuery {
     
     public String getPackageName(int caretOffset){
          TokenSequence<MirahTokenId> seq = getTokens(caretOffset, true);
-         while ( seq.movePrevious()){
+         while ( seq != null && seq.movePrevious()){
             //System.out.println("Tok is "+seq.token());
             if ( seq.token().id().ordinal() == Tokens.tPackage.ordinal() ){
                 //System.out.println("Found do... checking if there is something after");
