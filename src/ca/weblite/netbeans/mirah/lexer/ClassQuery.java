@@ -299,12 +299,13 @@ public class ClassQuery {
            if (method.name.equals(constructor.getName()) && method.desc.equals(constructorDescriptor)) {
                Type[] argumentTypes = Type.getArgumentTypes(method.desc);
                List<String> parameterNames = new ArrayList<String>(argumentTypes.length);
-
                @SuppressWarnings("unchecked")
                List<LocalVariableNode> localVariables = method.localVariables;
+               boolean isStatic = localVariables.isEmpty() || !localVariables.get(0).equals("this");
+               int offset = isStatic ? 0:1;
                for (int i = 0; i < argumentTypes.length; i++) {
                    // The first local variable actually represents the "this" object
-                   parameterNames.add(localVariables.get(i + 1).name);
+                   parameterNames.add(localVariables.get(i + offset).name);
                }
 
                return parameterNames;
