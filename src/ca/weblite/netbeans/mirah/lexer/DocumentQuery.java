@@ -526,15 +526,15 @@ public class DocumentQuery {
                     
                     SourceQuery parent = sq.findClass(offset);
                     if ( !parent.isEmpty()){
-                        System.out.println("Found parent class");
+                        //System.out.println("Found parent class");
                         ClassDefinition node = (ClassDefinition)parent.get(0);
                         
                         String type = parent.getFQN(node.name().identifier(), offset);
                         if ( type != null && type.indexOf(".") == 0 ){
                             type = type.substring(1);
                         }
-                        System.out.println("fqn "+type);
-                        System.out.println("Parent type "+node.name().identifier());
+                        //System.out.println("fqn "+type);
+                        //System.out.println("Parent type "+node.name().identifier());
                         ClassQuery cq = new ClassQuery(type, fo, true);
                         for ( Method m : cq.getMethods()){
                             if ( id.equals(m.getName()) ){

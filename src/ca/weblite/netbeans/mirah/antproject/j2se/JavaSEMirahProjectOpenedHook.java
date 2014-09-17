@@ -79,7 +79,7 @@ public class JavaSEMirahProjectOpenedHook extends ProjectOpenedHook {
             @Override
             public void fileChanged(FileEvent fe) {
                 if ( fe.getFile().getPath().endsWith(".java")){
-                    System.out.println("Adding to compile queue "+fe.getFile());
+                    //System.out.println("Adding to compile queue "+fe.getFile());
                     RecompileQueue.getProjectQueue(project).addChanged(fe.getFile());
                 }
                 super.fileChanged(fe); 

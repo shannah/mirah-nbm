@@ -116,12 +116,12 @@ public class ClassIndex {
         }
         public void addMatch(String match){
             if ( matchSet.contains(match)){
-                System.out.println("Matchset already contains "+match);
+                //System.out.println("Matchset already contains "+match);
                 return;
             }
-            System.out.println("Adding match "+match);
+            //System.out.println("Adding match "+match);
             matchSet.add(match);
-            System.out.println(matchSet);
+            //System.out.println(matchSet);
             while ( match.indexOf(".")==0 ){
                 match = match.substring(1);
             }

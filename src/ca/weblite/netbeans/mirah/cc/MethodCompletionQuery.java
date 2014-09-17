@@ -88,7 +88,7 @@ public class MethodCompletionQuery extends AsyncCompletionQuery {
 
     @Override
     protected void filter(CompletionResultSet resultSet) {
-        System.out.println("Filter "+filter);
+        //System.out.println("Filter "+filter);
         for ( Method m : currentType.getMethods()){
             if ( m.getName().toLowerCase().indexOf(filter.toLowerCase()) == 0 && isStatic == Modifier.isStatic(m.getModifiers()) ){
                 resultSet.addItem(new MirahMethodCompletionItem(file, m, initialOffset, filter.length(), currentType));

@@ -43,7 +43,7 @@ public class MirahIndentTask implements IndentTask  {
     
     @Override
     public void reindent() throws BadLocationException {
-        System.out.println("Reindenting");
+        //System.out.println("Reindenting");
         /*
         1. Single Indent This Line
             - Last line is def, if, else, elsif,  begin, do, rescue, class, 

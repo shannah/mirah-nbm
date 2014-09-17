@@ -57,6 +57,6 @@ public class RecompileQueue {
     
     public synchronized void addChanged(FileObject fo){
         changed.add(fo);
-        System.out.println("Changed now "+changed);
+        //System.out.println("Changed now "+changed);
     }
 }

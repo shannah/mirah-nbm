@@ -183,7 +183,7 @@ public abstract class AbstractMirahActionProvider implements ActionProvider {
 
     @Override
     public void invokeAction(final String command, final Lookup context) {
-        System.out.println("Invoking action "+command);
+        //System.out.println("Invoking action "+command);
         final Runnable action = new Runnable() {
             @Override
             public void run() {
