@@ -255,7 +255,7 @@ public class MirahParser extends Parser {
         
         
         String macroPath = new StringBuilder()
-        
+                .append(classPath.toString())
                 .append(buildDir.getPath())
                 .append(File.separator)
                 .append("mirah_tmp") 
