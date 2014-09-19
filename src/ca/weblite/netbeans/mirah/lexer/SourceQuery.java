@@ -31,6 +31,7 @@ import mirah.lang.ast.MethodDefinition;
 import mirah.lang.ast.Node;
 import mirah.lang.ast.Package;
 import mirah.lang.ast.NodeScanner;
+import mirah.lang.ast.StaticMethodDefinition;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.lexer.TokenSequence;
 import org.netbeans.modules.editor.NbEditorUtilities;
@@ -399,6 +400,18 @@ public class SourceQuery implements List<Node>{
             }
             return super.enterMethodDefinition(node, arg); //To change body of generated methods, choose Tools | Templates.
         }
+
+        @Override
+        public boolean enterStaticMethodDefinition(StaticMethodDefinition node, Object arg) {
+            if ( node.position() != null 
+                    && node.position().startChar() <= offset
+                    && node.position().endChar() > offset ){
+                found.add(node);
+            }
+            return super.enterStaticMethodDefinition(node, arg); //To change body of generated methods, choose Tools | Templates.
+        }
+        
+        
         
     }
     
