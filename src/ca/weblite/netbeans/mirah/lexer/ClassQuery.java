@@ -301,7 +301,10 @@ public class ClassQuery {
                List<String> parameterNames = new ArrayList<String>(argumentTypes.length);
                @SuppressWarnings("unchecked")
                List<LocalVariableNode> localVariables = method.localVariables;
-               boolean isStatic = localVariables.isEmpty() || !localVariables.get(0).equals("this");
+               boolean isStatic = true;
+               if ( localVariables != null && !localVariables.isEmpty() && localVariables.get(0).name.equals("this")){
+                   isStatic=false;
+               }
                int offset = isStatic ? 0:1;
                for (int i = 0; i < argumentTypes.length; i++) {
                    // The first local variable actually represents the "this" object
