@@ -331,7 +331,7 @@ public class DocumentQuery {
             Set<MirahTokenId> endTokens,
             Set<MirahTokenId> needleTokens){
         while ( true ){
-            if ( sequence.token() == null ){
+            if ( sequence.token() == null){
                 return false;
             }
             
@@ -345,7 +345,9 @@ public class DocumentQuery {
             if ( endTokens != null && endTokens.contains(tok)){
                 return false;
             }
-            sequence.movePrevious();
+            if (!sequence.movePrevious()){
+                return false;
+            }
         }
     }
     
