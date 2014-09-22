@@ -4,7 +4,7 @@
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/nb-module-project/3">
             <code-name-base>ca.weblite.netbeans.mirah</code-name-base>
-            <standalone/>
+            <suite-component/>
             <module-dependencies>
                 <dependency>
                     <code-name-base>org.apache.tools.ant.module</code-name-base>
@@ -329,6 +329,14 @@
             <class-path-extension>
                 <runtime-relative-path>ext/mirahc.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/mirahc.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/maven-model-3.2.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/maven-model-3.2.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/plexus-utils-3.0.17.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/plexus-utils-3.0.17.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/MirahAnt.jar</runtime-relative-path>
