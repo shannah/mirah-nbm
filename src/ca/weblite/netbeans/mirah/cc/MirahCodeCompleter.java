@@ -75,7 +75,7 @@ public class MirahCodeCompleter implements CompletionProvider {
         
         return foundNodes.toArray(new FieldDeclaration[0]);
     }
-    static Node findNode(final DocumentDebugger dbg, final int rightEdge){
+    public static Node findNode(final DocumentDebugger dbg, final int rightEdge){
         final Node[] foundNode = new Node[1];
         for( Object node : dbg.compiler.compiler().getParsedNodes() ){
             if ( node instanceof Node ){
