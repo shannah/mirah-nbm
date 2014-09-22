@@ -1,2 +1,4 @@
 private
 build/*
+/mirah-nbm-suite/build/
+/mirah-nbm-suite/MirahCodenameOne/build/
