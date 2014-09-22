@@ -7,43 +7,24 @@
 package ca.weblite.netbeans.mirah.hyperlinks;
 
 import ca.weblite.netbeans.mirah.cc.MirahCodeCompleter;
-import ca.weblite.netbeans.mirah.cc.MirahConstructorCompletionItem;
-import ca.weblite.netbeans.mirah.cc.MirahMethodCompletionItem;
-import ca.weblite.netbeans.mirah.lexer.ClassQuery;
-import ca.weblite.netbeans.mirah.lexer.DocumentQuery;
 import ca.weblite.netbeans.mirah.lexer.MirahLanguageHierarchy;
 import ca.weblite.netbeans.mirah.lexer.MirahParser;
 import ca.weblite.netbeans.mirah.lexer.MirahTokenId;
 import ca.weblite.netbeans.mirah.lexer.SourceQuery;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.EnumSet;
 import java.util.Set;
-import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import mirah.impl.Tokens;
-import mirah.lang.ast.Constant;
 import mirah.lang.ast.FieldDeclaration;
-import mirah.lang.ast.LocalDeclaration;
 import mirah.lang.ast.Node;
 import org.mirah.typer.ResolvedType;
-import org.netbeans.api.editor.completion.Completion;
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenSequence;
 import org.netbeans.editor.BaseDocument;
-import org.netbeans.lib.editor.hyperlink.spi.HyperlinkProvider;
 import org.netbeans.lib.editor.hyperlink.spi.HyperlinkProviderExt;
 import org.netbeans.lib.editor.hyperlink.spi.HyperlinkType;
-import org.netbeans.modules.editor.NbEditorUtilities;
-import org.netbeans.modules.parsing.api.Snapshot;
-import org.netbeans.modules.parsing.api.Source;
-import org.netbeans.modules.parsing.spi.ParseException;
-import org.netbeans.spi.editor.completion.CompletionResultSet;
-import org.openide.filesystems.FileObject;
-import org.openide.util.Exceptions;
 
 /**
  *

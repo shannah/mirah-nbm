@@ -9,6 +9,7 @@ import ca.weblite.netbeans.mirah.ImportFixList;
 import ca.weblite.netbeans.mirah.lexer.MirahParser.MirahParseDiagnostics.SyntaxError;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -71,21 +72,32 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
             try {
                 
                 if ( syntaxError.position != null ){
-                    
+                    //System.out.println("Syntax error position is not null: "+syntaxError.position);
                     String[] pieces = syntaxError.position.substring(0, syntaxError.position.lastIndexOf(":")).split(":");
+                    //System.out.println(Arrays.toString(pieces));
                     String file = pieces[0];
                     File f = new File(file);
                     
                     // Sometimes the error seems to cite a line in the mirah core source
                     // files instead of the file that was being parsed.  check
                     // for that here
-                    if ( source.getFileObject() != null && !source.getFileObject().getNameExt().equals(f.getName())){
+                    if ( source.getFileObject() != null && !source.getFileObject().getName().equals(f.getName()) && !source.getFileObject().getNameExt().equals(f.getName())){
                         //System.out.println(source.getFileObject().getName()+" -- "+f.getName());
                     } else {
-                    
-                        line = Integer.parseInt(pieces[pieces.length-1]);
+                        int idx = pieces.length;
+                        while (--idx >0 && line == -1 ){
+                            if ( pieces[idx].trim().length() == 0){
+                                continue;
+                            }
+                            try {
+                                line = Integer.parseInt(pieces[idx]);
+                            } catch (NumberFormatException nfe){}
+                            
+                        }
                     }
-                } 
+                }  else {
+                    //System.out.println("Syntax error position is null");
+                }
                 if ( line == -1 ){
                     
                     // If we're here then it may be an inference error
