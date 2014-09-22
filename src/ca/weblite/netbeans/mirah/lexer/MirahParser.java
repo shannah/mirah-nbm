@@ -40,8 +40,12 @@ import org.mirah.typer.TypeListener;
 import org.mirah.util.Context;
 import org.mirah.util.SimpleDiagnostics;
 import org.netbeans.api.java.classpath.ClassPath;
+import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
+import org.netbeans.api.project.ProjectUtils;
+import org.netbeans.api.project.SourceGroup;
+import org.netbeans.api.project.Sources;
 import org.netbeans.modules.parsing.api.Snapshot;
 import org.netbeans.modules.parsing.api.Task;
 import org.netbeans.modules.parsing.spi.ParseException;
@@ -291,8 +295,10 @@ public class MirahParser extends Parser {
             compiler.setBootClassPath(bootClassPathStr);
         }
         String srcText = content;
-        
-        compiler.addFakeFile(src.getPath(), srcText);
+        FileObject fakeFileRoot = getRoot(src);
+        String relPath = FileUtil.getRelativePath(fakeFileRoot, src);
+        relPath = relPath.substring(0, relPath.lastIndexOf("."));
+        compiler.addFakeFile(relPath, srcText);
         FileChangeAdapter fileChangeListener = null;
         try {
             
@@ -331,6 +337,17 @@ public class MirahParser extends Parser {
     }
     
 
+     private FileObject getRoot(FileObject file){
+        Project project = FileOwnerQuery.getOwner(file);
+        Sources sources = ProjectUtils.getSources(project);
+        for (SourceGroup sourceGroup : sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA)) {
+            FileObject root = sourceGroup.getRootFolder();
+            if ( FileUtil.isParentOf(root, file) || root.equals(file)){
+                return root;
+            }
+        }
+        return null;
+    }
 
     @Override
     public Result getResult (Task task) {
