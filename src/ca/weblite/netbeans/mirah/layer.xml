@@ -26,6 +26,17 @@
             </folder>
         </folder>
     </folder>
+    <folder name="Services">
+        <folder name="AutoupdateType">
+            <file name="ca_weblite_netbeans_mirah_update_center.instance">
+                <attr name="displayName" bundlevalue="ca.weblite.netbeans.mirah.Bundle#Services/AutoupdateType/ca_weblite_netbeans_mirah_update_center.instance"/>
+                <attr name="enabled" boolvalue="true"/>
+                <attr name="instanceCreate" methodvalue="org.netbeans.modules.autoupdate.updateprovider.AutoupdateCatalogFactory.createUpdateProvider"/>
+                <attr name="instanceOf" stringvalue="org.netbeans.spi.autoupdate.UpdateProvider"/>
+                <attr name="url" bundlevalue="ca.weblite.netbeans.mirah.Bundle#ca_weblite_netbeans_mirah_update_center"/>
+            </file>
+        </folder>
+    </folder>
     <folder name="org-netbeans-api-project-libraries">
         <folder name="Libraries">
             <file name="mirah-all.xml" url="mirah-all.xml"/>
