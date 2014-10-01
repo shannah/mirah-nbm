@@ -6,7 +6,7 @@ A module to add Mirah support to Netbeans.
 
 ##Project Status
 
-Pre-alpha
+Alpha
 
 This module includes both support for augmenting the build/compile process of certain NetBeans project types, and support for editing .mirah files in the code editor.  So far (Sept. 1, 2014) I have focused only on the Codename One and Java SE Application project types.  JavaEE and Java Web projects haven't been tested as thoroughly.
 
