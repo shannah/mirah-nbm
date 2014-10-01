@@ -16,7 +16,7 @@ This module includes both support for augmenting the build/compile process of ce
 
 * Ruby-like syntax
 * Statically compiled to JVM bytecode.
-* Compiled code has no dependencies (you can deply code just as if it was compiled java).
+* Compiled code has no dependencies (you can deploy code just as if it was compiled java).
 * 2-way interrop between Mirah code and java code.
 * As fast as Java
 
