@@ -115,5 +115,7 @@ private static final Logger LOG =
         MultiViewEditorElement el = new MultiViewEditorElement(lkp);
         return el;
     }
+    
+    
 
 }

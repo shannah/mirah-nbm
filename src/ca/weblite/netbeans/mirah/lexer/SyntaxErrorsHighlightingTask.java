@@ -48,10 +48,10 @@ class SyntaxErrorsHighlightingTask extends ParserResultTask {
     @Override
     public void run(Parser.Result t, SchedulerEvent se) {
         MirahParser.NBMirahParserResult result = (MirahParser.NBMirahParserResult) t;
-        if ( result == null || result.getDiagnostics() == null ){
+        if ( result == null || result.getMirahDiagnostics() == null ){
             return;
         }
-        List<SyntaxError> syntaxErrors = result.getDiagnostics().getErrors();
+        List<SyntaxError> syntaxErrors = result.getMirahDiagnostics().getErrors();
         Snapshot snapshot = result.getSnapshot();
         if ( snapshot == null ){
             return;
