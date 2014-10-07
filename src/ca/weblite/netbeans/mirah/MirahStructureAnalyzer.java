@@ -7,6 +7,7 @@ package ca.weblite.netbeans.mirah;
 
 import ca.weblite.netbeans.mirah.lexer.MirahParser.NBMirahParserResult;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,12 +35,22 @@ public class MirahStructureAnalyzer implements StructureScanner {
 
     @Override
     public Map<String, List<OffsetRange>> folds(ParserResult pr) {
-        return new HashMap<String,List<OffsetRange>>();
+        System.out.println("In folds");
+        Map<String,List<OffsetRange>> out =  new HashMap<String,List<OffsetRange>>();
+        NBMirahParserResult res = (NBMirahParserResult)pr;
+        ArrayList<OffsetRange> ranges = new ArrayList<OffsetRange>();
+        for ( NBMirahParserResult.Block block : res.getBlocks()){
+            System.out.println("Adding range for block "+block);
+            ranges.add(new OffsetRange(block.getOffset(), block.getOffset()+block.getLength()));
+        }
+        out.put("codeblocks", ranges);
+        return out;
+        
     }
 
     @Override
     public Configuration getConfiguration() {
-        return null;
+        return new Configuration(true, true);
     }
     
 }
