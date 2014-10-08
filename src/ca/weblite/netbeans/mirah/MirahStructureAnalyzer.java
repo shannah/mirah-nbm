@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.netbeans.modules.csl.api.ElementKind;
 import org.netbeans.modules.csl.api.OffsetRange;
 import org.netbeans.modules.csl.api.StructureItem;
 import org.netbeans.modules.csl.api.StructureScanner;
@@ -25,22 +26,20 @@ public class MirahStructureAnalyzer implements StructureScanner {
     @Override
     public List<? extends StructureItem> scan(ParserResult pr) {
         NBMirahParserResult res = (NBMirahParserResult)pr;
+        
         ArrayList<StructureItem> out = new ArrayList<StructureItem>();
         for ( NBMirahParserResult.Block block : res.getBlocks()){
             out.add(new MirahStructureItem(res.getSnapshot(), block));
         }
-        
         return out;
     }
 
     @Override
     public Map<String, List<OffsetRange>> folds(ParserResult pr) {
-        System.out.println("In folds");
         Map<String,List<OffsetRange>> out =  new HashMap<String,List<OffsetRange>>();
         NBMirahParserResult res = (NBMirahParserResult)pr;
         ArrayList<OffsetRange> ranges = new ArrayList<OffsetRange>();
         for ( NBMirahParserResult.Block block : res.getBlocks()){
-            System.out.println("Adding range for block "+block);
             ranges.add(new OffsetRange(block.getOffset(), block.getOffset()+block.getLength()));
         }
         out.put("codeblocks", ranges);

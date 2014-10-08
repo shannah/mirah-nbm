@@ -138,6 +138,10 @@ public class MirahParser extends Parser {
                     newContent
             );
             reparse(snapshot);
+        } else if ( result == null ){
+            result = new NBMirahParserResult(snapshot, diag);
+            getBlocks(result, newContent);
+            
         }
 
     }
@@ -371,8 +375,6 @@ public class MirahParser extends Parser {
     public void reparse(Snapshot snapshot, String content)
             throws ParseException {
 
-        //(new RuntimeException()).printStackTrace();
-        
         this.snapshot = snapshot;
         diag = new MirahParseDiagnostics();
         NBMirahParserResult parserResult = new NBMirahParserResult(snapshot, diag);
@@ -542,6 +544,9 @@ public class MirahParser extends Parser {
     public Result getResult(Task task) {
         if ( result != null ) {
             return result;
+        }
+        if ( snapshot == null ){
+            
         }
         return new NBMirahParserResult(snapshot, diag);
     }
