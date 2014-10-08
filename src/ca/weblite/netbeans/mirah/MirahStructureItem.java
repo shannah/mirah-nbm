@@ -29,6 +29,7 @@ public class MirahStructureItem implements StructureItem {
 
     Snapshot snapshot;
     NBMirahParserResult.Block item;
+    List<MirahStructureItem> children = null;
     
     public MirahStructureItem(Snapshot snapshot, NBMirahParserResult.Block item){
         this.snapshot = snapshot;
@@ -57,7 +58,7 @@ public class MirahStructureItem implements StructureItem {
 
     @Override
     public ElementKind getKind() {
-        return ElementKind.METHOD;
+        return item.getKind();
     }
 
     @Override
@@ -67,12 +68,18 @@ public class MirahStructureItem implements StructureItem {
 
     @Override
     public boolean isLeaf() {
-        return true;
+        return getNestedItems().isEmpty();
     }
 
     @Override
     public List<? extends StructureItem> getNestedItems() {
-        return new ArrayList<StructureItem>();
+        if ( children == null ){
+            children = new ArrayList<MirahStructureItem>();
+            for (NBMirahParserResult.Block child : item.getChildren()){
+                children.add(new MirahStructureItem(snapshot, child));
+            }
+        }
+        return children;
     }
 
     @Override

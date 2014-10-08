@@ -13,6 +13,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,6 +26,7 @@ import java.util.TreeSet;
 import java.util.WeakHashMap;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+//import javax.lang.model.element.ElementKind;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.Document;
 import javax.tools.Diagnostic;
@@ -54,6 +56,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
+import org.netbeans.modules.csl.api.ElementKind;
 import org.netbeans.modules.csl.api.Error;
 import org.netbeans.modules.csl.api.Severity;
 import org.netbeans.modules.csl.spi.ParserResult;
@@ -182,7 +185,15 @@ public class MirahParser extends Parser {
 
     void getBlocks(final NBMirahParserResult res, String content){
         mirah.impl.MirahParser parser = new mirah.impl.MirahParser();
-        Object ast = parser.parse(new StringCodeSource(snapshot.getSource().getFileObject().getName(), content));
+        
+        final LinkedList<NBMirahParserResult.Block> blockStack = new LinkedList<NBMirahParserResult.Block>();
+        Object ast = null;
+        try {
+            ast = parser.parse(new StringCodeSource(snapshot.getSource().getFileObject().getName(), content));
+        } catch ( Throwable ex){
+            //ex.printStackTrace();
+            return;
+        }
         if ( ast instanceof Node ){
             
             Node node = (Node)ast;
@@ -190,51 +201,157 @@ public class MirahParser extends Parser {
 
                 @Override
                 public boolean enterClassDefinition(ClassDefinition node, Object arg) {
-                    res.addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "");
+                    NBMirahParserResult.Block block = null;
+                    if ( blockStack.isEmpty()){
+                        block = res.addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.CLASS);
+                    } else {
+                        block = blockStack.peek().addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.CLASS);
+                    }
+                    blockStack.push(block);
                     return super.enterClassDefinition(node, arg); 
                 }
 
                 @Override
+                public Object exitClassDefinition(ClassDefinition node, Object arg) {
+                    blockStack.pop();
+                    return super.exitClassDefinition(node, arg); //To change body of generated methods, choose Tools | Templates.
+                }
+                
+                
+
+                @Override
                 public boolean enterMethodDefinition(MethodDefinition node, Object arg) {
-                    res.addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "");
+                    NBMirahParserResult.Block block = null;
+                    if (blockStack.isEmpty()){
+                        block = res.addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.METHOD);
+                    } else {
+                        block = blockStack.peek().addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.METHOD);
+                    }
+                    blockStack.push(block);
                     return super.enterMethodDefinition(node, arg); //To change body of generated methods, choose Tools | Templates.
                 }
 
                 @Override
+                public Object exitMethodDefinition(MethodDefinition node, Object arg) {
+                    blockStack.pop();
+                    return super.exitMethodDefinition(node, arg); //To change body of generated methods, choose Tools | Templates.
+                }
+                
+                
+
+                @Override
                 public boolean enterInterfaceDeclaration(InterfaceDeclaration node, Object arg) {
-                    res.addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "");
+                    NBMirahParserResult.Block block = null;
+                    if (blockStack.isEmpty()){
+                        block = res.addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.INTERFACE);
+                    } else {
+                        block = blockStack.peek().addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.INTERFACE);
+                    }
+                    blockStack.push(block);
                     return super.enterInterfaceDeclaration(node, arg); //To change body of generated methods, choose Tools | Templates.
                 }
 
                 @Override
+                public Object exitInterfaceDeclaration(InterfaceDeclaration node, Object arg) {
+                    blockStack.pop();
+                    return super.exitInterfaceDeclaration(node, arg); //To change body of generated methods, choose Tools | Templates.
+                }
+                
+                
+
+                @Override
                 public boolean enterStaticMethodDefinition(StaticMethodDefinition node, Object arg) {
-                    res.addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "");
+                    NBMirahParserResult.Block block = null;
+                    if (blockStack.isEmpty()){
+                        block = res.addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.METHOD);
+                    } else {
+                        block = blockStack.peek().addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.METHOD);
+                    }
+                    blockStack.push(block);
                     return super.enterStaticMethodDefinition(node, arg); //To change body of generated methods, choose Tools | Templates.
                 }
 
                 @Override
+                public Object exitStaticMethodDefinition(StaticMethodDefinition node, Object arg) {
+                    blockStack.pop();
+                    return super.exitStaticMethodDefinition(node, arg); //To change body of generated methods, choose Tools | Templates.
+                }
+
+                
+                /*
+                @Override
                 public boolean enterScript(Script node, Object arg) {
-                    res.addBlock("Mirah File", node.position().startChar(), node.position().endChar()-node.position().startChar(), "");
+                    NBMirahParserResult.Block block = res.addBlock("Mirah File", node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.OTHER);
+                    blockStack.push(block);
                     return super.enterScript(node, arg); //To change body of generated methods, choose Tools | Templates.
                 }
 
                 @Override
+                public Object exitScript(Script node, Object arg) {
+                    blockStack.pop();
+                    return super.exitScript(node, arg); //To change body of generated methods, choose Tools | Templates.
+                }
+                
+                */
+
+                @Override
                 public boolean enterPackage(Package node, Object arg) {
-                    res.addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "");
+                    if ( !blockStack.isEmpty() ){
+                        blockStack.pop();
+                    }
+                    NBMirahParserResult.Block block = null;
+                    if (blockStack.isEmpty()){
+                        block = res.addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.PACKAGE);
+                    } else {
+                        block = blockStack.peek().addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.PACKAGE);
+                    }
+                    blockStack.push(block);
                     return super.enterPackage(node, arg); //To change body of generated methods, choose Tools | Templates.
                 }
 
+                
+                
+                
+
                 @Override
                 public boolean enterFieldDeclaration(FieldDeclaration node, Object arg) {
-                    res.addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "");
+                    NBMirahParserResult.Block block = null;
+                    if (blockStack.isEmpty()){
+                        block = res.addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.FIELD);
+                    } else {
+                        block = blockStack.peek().addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.FIELD);
+                    }
+                    blockStack.push(block);
                     return super.enterFieldDeclaration(node, arg); //To change body of generated methods, choose Tools | Templates.
                 }
 
                 @Override
+                public Object exitFieldDeclaration(FieldDeclaration node, Object arg) {
+                    blockStack.pop();
+                    return super.exitFieldDeclaration(node, arg); //To change body of generated methods, choose Tools | Templates.
+                }
+                
+                
+
+                @Override
                 public boolean enterMacroDefinition(MacroDefinition node, Object arg) {
-                    res.addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "");
+                    NBMirahParserResult.Block block = null;
+                    if (blockStack.isEmpty()){
+                        block = res.addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.METHOD);
+                    } else {
+                        block = blockStack.peek().addBlock(node.name().identifier(), node.position().startChar(), node.position().endChar()-node.position().startChar(), "", ElementKind.METHOD);
+                    }
+                    blockStack.push(block);
                     return super.enterMacroDefinition(node, arg); //To change body of generated methods, choose Tools | Templates.
                 }
+
+                @Override
+                public Object exitMacroDefinition(MacroDefinition node, Object arg) {
+                    blockStack.pop();
+                    return super.exitMacroDefinition(node, arg); //To change body of generated methods, choose Tools | Templates.
+                }
+                
+                
                 
                 
                 
@@ -482,10 +599,16 @@ public class MirahParser extends Parser {
             return blockList;
         }
 
-        public void addBlock(CharSequence function, int offset, int length, CharSequence extra) {
-            blockList.add(new Block(function, offset, length, extra));
+        public Block  addBlock(CharSequence function, int offset, int length, CharSequence extra, ElementKind kind) {
+            Block block = new Block(function, offset, length, extra, kind);
+            blockList.add(block);
+            return block;
         }
-
+        
+        public Block addBlock(Block parent, CharSequence function, int offset, int length, CharSequence extra, ElementKind kind){
+            return parent.addBlock(function, offset, length, extra, kind);
+        }
+        
         public class Error implements org.netbeans.modules.csl.api.Error {
 
             String description;
@@ -557,18 +680,32 @@ public class MirahParser extends Parser {
 
         public class Block {
 
+            
+            ElementKind kind;
             CharSequence function;
             int offset;
             int length;
             CharSequence extra;
+            List<Block> children = new ArrayList<Block>();
 
-            public Block(CharSequence function, int offset, int length, CharSequence extra) {
+            public Block(CharSequence function, int offset, int length, CharSequence extra, ElementKind kind) {
                 this.function = function;
                 this.offset = offset;
                 this.length = length;
                 this.extra = extra;
+                this.kind = kind;
             }
 
+            public Block addBlock(CharSequence function, int offset, int length, CharSequence extra, ElementKind kind){
+                Block block = new Block(function, offset, length, extra, kind);
+                children.add(block);
+                return block;
+            }
+            
+            public List<Block> getChildren(){
+                return Collections.unmodifiableList(children);
+            }
+            
             public CharSequence getExtra() {
                 return extra;
             }
@@ -583,6 +720,10 @@ public class MirahParser extends Parser {
 
             public int getLength() {
                 return length;
+            }
+            
+            public ElementKind getKind(){
+                return kind;
             }
 
         }
