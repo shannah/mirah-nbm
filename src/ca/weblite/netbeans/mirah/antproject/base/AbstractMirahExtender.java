@@ -98,7 +98,7 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
     private static final String MIRAH_BUILD_PATH_PROPERTY = "mirah.build.dir";
     private static final String MIRAH_MACROS_JARDIR_PROPERTY = "mirah.macros.jardir";
     private static final String VERSION_PROPERTY = "mirah.plugin.version";
-    private static final int PLUGIN_VERSION=9;
+    private static final int PLUGIN_VERSION=10;
     
 
     private final Project project;
@@ -289,8 +289,11 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
             String exclude = props.getProperty(EXCLUDE_PROPERTY);
             //props.setProperty("mirahc.ant.classpath", "foobarfoo");
             if (!exclude.contains(EXCLUSION_PATTERN)) {
+                //System.out.println(EXCLUSION_PATTERN+" is not found");
                 props.setProperty(EXCLUDE_PROPERTY, exclude + "," + EXCLUSION_PATTERN); // NOI18N
                 storeEditableProperties(project, PROJECT_PROPERTIES_PATH, props);
+            } else {
+                //System.out.println("Exclusion pattern "+EXCLUSION_PATTERN+" was found");
             }
             return true;
         } catch (IOException ex) {
@@ -662,11 +665,12 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
                 } catch ( Throwable t){}
             }
             
-            if ( !removeBuildScript() || !addBuildScript()){
+            if ( !removeExcludes() || !removeBuildScript() || addExcludes() || !addBuildScript()){
                 return false;
             }
             
             if ( version < PLUGIN_VERSION){
+                props = getEditableProperties(project, PROJECT_PROPERTIES_PATH);
                 props.setProperty(VERSION_PROPERTY, String.valueOf(PLUGIN_VERSION));
                 storeEditableProperties(project, PROJECT_PROPERTIES_PATH, props);
             }
