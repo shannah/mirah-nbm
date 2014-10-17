@@ -98,7 +98,7 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
     private static final String MIRAH_BUILD_PATH_PROPERTY = "mirah.build.dir";
     private static final String MIRAH_MACROS_JARDIR_PROPERTY = "mirah.macros.jardir";
     private static final String VERSION_PROPERTY = "mirah.plugin.version";
-    private static final int PLUGIN_VERSION=3;
+    private static final int PLUGIN_VERSION=9;
     
 
     private final Project project;
@@ -350,6 +350,7 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
             
             if (extender != null && extender.getExtensibleTargets().contains(EXTENSIBLE_TARGET_NAME)) {
                 AntBuildExtender.Extension extension = extender.getExtension(MIRAH_EXTENSION_ID);
+                
                 if (extension == null) {
                     FileObject destDirFO = project.getProjectDirectory().getFileObject("nbproject"); // NOI18N
                     FileObject projectFO = project.getProjectDirectory();
@@ -409,14 +410,33 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
                         FileObject destFileFO = destDirFO.getFileObject("mirah-build", "xml"); // NOI18N
                         extension = extender.addExtension(MIRAH_EXTENSION_ID, destFileFO);
                         extension.addDependency(EXTENSIBLE_TARGET_NAME, "-mirah-init-macrodef-javac"); // NOI18N
+                        //extension.addDependency("-init-project", "-mirah-pre-init");
                         ProjectManager.getDefault().saveProject(project);
                         FileObject buildImplFO = destDirFO.getFileObject("build-impl", "xml");
                         String contents = buildImplFO.asText();
                         if ( !contents.contains("mirah-build.xml")){
                             // Codename One projects don't seem to be regenerating the build-impl.xml file automatically
                             // so we have to use this ugly regex workaround to updating it ourselves. 
-                            contents = contents.replaceAll("<project [^>]*>", "$0\n <import file=\"mirah-build-cn1.xml\"/><import file=\"mirah-build.xml\"/>");
-                            contents = contents.replaceAll("(<target depends=\".*?)(\"[^>]* name=\"-pre-pre-compile\">)", "$1,mirah-precompile,mirah-precompile-cn1lib,-mirah-init-macrodef-javac$2");
+                            contents = contents.replaceAll("<project [^>]*>", "$0\n <import file=\"mirah-build.xml\"/>");
+                            if ( isCodename1Lib || isCodename1Proj){
+                                contents = contents.replaceAll("<project [^>]*>", "$0\n <import file=\"mirah-build-cn1.xml\"/>");
+                            }
+                            contents = contents.replaceAll("(<target depends=\".*?)(\"[^>]* name=\"-pre-pre-compile\">)", "$1,-mirah-init-macrodef-javac$2");
+                            if ( isCodename1Lib || isCodename1Proj){
+                                contents = contents.replaceAll("(<target depends=\".*?)(\"[^>]* name=\"-pre-pre-compile\">)", "$1,mirah-precompile,mirah-precompile-cn1lib$2");
+                            } 
+                            contents = contents.replaceAll("(<target depends=\".*?)(\"[^>]* name=\"init\"[^>]*>)", "$1,-mirah-pre-init$2");
+                            PrintWriter os = null;
+                            try {
+                                os = new PrintWriter(buildImplFO.getOutputStream());
+                                os.write(contents);
+                            } finally {
+                                try {
+                                    os.close();
+                                } catch ( Exception ex){}
+                            }
+                        } else if ( !contents.contains("-mirah-pre-init")){
+                            contents = contents.replaceAll("(<target depends=\".*?)(\"[^>]* name=\"init\"[^>]*>)", "$1,-mirah-pre-init$2");
                             PrintWriter os = null;
                             try {
                                 os = new PrintWriter(buildImplFO.getOutputStream());
@@ -457,6 +477,7 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
                 FileObject destDirFO = project.getProjectDirectory().getFileObject("nbproject"); // NOI18N
                 try {
                     extension.removeDependency(EXTENSIBLE_TARGET_NAME, "-mirah-init-macrodef-javac"); // NOI18N
+                    //extension.removeDependency("-init-project", "-mirah-pre-init");
                     extender.removeExtension(MIRAH_EXTENSION_ID);
                     if (destDirFO != null) {
                         FileObject fileToRemove = destDirFO.getFileObject("mirah-build.xml"); // NOI18N
@@ -465,6 +486,40 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
                         }
                     }
                     ProjectManager.getDefault().saveProject(project);
+                    
+                    FileObject buildImplFO = destDirFO.getFileObject("build-impl", "xml");
+                    String contents = buildImplFO.asText();
+                    if ( contents.contains("mirah-build.xml")){
+                        //contents = contents.replaceAll("<project [^>]*>", "$0\n <import file=\"mirah-build-cn1.xml\"/><import file=\"mirah-build.xml\"/>");
+                        contents = contents.replaceAll("<import file=\"mirah-build-cn1.xml\"/>", "");
+                        contents = contents.replaceAll("<import file=\"mirah-build.xml\"/>", "");
+                        //contents = contents.replaceAll("(<target depends=\".*?)(\"[^>]* name=\"-pre-pre-compile\">)", "$1,mirah-precompile,mirah-precompile-cn1lib,-mirah-init-macrodef-javac$2");
+                        contents = contents.replaceAll(",mirah-precompile,mirah-precompile-cn1lib", "");
+                        contents = contents.replaceAll(",-mirah-init-macrodef-javac", "");
+                        //contents = contents.replaceAll("(<target depends=\".*?)(\"[^>]* name=\"init\"[^>]*>)", "$1,-mirah-pre-init$2");
+                        contents = contents.replaceAll(",-mirah-pre-init", "");
+                        PrintWriter os = null;
+                        try {
+                            os = new PrintWriter(buildImplFO.getOutputStream());
+                            os.write(contents);
+                        } finally {
+                            try {
+                                os.close();
+                            } catch ( Exception ex){}
+                        }
+                    } else if ( contents.contains(",-mirah-pre-init")){
+                        contents = contents.replaceAll(",-mirah-pre-init", "");
+                        PrintWriter os = null;
+                        try {
+                            os = new PrintWriter(buildImplFO.getOutputStream());
+                            os.write(contents);
+                        } finally {
+                            try {
+                                os.close();
+                            } catch ( Exception ex){}
+                        }
+                    }
+                    
                     return true;
                 } catch (IOException ioe) {
                     Exceptions.printStackTrace(ioe);

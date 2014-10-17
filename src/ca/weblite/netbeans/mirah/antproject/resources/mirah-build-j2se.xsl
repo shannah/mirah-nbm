@@ -78,6 +78,9 @@ made subject to such option by the copyright holder.
               </condition>
             <property name="test.binaryincludes" value="**/*Test.class"/>
             <property name="test.binarytestincludes" value="**/*Test.class"/>
+            <target name="-mirah-pre-init">
+                <mkdir dir="build/mirah"></mkdir>
+            </target>
             <target name="-mirah-init-macrodef-javac" unless="mirah.use_default_javac">
                 <macrodef>
                     <xsl:attribute name="name">javac</xsl:attribute>
