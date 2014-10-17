@@ -98,7 +98,7 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
     private static final String MIRAH_BUILD_PATH_PROPERTY = "mirah.build.dir";
     private static final String MIRAH_MACROS_JARDIR_PROPERTY = "mirah.macros.jardir";
     private static final String VERSION_PROPERTY = "mirah.plugin.version";
-    private static final int PLUGIN_VERSION=10;
+    private static final int PLUGIN_VERSION=11;
     
 
     private final Project project;
@@ -350,11 +350,13 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
             
         
             AntBuildExtender extender = project.getLookup().lookup(AntBuildExtender.class);
-            
+            System.out.println("Step 0");
             if (extender != null && extender.getExtensibleTargets().contains(EXTENSIBLE_TARGET_NAME)) {
+                System.out.println("Step 1");
                 AntBuildExtender.Extension extension = extender.getExtension(MIRAH_EXTENSION_ID);
                 
                 if (extension == null) {
+                    System.out.println("Step 2");
                     FileObject destDirFO = project.getProjectDirectory().getFileObject("nbproject"); // NOI18N
                     FileObject projectFO = project.getProjectDirectory();
                     try {
@@ -665,7 +667,8 @@ public abstract class AbstractMirahExtender implements MirahExtenderImplementati
                 } catch ( Throwable t){}
             }
             
-            if ( !removeExcludes() || !removeBuildScript() || addExcludes() || !addBuildScript()){
+            if ( !removeExcludes() || !removeBuildScript() || !addExcludes() || !addBuildScript()){
+                System.out.println("Failed to update");
                 return false;
             }
             
