@@ -108,6 +108,9 @@
           <fileset dir="build/mirah" includes="**" excludes="**/macros/**"/>
           
         </copy>
+        <zip destfile="dist/${application.title}-macros.jar" includes="**/macros/**" basedir="build/mirah">
+            
+        </zip>
     </target>
     
     <target name="mirah-postcompile-cn1lib" depends="mirah-init" if="codename1.is_library">
@@ -213,9 +216,13 @@
             </javac>
         </mirahc>
         
+        <zip destfile="dist/${codename1.displayName}-macros.jar" includes="**/macros/**" basedir="lib/impl/cls">
+            
+        </zip>
         <delete>
             <fileset dir="lib/impl/cls" includes="**/macros/**"/>
         </delete>
+        
         <antcall target="copy-libs"/>
         
         

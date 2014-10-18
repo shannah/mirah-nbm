@@ -10,6 +10,7 @@ import ca.weblite.netbeans.mirah.RecompileQueue;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -389,6 +390,7 @@ public class MirahParser extends Parser {
 
         FileObject projectDirectory = project.getProjectDirectory();
         FileObject buildDir = projectDirectory.getFileObject("build");
+        
 
         ClassPath compileClassPath
                 = ClassPath.getClassPath(src, ClassPath.COMPILE);
@@ -472,15 +474,43 @@ public class MirahParser extends Parser {
                 .append(File.pathSeparator)
                 .toString();
 
+        FileObject macroJarDir = projectDirectory.getFileObject("lib/mirah/macros");
+        
+        if ( macroJarDir != null ){
+            
+            File jarDir = FileUtil.toFile(macroJarDir);
+            File[] jars = jarDir.listFiles(new FilenameFilter(){
+
+                @Override
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(".jar");
+                }
+
+            });
+            if ( jars != null ){
+                for ( File jar : jars ){
+                    macroPath += jar.getAbsolutePath() + File.pathSeparator;
+                    
+                }
+            }
+        }
+        
+        
+        if (macroPath.length() >= 1) {
+            macroPath = macroPath.substring(0, macroPath.length() - 1);
+        }
+        
         String cp = ".";
         if (classPath.length() >= 1) {
             cp = classPath.toString().substring(0, classPath.length() - 1);
         }
         compiler.setClassPath(macroPath + File.pathSeparator + cp);
 
-        compiler.setMacroClassPath(
-                macroPath.substring(0, macroPath.length() - 1)
-        );
+        System.out.println("Macro classpath is "+macroPath);
+        compiler.setMacroClassPath(macroPath);
+        
+        
+        
         DocumentDebugger debugger = new DocumentDebugger();
 
         compiler.setDebugger(debugger);

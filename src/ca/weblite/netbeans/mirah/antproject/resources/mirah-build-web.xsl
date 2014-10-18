@@ -69,6 +69,7 @@ made subject to such option by the copyright holder.
                 <mkdir dir="build/mirah"></mkdir>
             </target>
             <target name="-mirah-init-macrodef-javac" unless="mirah.use_default_javac">
+                <mkdir dir="build/mirah"></mkdir>
                 <macrodef>
                     <xsl:attribute name="name">javac</xsl:attribute>
                    <xsl:attribute name="uri">http://www.netbeans.org/ns/web-project/2</xsl:attribute>
@@ -151,6 +152,7 @@ made subject to such option by the copyright holder.
 
                         <mirahc dest="${{mirah.tmp.macros.classes}}" 
                                 macrojardir="${{mirah.macros.jardir}}"
+                                macroclasspath="@{{classpath}}"
                                 javasourcespath="@{{srcdir}}"
                                 javastubdir="${{mirah.java.stub.dir}}"
                                 classcachedir="${{mirah.class.cache.dir}}"
@@ -169,7 +171,7 @@ made subject to such option by the copyright holder.
                         </copy>
                         <mirahc dest="${{mirah.tmp.macros.classes}}" 
                                 macrojardir="${{mirah.macros.jardir}}" 
-                                macroclasspath="${{mirah.tmp.macros.classes}}"
+                                macroclasspath="${{mirah.tmp.macros.classes}}:@{{classpath}}"
                                 javasourcespath="@{{srcdir}}"
                                 javastubdir="${{mirah.java.stub.dir}}"
                                 classcachedir="${{mirah.class.cache.dir}}"
@@ -184,7 +186,7 @@ made subject to such option by the copyright holder.
                         <mirahc>
                             <xsl:attribute name="dest">${build.dir}/mirah</xsl:attribute>
                             <xsl:attribute name="macrojardir">${mirah.macros.jardir}</xsl:attribute>
-                            <xsl:attribute name="macroclasspath">${mirah.tmp.macros.classes}</xsl:attribute>
+                            <xsl:attribute name="macroclasspath">${mirah.tmp.macros.classes}:@{classpath}</xsl:attribute>
                             <xsl:attribute name="javastubdir">${mirah.java.stub.dir}</xsl:attribute>
                             <xsl:attribute name="classcachedir">${mirah.class.cache.dir}</xsl:attribute>
                              <xsl:attribute name="javasourcespath">@{srcdir}</xsl:attribute>

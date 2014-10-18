@@ -104,6 +104,9 @@ public class BuildScriptHelper {
 
         // FIXME is ther any better way ?
         URL xml65 = BuildScriptHelper.class.getClassLoader().getResource(resource);
+        if ( xml65 == null ){
+            return false;
+        }
         URLConnection connection = xml65.openConnection();
         connection.setUseCaches(false);
         BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8")); // NOI18N
