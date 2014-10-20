@@ -308,7 +308,11 @@ public class ClassQuery {
                int offset = isStatic ? 0:1;
                for (int i = 0; i < argumentTypes.length; i++) {
                    // The first local variable actually represents the "this" object
-                   parameterNames.add(localVariables.get(i + offset).name);
+                   try {
+                    parameterNames.add(localVariables.get(i + offset).name);
+                   } catch ( NullPointerException npe){
+                       npe.printStackTrace();
+                   }
                }
 
                return parameterNames;
