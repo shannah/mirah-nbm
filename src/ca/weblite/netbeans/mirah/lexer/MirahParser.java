@@ -7,11 +7,13 @@ package ca.weblite.netbeans.mirah.lexer;
 
 import ca.weblite.asm.WLMirahCompiler;
 import ca.weblite.netbeans.mirah.RecompileQueue;
+import ca.weblite.netbeans.mirah.support.spi.MirahExtenderImplementation;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,8 +27,11 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.WeakHashMap;
+import java.util.jar.JarOutputStream;
 import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
 //import javax.lang.model.element.ElementKind;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.Document;
@@ -43,6 +48,7 @@ import mirah.lang.ast.Script;
 import mirah.lang.ast.StaticMethodDefinition;
 import mirah.lang.ast.StringCodeSource;
 import mirah.lang.ast.Super;
+import org.codehaus.plexus.util.FileUtils;
 import org.mirah.jvm.mirrors.debug.DebuggerInterface;
 import org.mirah.tool.Mirahc;
 import org.mirah.typer.ResolvedType;
@@ -70,6 +76,7 @@ import org.openide.filesystems.FileChangeAdapter;
 import org.openide.filesystems.FileEvent;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -244,6 +251,7 @@ public class MirahParser extends Parser {
                 
                 
 
+                
                 @Override
                 public boolean enterInterfaceDeclaration(InterfaceDeclaration node, Object arg) {
                     NBMirahParserResult.Block block = null;
@@ -390,6 +398,21 @@ public class MirahParser extends Parser {
 
         FileObject projectDirectory = project.getProjectDirectory();
         FileObject buildDir = projectDirectory.getFileObject("build");
+        Preferences projPrefs = ProjectUtils.getPreferences(project, MirahExtenderImplementation.class, true);
+        String projectType = projPrefs.get("project_type", "unknown");
+        System.out.println("Project type is "+projectType);
+        if ( "maven".equals(projectType)){
+            try {
+                // It's a maven project so we want to build our sources to a different location
+                FileObject cacheDir = ProjectUtils.getCacheDirectory(project, MirahExtenderImplementation.class);
+                buildDir = cacheDir.getFileObject("build");
+                if ( buildDir == null ){
+                    buildDir = cacheDir.createFolder("build");
+                }
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
         
 
         ClassPath compileClassPath
@@ -506,7 +529,6 @@ public class MirahParser extends Parser {
         }
         compiler.setClassPath(macroPath + File.pathSeparator + cp);
 
-        System.out.println("Macro classpath is "+macroPath);
         compiler.setMacroClassPath(macroPath);
         
         
@@ -538,6 +560,24 @@ public class MirahParser extends Parser {
                         copyIfChanged(new File(mirahDir.getPath()), new File(compileRoot.getPath()), new File(mirahDir.getPath()));
                     }
                 }
+            }
+            
+            if ("maven".equals(projectType)){
+                // If its a maven project, we need to copy the build files into 
+                System.out.println("This is a MAVEN PROJECT");
+                FileObject libDir = projectDirectory.getFileObject("lib");
+                if ( libDir == null ){
+                    libDir = projectDirectory.createFolder("lib");
+                    
+                }
+                FileObject mirahTmpClassesDir = libDir.getFileObject("mirah-tmp-classes");
+                if ( mirahTmpClassesDir == null ){
+                    mirahTmpClassesDir = libDir.createFolder("mirah-tmp-classes");
+                }
+                
+                File jarFile = new File(FileUtil.toFile(libDir), "mirah-tmp-classes.jar");
+                FileUtils.copyDirectoryStructureIfModified(new File(dest), FileUtil.toFile(mirahTmpClassesDir));
+                createJar(FileUtil.toFile(mirahTmpClassesDir), FileUtil.toFile(mirahTmpClassesDir).getPath(), jarFile);
             }
 
         } catch (Exception ex) {
@@ -984,6 +1024,85 @@ public class MirahParser extends Parser {
 
         return sb.toString();
 
+    }
+    
+    private void createJar(File source, String sourceRoot, File jarFile) throws IOException {
+        FileOutputStream fos = null;
+        JarOutputStream jos = null;
+        try {
+            fos = new FileOutputStream(jarFile);
+            jos = new JarOutputStream(fos);
+            jos.setLevel(0);
+            
+            addToJar(source, sourceRoot, jos);
+        } finally {
+            try {
+                if ( jos != null ) jos.close();
+            } catch ( Throwable t ){}
+            try {
+                if ( fos != null ) fos.close();
+            } catch ( Throwable t){}
+        }
+              
+        
+        
+    }
+    
+    private void addToJar(File source, String sourceRoot, JarOutputStream jos) throws IOException {
+        if ( source.getName().endsWith(".class")){
+            String fileName = formatEntry(source, sourceRoot, false);
+            System.out.println("Adding file "+fileName+" to jar ("+source+")");
+            ZipEntry entry = new ZipEntry(fileName);
+            jos.putNextEntry(entry);
+            InputStream fis = null;
+            try {
+                fis = new FileInputStream(source);
+                byte[] buf = new byte[4096];
+                int len;
+                while ( (len = fis.read(buf)) != -1 ){
+                    System.out.println("Writing "+len+" bytes");
+                    jos.write(buf, 0, len);
+                }
+                jos.closeEntry();
+            } finally {
+                try {
+                    if ( fis != null ){
+                        fis.close();
+                    }
+                } catch ( Exception ex){}
+            }
+        } else if ( source.isDirectory() ){
+            String dirName = formatEntry(source, sourceRoot, true);
+            System.out.println("Adding "+dirName+" to jar");
+            //ZipEntry entry = new ZipEntry(dirName);
+            //jos.putNextEntry(entry);
+            for ( File child : source.listFiles()){
+                addToJar(child, sourceRoot, jos);
+            }
+            //jos.closeEntry();
+        }
+    }
+    
+    private String formatEntry(File f, String sourceRoot, boolean directory){
+        if ( directory ){
+            String name = f.getPath().substring(sourceRoot.length());
+            name = name.replace("\\", "/");
+            if ( !name.endsWith("/")){
+                name += "/";
+            }
+            if ( name.startsWith("/")){
+                name = name.substring(1);
+            }
+            return name;
+        } else {
+            String name = f.getPath().substring(sourceRoot.length());
+            name = name.replace("\\", "/");
+            
+            if ( name.startsWith("/")){
+                name = name.substring(1);
+            }
+            return name;
+        }
     }
 
 }
