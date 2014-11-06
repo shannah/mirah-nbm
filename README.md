@@ -8,7 +8,7 @@ A module to add Mirah support to Netbeans.
 
 Alpha
 
-This module includes both support for augmenting the build/compile process of certain NetBeans project types, and support for editing .mirah files in the code editor.  So far (October 20, 2014) I have focused only on the Codename One and Java SE Application, and Java Web Application project types.  I have been experimenting with Maven project support but need to overcome some dependency issues... that is high on the priority list.
+This module includes both support for augmenting the build/compile process of certain NetBeans project types, and support for editing .mirah files in the code editor.  So far (October 20, 2014) I have focused only on the Codename One and Java SE Application, Java Web Application and Maven project types (*added in version 1.0.23*).
 
 If you would like to see support for a specific project type, please post it in the [issue tracker](https://github.com/shannah/mirah-nbm/issues).
 
@@ -31,6 +31,13 @@ If you would like to see support for a specific project type, please post it in 
 * Error highlighting
 * Abstract method completion
 * Class member navigation panel
+
+###Project Support
+ * Java Application & Java Class Library (i.e. JavaSE)
+ * Java Web Application (i.e. JavaEE)
+ * Codename One Projects
+ * Codename One Libraries
+ * Maven Projects
 
 ###Building
 
