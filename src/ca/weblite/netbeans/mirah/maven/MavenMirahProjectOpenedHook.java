@@ -93,9 +93,10 @@ public class MavenMirahProjectOpenedHook extends ProjectOpenedHook {
         
         //BuildScriptHelper.refreshBuildScript(project, BuildScriptType.J2SE.getStylesheet(), true);
         MavenMirahExtender ext = new MavenMirahExtender(project);
-        if ( !ext.isCurrent() ){
-            ext.activate();
-        }
+        
+        //if ( !ext.isCurrent() ){
+        //    ext.activate();
+        //}
         Preferences prefs = ProjectUtils.getPreferences(project, MirahExtenderImplementation.class, true);
         prefs.put("project_type", "maven");
         System.out.println("Setting project type in prefs to maven");
