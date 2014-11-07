@@ -6,6 +6,10 @@ This tutorial describes how to develop a JavaFX application using the [Mirah Net
 
 As of version 1.0.23, the [Mirah Netbeans Module](https://github.com/shannah/mirah-nbm) supports Maven projects.  This opens up a lot of doors, as it allows us to essentially use Mirah inside any Maven project.  Most Java frameworks have Maven support these days, so this means that you can now use Mirah with most frameworks.  In this tutorial I will walk through how to use a Mirah inside a JavaFX Maven project, including how to use a Mirah class as an FXML controller.
 
+##Download the Project Sources
+
+I have created a GitHub repository for this tutorial [here](https://github.com/shannah/MavenFXDemo), there are tags at all of the key milestones so that you can see what the source is at any given point.
+
 ##Requirements
 
 1. Netbeans 7.4 or higher
@@ -33,6 +37,8 @@ Nice.  It has generated a default project for us.  If you run this project, at t
 After clicking the button, it displays "Hello World" in a label just below the button:
 
 ![Hello World 2](images/MavenFXDemo-2.png)
+
+You can browse/download the source of this project in this state [here](https://github.com/shannah/MavenFXDemo/releases/tag/step1)
 
 ##Step Two: Sprinkle in Some Mirah
 
@@ -92,6 +98,8 @@ public class FXMLController implements Initializable {
 }
  ~~~
 
+You can browse/download the source of this project in this state [here](https://github.com/shannah/MavenFXDemo/releases/tag/step2)
+
 ##Step 3: Try to run the project
 
 Now try to run the project.  
@@ -143,6 +151,8 @@ hello from Mirah!
 
 I.e. That means that it was able to execute Mirah successfully.
 
+You can browse/download the source of this project in this state [here](https://github.com/shannah/MavenFXDemo/releases/tag/step3)
+
 ##Step 4: Use a Mirah Class as a FXML Controller Class
 
 At this point, we have shown that we can call Mirah from Java.  And you can verify for yourself that you can also call Java code from Mirah.  Let's take it a step further an try to use a Mirah class for the FXML controller.
@@ -192,6 +202,8 @@ end
 Once you have finished saving the Scene.fxml file in Scene Builder, return to Netbeans and try to run the project again.  It should run the same as before, except this time when you click the button it says "Hello Mirah!" instead of "Hello World!" (because it is using the Mirah class as a controller).
 
 ![hello mirah](images/hello-mirah-fx.png)
+
+You can browse/download the source of this project in this state [here](https://github.com/shannah/MavenFXDemo/releases/tag/step4)
 
 ##Summary
 
