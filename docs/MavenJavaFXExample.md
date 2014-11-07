@@ -178,7 +178,7 @@ end
  2. I have removed the initialize(URL,ResourceBundle) method because the name `initialize` conflicts with the Mirah constructor methods.  Luckily JavaFX no longer requires its controllers to implement the `Initializable` interface.
  3. This class does not implement the `Initializable` interface.
  4. In Mirah, the `@FXML` annotation is written as `$FXML`
- 5. Notice that the `$FXML1` annotation is placed just before the assignment of the `@label` member variable - which is inside the `initialize` method.  This differs from the Java placement outside of functions.  This is because Mirah doesn't have member declarations in the root class space like Java does.  Member vars and types are automatically created and inferred in Mirah based on the types that are assigned to them.
+ 5. Notice that the `$FXML` annotation is placed just before the assignment of the `@label` member variable - which is inside the `initialize` method.  This differs from the Java placement outside of functions.  This is because Mirah doesn't have member declarations in the root class space like Java does.  Member vars and types are automatically created and inferred in Mirah based on the types that are assigned to them.
 2. Open the `Scene.fxml` file in Scene Builder by double clicking inside the project explorer.
  
  ![Scene.xml project explorer](images/Scene-fxml.png)
