@@ -69,6 +69,9 @@ The following screencast demonstrates the use of the NetBeans Mirah plugin to de
 
 [Codename One Mirah Poker Demo Screencast](http://youtu.be/uGgppdsMCjA)
 
+###JavaFX/Maven Tutorial
+
+This [tutorial](docs/MavenJavaFXExample.md) shows you how to use Mirah with a JavaFX Maven project.
 
 ###Creating a Mirah Class
 
