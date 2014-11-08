@@ -2,6 +2,8 @@
 
 This tutorial describes how to develop a JavaFX application using the [Mirah Netbeans Module](../README.md)
 
+You can also [watch a screencast of this tutorial](http://youtu.be/FqiBYnbPIcA)
+
 ##Background
 
 As of version 1.0.23, the [Mirah Netbeans Module](https://github.com/shannah/mirah-nbm) supports Maven projects.  This opens up a lot of doors, as it allows us to essentially use Mirah inside any Maven project.  Most Java frameworks have Maven support these days, so this means that you can now use Mirah with most frameworks.  In this tutorial I will walk through how to use a Mirah inside a JavaFX Maven project, including how to use a Mirah class as an FXML controller.
