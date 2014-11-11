@@ -54,7 +54,7 @@ public class MavenMirahExtender implements MirahExtenderImplementation{
 
     private static final String MIRAH_GROUP_ID = "ca.weblite"; // NOI18N
     private static final String MIRAH_ARTIFACT_ID = "maven-mirah-plugin";       // NOI18N
-    private static final String MIRAH_PLUGIN_VERSION = "1.0";
+    private static final String MIRAH_PLUGIN_VERSION = "1.0.1";
     private final FileObject pom;
 
     
@@ -368,6 +368,10 @@ public class MavenMirahExtender implements MirahExtenderImplementation{
                 }
                 return name;
             }
+        }
+        
+        private void updatePluginVersion(final Plugin plugin) {
+            plugin.setVersion(MIRAH_PLUGIN_VERSION);
         }
         
         private Plugin mirahCompilerPluginExists(final Build build) {
