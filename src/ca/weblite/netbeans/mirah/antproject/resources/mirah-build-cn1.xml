@@ -106,8 +106,10 @@
         </mirahc>
         <copy todir="build/classes">
           <fileset dir="build/mirah" includes="**" excludes="**/macros/**"/>
-          
         </copy>
+        <delete>
+            <fileset dir="build/mirah" includes="MacrosBootstrap.class"/>
+        </delete>
         <zip destfile="dist/${application.title}-macros.jar" includes="**/macros/**" basedir="build/mirah">
             
         </zip>
@@ -221,6 +223,7 @@
         </zip>
         <delete>
             <fileset dir="lib/impl/cls" includes="**/macros/**"/>
+            <fileset dir="lib/impl/cls" includes="MacrosBootstrap.class"/>
         </delete>
         
         <antcall target="copy-libs"/>
