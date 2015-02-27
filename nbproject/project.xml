@@ -342,24 +342,24 @@
             </module-dependencies>
             <public-packages/>
             <class-path-extension>
-                <runtime-relative-path>ext/mirahc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/mirahc.jar</binary-origin>
+                <runtime-relative-path>ext/mirah.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mirah.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/maven-model-3.2.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/maven-model-3.2.3.jar</binary-origin>
+                <runtime-relative-path>ext/mirahc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mirahc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/plexus-utils-3.0.17.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/plexus-utils-3.0.17.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/MirahAnt.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/MirahAnt.jar</binary-origin>
+                <runtime-relative-path>ext/maven-model-3.2.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/maven-model-3.2.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/mirah.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/mirah.jar</binary-origin>
+                <runtime-relative-path>ext/MirahAnt.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/MirahAnt.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>
