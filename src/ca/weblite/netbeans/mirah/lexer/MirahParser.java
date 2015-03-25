@@ -607,7 +607,7 @@ public class MirahParser extends Parser {
                 return root;
             }
         }
-        return null;
+        return ClassPath.getClassPath(file, ClassPath.SOURCE).findOwnerRoot(file);
     }
 
     @Override
