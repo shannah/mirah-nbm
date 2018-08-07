@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 OpenIDE-Module: ca.weblite.netbeans.mirah/1
-OpenIDE-Module-Implementation-Version: 32
+OpenIDE-Module-Implementation-Version: 33
 OpenIDE-Module-Layer: ca/weblite/netbeans/mirah/layer.xml
 OpenIDE-Module-Localizing-Bundle: ca/weblite/netbeans/mirah/Bundle.properties
 
